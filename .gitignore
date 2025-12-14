@@ -33,3 +33,8 @@ build/
 .vscode/
 vekku-server/vekku_data/qdrant/
 -server/vekku_data/qdrant/storage/raft_state.json
+
+### Vekku ###
+vekku_data
+vekku-server.log
+src/main/java/dev/kbd/vekku_server/.DS_Store
