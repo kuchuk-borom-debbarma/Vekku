@@ -87,3 +87,52 @@ To interact with our backend without a frontend, we added **Spring Shell**.
 
 ---
 **Summary**: We have successfully built the skeleton of a semantic knowledge graph. Tags are no longer isolated strings; they are interconnected nodes, allowing Vekku to understand that `Java` is a type of `Backend` technology, which is a type of `Software`.
+
+---
+
+# Commit Journal - AI Brain Service Refactoring & RAG
+
+**Date**: December 15, 2025
+**Topic**: Qdrant Vector Search & Solidity Refactoring
+
+## Overview
+This entry documents the refinement of the `QdrantBrainService`, which serves as the AI-powered suggestion engine for Vekku. We improved code solidity by replacing console outputs with proper logging and enhanced the user experience by expanding the search result limit. We also documented the underlying **RAG (Retrieval-Augmented Generation)** mechanics.
+
+## 1. Solidity & Refactoring
+**File**: `src/main/java/dev/kbd/vekku_server/services/independent/brainService/qdrantBrain/QdrantBrainService.java`
+
+We addressed several technical debt items to make the service production-ready.
+
+### Changes:
+- **Logging**: Replaced `System.out.println` with **SLF4J** (`log.info`).
+    - *Why?* `System.out` is synchronous and unmanageable. SLF4J allow us to control log levels (INFO, DEBUG, ERROR) and output formats (JSON, file, console) via configuration without changing code.
+- **Search Experience**: Increased `topK` from `1` to `5`.
+    - *Why?* When a user asks for "cooking", a single result might be miss "Baking" or "Recipes". Providing top 5 nearest neighbors gives the user better options.
+
+## 2. Educational Deep Dive: The AI "Brain"
+We added comprehensive Javadocs to explain *how* the magic happens.
+
+### Key Concepts:
+1.  **Vector Embeddings (The "Thought" Representation)**:
+    - We interpret user text not as strings, but as **Vectors** (arrays of floats, e.g., `[0.1, -0.9, 0.45...]`).
+    - We use **Spring AI** with `ONNX` transformers (BGE-Small model) to perform this translation locally.
+    - *Insight*: "Apple" (Fruit) and "Apple" (Tech) would have different vectors if the context is clear, but "Apple" and "Pear" will be mathematically "close" in the vector space because they are both fruits.
+
+2.  **RAG (Retrieval-Augmented Generation)**:
+    - Although we aren't "Generating" text (like ChatGPT) yet, we are doing the "Retrieval" part.
+    - **Step 1 (Ingest)**: When a tag is created, we embed it and save it to **Qdrant** with metadata `type=TAG`.
+    - **Step 2 (Retrieve)**: When a user types content, we embed that query and ask Qdrant for the "Nearest Neighbors" that match `type=TAG`.
+
+### Code Spotlight:
+```java
+SearchRequest request = SearchRequest.builder()
+    .query(content)
+    .topK(5) // Find 5 closest matches
+    .similarityThreshold(0.3) // 0.0 (Different) to 1.0 (Identical). 0.3 allows fuzzy matches.
+    .filterExpression("type == 'TAG'") // Metadata filtering
+    .build();
+```
+
+## 3. Infrastructure
+- We rely on **Qdrant** running in Docker to store these vectors.
+- We rely on **Spring AI** to abstract away the HTTP calls to Qdrant and the complex math of embeddings.
