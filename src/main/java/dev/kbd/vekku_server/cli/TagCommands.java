@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
  */
 @ShellComponent
 @RequiredArgsConstructor
-public class VekkuCommands {
+public class TagCommands {
     final TagService tagService;
 
     // Command: tag create <name> --parent <parentName>
