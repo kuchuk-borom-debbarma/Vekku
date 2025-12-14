@@ -1,4 +1,9 @@
 {
-  "repositories": {},
+  "repositories": {
+    "server-spring": {
+      "Name": "server-spring",
+      "Path": "vekku-server"
+    }
+  },
   "repo_aware_context_message": true
 }
