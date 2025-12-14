@@ -1,5 +1,7 @@
 package dev.kbd.vekku_server.services.independent.brainService;
 
+import java.util.Set;
+
 public interface BrainService {
     /**
      * 🧠 LEARN: The Process of Embedding
@@ -24,4 +26,6 @@ public interface BrainService {
      * to look ONLY for tags.
      */
     public void learnTag(String tagName);
+
+    public Set<String> suggestTags(String content);
 }
