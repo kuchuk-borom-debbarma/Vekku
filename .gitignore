@@ -1,2 +1,4 @@
-vekku-server/vekku_data/qdrant/
+vekku-server/vekku_data
+vekku_data
+vekku-server.log
 

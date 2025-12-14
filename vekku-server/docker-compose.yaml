@@ -4,19 +4,20 @@ services:
   # --- 1. The Knowledge Graph ---
   neo4j:
     image: neo4j:community
-    container_name: vekku-neo4j # Custom Name 1
-    hostname: vekku-neo4j # Internal Hostname
+    container_name: vekku-neo4j
+    hostname: vekku-neo4j
     ports:
       - "7474:7474" # HTTP Browser
       - "7687:7687" # Bolt Protocol
     environment:
       - NEO4J_AUTH=neo4j/vekku_secret
-      # Performance limits to keep your laptop happy
-      - NEO4J_dbms_memory_pagecache_size=512M
-      - NEO4J_dbms_memory_heap_initial_size=512M
-      - NEO4J_dbms_memory_heap_max_size=1G
+      # UPDATED FOR NEO4J 5.x (Replaced 'dbms' with 'server')
+      - NEO4J_server_memory_pagecache_size=512M
+      - NEO4J_server_memory_heap_initial__size=512M
+      - NEO4J_server_memory_heap_max__size=1G
+      # Allow upgrades if data format changes
+      - NEO4J_dbms_allow__upgrade=true
     volumes:
-      # Custom Path 1: Stores data in ./vekku_data/neo4j instead of ./data
       - ./vekku_data/neo4j/data:/data
       - ./vekku_data/neo4j/logs:/logs
       - ./vekku_data/neo4j/conf:/conf
@@ -26,14 +27,13 @@ services:
 
   # --- 2. The Vector Brain ---
   qdrant:
-    image: qdrant/qdrant:latest
-    container_name: vekku-qdrant # Custom Name 2
-    hostname: vekku-qdrant # Internal Hostname
+    image: qdrant/qdrant:v1.13.4
+    container_name: vekku-qdrant
+    hostname: vekku-qdrant
     ports:
       - "6333:6333" # REST API
       - "6334:6334" # gRPC API
     volumes:
-      # Custom Path 2: Stores data in ./vekku_data/qdrant
       - ./vekku_data/qdrant/storage:/qdrant/storage
     networks:
       - vekku-net
