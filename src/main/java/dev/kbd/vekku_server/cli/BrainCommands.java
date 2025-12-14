@@ -7,14 +7,22 @@ import org.springframework.shell.standard.ShellOption;
 
 import java.util.Set;
 
+import lombok.RequiredArgsConstructor;
+
+/**
+ * <b>AI INTERFACE (CLI):</b>
+ * <p>
+ * This class lets us talk to the 'Brain' (Vector Database + Embedding Model)
+ * from the terminal.
+ * It's magical because we can input raw text ("How to cook") and get back
+ * related Tags ("Food", "Cooking"),
+ * even if we never explicitly used those words.
+ */
 @ShellComponent
+@RequiredArgsConstructor
 public class BrainCommands {
 
     private final BrainService brainService;
-
-    public BrainCommands(BrainService brainService) {
-        this.brainService = brainService;
-    }
 
     @ShellMethod(key = "brain learn", value = "Teach the AI a concept (Tag)")
     public void brainLearn(@ShellOption String tag) {

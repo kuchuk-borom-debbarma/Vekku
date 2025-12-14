@@ -14,6 +14,25 @@ import dev.kbd.vekku_server.services.independent.brainService.BrainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Implementation of the {@link BrainService} that uses Qdrant (via Spring AI)
+ * as the underlying engine.
+ * <p>
+ * This service demonstrates the <b>RAG (Retrieval-Augmented Generation)</b>
+ * pattern's retrieval step,
+ * even though we are using it for simple classification/suggestion here.
+ * </p>
+ *
+ * <h2>Key Concepts:</h2>
+ * <ul>
+ * <li><b>VectorStore:</b> The database for embeddings (numbers representing
+ * text meaning).</li>
+ * <li><b>Embedding:</b> Converting text ("Cooking") into a vector (e.g., [0.1,
+ * -0.5, ...]).</li>
+ * <li><b>Metadata Filtering:</b> We tag entries with "type=TAG" to distinguish
+ * them from other stored docs.</li>
+ * </ul>
+ */
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -36,9 +55,12 @@ public class QdrantBrainService implements BrainService {
 
         // 3. Save to Qdrant
         // The Embedding Model (BGE-Small) runs automatically in the background here!
+        // Spring AI iterates over the list, calls the EmbeddingClient for each doc,
+        // and then pushes the vectors + metadata to Qdrant.
         vectorStore.add(List.of(doc));
 
-        System.out.println("🧠 Brain has learned the concept: " + tagName);
+        // Use SLF4J logger instead of System.out for proper log management
+        log.info("🧠 Brain has learned the concept: {}", tagName);
     }
 
     @Override
@@ -46,10 +68,18 @@ public class QdrantBrainService implements BrainService {
         log.trace("suggestTags({})", content);
 
         // 1. Setup the Search
+        // We want to find the closest matches in the "meaning space".
+        // If content is "how to make cake", "Baking" tag should be close.
         SearchRequest request = SearchRequest.builder()
                 .query(content)
-                .topK(3)
-                .similarityThreshold(0.6)
+                // Return top 5 matches to give the user variety
+                .topK(5)
+                // Similarity threshold (0.0 to 1.0).
+                // 0.7+ is usually "very close". 0.3 is "somewhat related".
+                // Since user input might be vague, we keep it loose (0.3).
+                .similarityThreshold(0.3)
+                // Metadata Filter: Ensure we don't suggest a whole Document body as a Tag.
+                // This acts like a SQL "WHERE type = 'TAG'" clause.
                 .filterExpression("type == 'TAG'")
                 .build();
 
