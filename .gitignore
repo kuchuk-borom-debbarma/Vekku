@@ -31,3 +31,5 @@ build/
 
 ### VS Code ###
 .vscode/
+vekku-server/vekku_data/qdrant/
+-server/vekku_data/qdrant/storage/raft_state.json
