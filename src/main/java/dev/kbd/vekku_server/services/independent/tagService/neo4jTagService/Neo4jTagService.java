@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import dev.kbd.vekku_server.services.independent.tagService.TagService;
 import dev.kbd.vekku_server.services.independent.tagService.neo4jTagService.models.Tag;
-import io.netty.util.internal.StringUtil;
+import org.springframework.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +18,19 @@ import lombok.extern.slf4j.Slf4j;
 public class Neo4jTagService implements TagService {
     private final Neo4jTagRepo repo;
 
+    /**
+     * Creates a new tag and optionally links it to a parent.
+     * <p>
+     * <b>@Transactional:</b> This is crucial. It ensures that all database
+     * operations within this method happen in a single "Unit of Work".
+     * If saving the parent fails, the child won't be saved either.
+     * <p>
+     * <b>Logic:</b>
+     * 1. Find/Create Child.
+     * 2. Find/Create Parent (if provided).
+     * 3. Link them in memory.
+     * 4. Save Child -> Neo4j cascades the save to the relationship and parent.
+     */
     @Transactional
     @Override
     public Tag createTag(String tagName, String parentTagName) {
@@ -28,7 +41,7 @@ public class Neo4jTagService implements TagService {
                 .orElse(new Tag(tagName));
 
         // 2. If a parent is provided, handle the linking
-        if (!StringUtil.isNullOrEmpty(parentTagName)) {
+        if (StringUtils.hasText(parentTagName)) {
             // Find or auto create the parent
             Tag parent = repo.findByName(parentTagName)
                     .orElseGet(() -> repo.save(new Tag(parentTagName)));

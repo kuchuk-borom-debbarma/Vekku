@@ -10,6 +10,17 @@ import dev.kbd.vekku_server.services.independent.tagService.TagService;
 import dev.kbd.vekku_server.services.independent.tagService.neo4jTagService.models.Tag;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * <b>CLI INTERFACE:</b>
+ * <p>
+ * This class exposes our backend logic to the command line using Spring Shell.
+ * It's perfect for testing without a frontend.
+ * <ul>
+ * <li><b>@ShellComponent:</b> Registers this class as a command provider.</li>
+ * <li><b>@RequiredArgsConstructor:</b> Lombok magic to generate the constructor
+ * for dependency injection.</li>
+ * </ul>
+ */
 @ShellComponent
 @RequiredArgsConstructor
 public class VekkuCommands {

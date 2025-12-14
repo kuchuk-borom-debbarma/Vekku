@@ -22,8 +22,21 @@ public class Tag {
     private Long id;
     private String name;
 
-    // THE HIERARCHY: Defines that this tag is a "Child Of" another tag.
-    // Direction.OUTGOING means: (This Tag) -> [CHILD_OF] -> (Parent Tag)
+    /**
+     * THE HIERARCHY: Defines that this tag is a "Child Of" another tag.
+     * <p>
+     * <b>Concept:</b> In a Graph, relationships are first-class citizens.
+     * Unlike SQL where you might have a "parent_id" column, here we have an actual
+     * Link (Edge) pointing to another Node.
+     * <p>
+     * <b>Direction.OUTGOING</b> means:
+     * (This Tag) ---[CHILD_OF]---> (Parent Tag)
+     * <p>
+     * <b>Set&lt;Tag&gt;:</b> Using a Set ensures we don't accidentally link to the
+     * same parent twice.
+     * It also allows for "Polyhierarchy" (a tag can belong to multiple categories).
+     * e.g., "SpringBoot" is a child of "Java" AND "Frameworks".
+     */
     @Relationship(type = "CHILD_OF", direction = Relationship.Direction.OUTGOING)
     private Set<Tag> parents = new HashSet<>();
 
