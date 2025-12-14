@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # --- 1. The Knowledge Graph ---
+  neo4j:
+    image: neo4j:community
+    container_name: vekku-neo4j # Custom Name 1
+    hostname: vekku-neo4j # Internal Hostname
+    ports:
+      - "7474:7474" # HTTP Browser
+      - "7687:7687" # Bolt Protocol
+    environment:
+      - NEO4J_AUTH=neo4j/vekku_secret
+      # Performance limits to keep your laptop happy
+      - NEO4J_dbms_memory_pagecache_size=512M
+      - NEO4J_dbms_memory_heap_initial_size=512M
+      - NEO4J_dbms_memory_heap_max_size=1G
+    volumes:
+      # Custom Path 1: Stores data in ./vekku_data/neo4j instead of ./data
+      - ./vekku_data/neo4j/data:/data
+      - ./vekku_data/neo4j/logs:/logs
+      - ./vekku_data/neo4j/conf:/conf
+    networks:
+      - vekku-net
+    restart: unless-stopped
+
+  # --- 2. The Vector Brain ---
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: vekku-qdrant # Custom Name 2
+    hostname: vekku-qdrant # Internal Hostname
+    ports:
+      - "6333:6333" # REST API
+      - "6334:6334" # gRPC API
+    volumes:
+      # Custom Path 2: Stores data in ./vekku_data/qdrant
+      - ./vekku_data/qdrant/storage:/qdrant/storage
+    networks:
+      - vekku-net
+    restart: unless-stopped
+
+# --- 3. Isolated Network ---
+networks:
+  vekku-net:
+    driver: bridge
+    name: vekku-network
