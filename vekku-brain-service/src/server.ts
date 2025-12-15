@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { BrainController } from './controllers/BrainController';
-import { BrainLogic } from './services/BrainLogic';
+import { BrainLogic } from './services/brain-logic/BrainLogic';
 
 const app = express();
 const PORT = 3000;

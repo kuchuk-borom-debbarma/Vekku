@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { BrainLogic } from '../services/BrainLogic';
+import { BrainLogic } from '../services/brain-logic/BrainLogic';
 
 // Express Controller
 export const BrainController = {
@@ -29,17 +29,9 @@ export const BrainController = {
     },
 
     /**
-     * POST /analyze
-     * Body: { text: string }
-     */
-    Analyze: (req: Request, res: Response) => {
-        // ... We will implement this next
-        return res.json({ regions: [] });
-    },
-
-    /**
      * POST /suggest-tags
      * Body: { content: string }
+     * Returns: ContentRegionTags[] - Detailed semantic regions with tags
      */
     SuggestTags: async (req: Request, res: Response) => {
         const content = req.body.content;
@@ -50,8 +42,11 @@ export const BrainController = {
 
         try {
             const brain = BrainLogic.getInstance();
-            const tags = await brain.suggestTags(content);
-            return res.json({ tags });
+            // Get detailed regions with semantic chunking
+            const regions = await brain.suggestTags(content);
+
+            // Return the full structure as requested
+            return res.json({ regions });
         } catch (error: any) {
             console.error("❌ Error in SuggestTags:", error);
             return res.status(500).json({ error: error.message });
