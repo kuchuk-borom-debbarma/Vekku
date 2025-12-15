@@ -1,36 +1,50 @@
 package dev.kbd.vekku_server.services.independent.brainService.remote;
 
-import dev.kbd.vekku_server.brain.BrainServiceGrpc;
-import dev.kbd.vekku_server.brain.LearnRequest;
-import dev.kbd.vekku_server.brain.SuggestTagsRequest;
-import dev.kbd.vekku_server.brain.SuggestTagsResponse;
 import dev.kbd.vekku_server.services.independent.brainService.BrainService;
-import net.devh.boot.grpc.client.inject.GrpcClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.http.MediaType;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @Service
 public class RemoteBrainService implements BrainService {
 
-    @GrpcClient("brainService")
-    private BrainServiceGrpc.BrainServiceBlockingStub brainClient;
+    private final RestClient restClient;
+
+    public RemoteBrainService(@Value("${brain-service.url}") String brainServiceUrl,
+            RestClient.Builder restClientBuilder) {
+        this.restClient = restClientBuilder.baseUrl(brainServiceUrl).build();
+    }
 
     @Override
     public void learnTag(String tagName) {
-        LearnRequest request = LearnRequest.newBuilder()
-                .setTagName(tagName)
-                .build();
-        brainClient.learn(request);
+        record LearnRequest(String tag_name) {
+        }
+
+        restClient.post()
+                .uri("/learn")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new LearnRequest(tagName))
+                .retrieve()
+                .toBodilessEntity();
     }
 
     @Override
     public Set<String> suggestTags(String content) {
-        SuggestTagsRequest request = SuggestTagsRequest.newBuilder()
-                .setContent(content)
-                .build();
-        SuggestTagsResponse response = brainClient.suggestTags(request);
-        return new HashSet<>(response.getTagsList());
+        record SuggestTagsRequest(String content) {
+        }
+        record SuggestTagsResponse(Set<String> tags) {
+        }
+
+        SuggestTagsResponse response = restClient.post()
+                .uri("/suggest-tags")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new SuggestTagsRequest(content))
+                .retrieve()
+                .body(SuggestTagsResponse.class);
+
+        return response != null ? response.tags() : Set.of();
     }
 }
