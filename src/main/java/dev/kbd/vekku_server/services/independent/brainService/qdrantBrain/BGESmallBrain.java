@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class QdrantBrainService implements BrainService {
+public class BGESmallBrain implements BrainService {
     final VectorStore vectorStore;
 
     @Override
