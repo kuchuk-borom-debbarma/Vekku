@@ -1,6 +1,11 @@
 package dev.kbd.vekku_server.services.independent.brainService;
 
+<<<<<<< HEAD
 import java.util.Set;
+=======
+import dev.kbd.vekku_server.services.independent.brainService.model.ContentRegionTags;
+import java.util.List;
+>>>>>>> gg-sync/server-spring/1765835959
 
 public interface BrainService {
     /**
@@ -27,5 +32,15 @@ public interface BrainService {
      */
     public void learnTag(String tagName);
 
+<<<<<<< HEAD
     public Set<String> suggestTags(String content);
+=======
+    /**
+     * 🔎 SUGGEST: Finds tags conceptually related to content.
+     * <p>
+     * Returns a list of semantic regions, each with its own specific tags.
+     * This allows for granular tagging of long content.
+     */
+    public List<ContentRegionTags> suggestTags(String content);
+>>>>>>> gg-sync/server-spring/1765835959
 }
