@@ -1,8 +1,8 @@
 ---
-trigger: always_on
+description: Create journal documentation in docs/journal
 ---
 
-Create journal documentation in docs/journal
+Create journal documentation in docs/journal of root dir
 
 We use numbers to keep track so first journal will be
 1.<title>
