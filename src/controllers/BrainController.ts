@@ -1,34 +1,29 @@
-// import { BrainServiceHandlers } from '../protos/brain'; // We will generate types later or use loose types for now
-// import { AnalyzeRequest, AnalyzeResponse, LearnRequest, Empty } from '../protos/brain'; // Conceptual types
+import { BrainLogic } from '../services/BrainLogic';
 
-// Since we haven't generated static types yet, we'll use 'any' for the untyped gRPC interface for now.
-// For this scaffold, we will implement the logic directly.
-// or define a simple interface matching the proto.
-// For this scaffold, we will implement the logic directly.
-
+// This matches the gRPC function signature
 export const BrainController = {
-    analyze: (call: any, callback: any) => {
-        const { text } = call.request;
-        console.log(`[Analyze] Received text: ${text?.substring(0, 50)}...`);
 
-        // Dummy response
-        const response = {
-            regions: [
-                {
-                    start_index: 0,
-                    end_index: text?.length || 0,
-                    content: text || "",
-                    tags: ["DUMMY_TAG", "SCAFFOLDING"]
-                }
-            ]
-        };
+    Learn: async (call: any, callback: any) => {
+        const tagName = call.request.tag_name;
 
-        callback(null, response);
+        try {
+            // Call the Logic
+            const brain = BrainLogic.getInstance();
+            await brain.learnTag(tagName);
+
+            // Respond success (Empty object as per proto)
+            callback(null, {});
+        } catch (error: any) {
+            console.error("❌ Error in Learn:", error);
+            callback({
+                code: 13, // gRPC Internal Error
+                details: error.message
+            });
+        }
     },
 
-    learn: (call: any, callback: any) => {
-        const { tag_name } = call.request;
-        console.log(`[Learn] Learning new tag: ${tag_name}`);
-        callback(null, {});
+    Analyze: (call: any, callback: any) => {
+        // ... We will implement this next
+        callback(null, { regions: [] });
     }
 };
