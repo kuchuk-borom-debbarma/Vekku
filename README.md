@@ -2,9 +2,7 @@
 
 ## Intelligent Unified Content Store
 
-**Vekku** is an intelligent, unified content store designed to organize all your digital knowledge. Unlike traditional document management systems, Vekku is built to ingest and understand a wide variety of text-based content—from simple Markdown notes and formal documents to live URLs.
-
-It combines strict organization consistent with your personal workflow and adaptive AI that understands the meaning of your content, not just keywords.
+**Vekku** is an intelligent unified content store powered by **RAG** and **Graph** architecture. It ingests documents and URLs, using adaptive AI to understand context instead of just keywords. It automatically structures your digital life into a **semantic knowledge graph** that learns from your habits. Your personal Second Brain, evolved.
 
 ---
 
