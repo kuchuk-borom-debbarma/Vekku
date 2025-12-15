@@ -64,7 +64,7 @@
 		<dependency>
 			<groupId>jakarta.annotation</groupId>
 			<artifactId>jakarta.annotation-api</artifactId>
-			<version>1.3.5</version> <!-- Common for generated code -->
+			<!-- Version managed by Spring Boot parent (should be 2.1.1+) -->
 		</dependency>
 
 		<dependency>
