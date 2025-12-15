@@ -1,44 +1,60 @@
+import { Request, Response } from 'express';
 import { BrainLogic } from '../services/BrainLogic';
 
-// This matches the gRPC function signature
+// Express Controller
 export const BrainController = {
 
-    Learn: async (call: any, callback: any) => {
-        const tagName = call.request.tag_name;
+    /**
+     * POST /learn
+     * Body: { tag_name: string }
+     */
+    Learn: async (req: Request, res: Response) => {
+        const tagName = req.body.tag_name;
+
+        if (!tagName) {
+            return res.status(400).json({ error: "tag_name is required" });
+        }
 
         try {
             // Call the Logic
             const brain = BrainLogic.getInstance();
             await brain.learnTag(tagName);
 
-            // Respond success (Empty object as per proto)
-            callback(null, {});
+            // Respond success
+            return res.json({});
         } catch (error: any) {
             console.error("❌ Error in Learn:", error);
-            callback({
-                code: 13, // gRPC Internal Error
-                details: error.message
-            });
+            return res.status(500).json({ error: error.message });
         }
     },
 
-    Analyze: (call: any, callback: any) => {
+    /**
+     * POST /analyze
+     * Body: { text: string }
+     */
+    Analyze: (req: Request, res: Response) => {
         // ... We will implement this next
-        callback(null, { regions: [] });
+        return res.json({ regions: [] });
     },
 
-    SuggestTags: async (call: any, callback: any) => {
-        const content = call.request.content;
+    /**
+     * POST /suggest-tags
+     * Body: { content: string }
+     */
+    SuggestTags: async (req: Request, res: Response) => {
+        const content = req.body.content;
+
+        if (!content) {
+            return res.status(400).json({ error: "content is required" });
+        }
+
         try {
             const brain = BrainLogic.getInstance();
             const tags = await brain.suggestTags(content);
-            callback(null, { tags });
+            return res.json({ tags });
         } catch (error: any) {
             console.error("❌ Error in SuggestTags:", error);
-            callback({
-                code: 13, // gRPC Internal Error
-                details: error.message
-            });
+            return res.status(500).json({ error: error.message });
         }
     }
 };

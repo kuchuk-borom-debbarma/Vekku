@@ -1,32 +1,27 @@
-import * as grpc from '@grpc/grpc-js';
-import * as protoLoader from '@grpc/proto-loader';
-import path from 'path';
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
 import { BrainController } from './controllers/BrainController';
 import { BrainLogic } from './services/BrainLogic';
 
-const PROTO_PATH = path.join(__dirname, '../protos/brain.proto');
+const app = express();
+const PORT = 3000;
 
-const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
-    keepCase: true,
-    longs: String,
-    enums: String,
-    defaults: true,
-    oneofs: true
-});
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
 
-const brainProto = grpc.loadPackageDefinition(packageDefinition) as any;
-
-const server = new grpc.Server();
-// 1. Bind Controller
-server.addService(brainProto.brain.BrainService.service, BrainController);
-
-// 2. Start
-const PORT = '50051';
-const brain = BrainLogic.getInstance();
+// Routes
+// POST because we are sending data (even if suggest is technically a read, we send a body)
+app.post('/learn', BrainController.Learn);
+app.post('/analyze', BrainController.Analyze);
+app.post('/suggest-tags', BrainController.SuggestTags);
 
 // Initialize AI/DB *before* accepting requests
+const brain = BrainLogic.getInstance();
+
 brain.initialize().then(() => {
-    server.bindAsync(`0.0.0.0:${PORT}`, grpc.ServerCredentials.createInsecure(), () => {
-        console.log(`🤖 Vekku Brain Service running on port ${PORT}`);
+    app.listen(PORT, () => {
+        console.log(`🤖 Vekku Brain Service (REST) running on port ${PORT}`);
     });
 });
