@@ -25,5 +25,20 @@ export const BrainController = {
     Analyze: (call: any, callback: any) => {
         // ... We will implement this next
         callback(null, { regions: [] });
+    },
+
+    SuggestTags: async (call: any, callback: any) => {
+        const content = call.request.content;
+        try {
+            const brain = BrainLogic.getInstance();
+            const tags = await brain.suggestTags(content);
+            callback(null, { tags });
+        } catch (error: any) {
+            console.error("❌ Error in SuggestTags:", error);
+            callback({
+                code: 13, // gRPC Internal Error
+                details: error.message
+            });
+        }
     }
 };

@@ -8,6 +8,9 @@ service BrainService {
 
   // Teaches the brain a new Concept (Tag)
   rpc Learn (LearnRequest) returns (Empty);
+
+  // Suggests existing tags based on content
+  rpc SuggestTags (SuggestTagsRequest) returns (SuggestTagsResponse);
 }
 
 message Empty {}
@@ -29,4 +32,12 @@ message ContentRegion {
 
 message LearnRequest {
   string tag_name = 1;
+}
+
+message SuggestTagsRequest {
+  string content = 1;
+}
+
+message SuggestTagsResponse {
+  repeated string tags = 1;
 }

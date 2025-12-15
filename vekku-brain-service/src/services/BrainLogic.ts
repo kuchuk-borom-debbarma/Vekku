@@ -83,4 +83,36 @@ export class BrainLogic {
 
         console.log(`✅ Learned: ${tagName}`);
     }
+
+    /**
+     * 🔎 SUGGEST: Finds tags conceptually related to content
+     */
+    public async suggestTags(content: string): Promise<string[]> {
+        if (!this.embedder) await this.initialize();
+
+        console.log(`🤔 Thinking about tags for: "${content}"`);
+
+        // 1. Embed Query
+        const output = await this.embedder(content, { pooling: 'mean', normalize: true });
+        const vector = Array.from(output.data) as number[];
+
+        // 2. Search Qdrant
+        const result = await this.qdrant.search(this.COLLECTION_NAME, {
+            vector: vector,
+            limit: 5,
+            score_threshold: 0.3,
+            filter: {
+                must: [
+                    {
+                        key: "type",
+                        match: { value: "TAG" }
+                    }
+                ]
+            }
+        });
+
+        // 3. Extract Tag Names
+        const tags = result.map(hit => hit.payload?.original_name as string).filter(t => t);
+        return [...new Set(tags)]; // Unique
+    }
 }
