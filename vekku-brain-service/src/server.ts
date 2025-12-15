@@ -14,7 +14,7 @@ app.use(bodyParser.json());
 // Routes
 // POST because we are sending data (even if suggest is technically a read, we send a body)
 app.post('/learn', BrainController.Learn);
-app.post('/analyze', BrainController.Analyze);
+
 app.post('/suggest-tags', BrainController.SuggestTags);
 
 // Initialize AI/DB *before* accepting requests

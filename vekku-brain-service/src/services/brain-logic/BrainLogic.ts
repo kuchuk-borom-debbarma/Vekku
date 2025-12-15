@@ -1,7 +1,8 @@
-import { pipeline, env } from '@xenova/transformers';
+import { pipeline, env } from '@huggingface/transformers';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { v4 as uuidv4 } from 'uuid';
 import { ContentRegionTags } from './model';
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 
 // Configuration: Force local execution (no remote API calls to HuggingFace)
 env.allowLocalModels = false;
@@ -89,73 +90,68 @@ export class BrainLogic {
      * 🔎 SUGGEST: Finds tags conceptually related to content
      * Splits content into semantic regions and finds tags for each region.
      */
+    /**
+     * 🔎 SUGGEST: Finds tags conceptually related to content
+     * Splits content into regions using LangChain and finds tags for each region.
+     */
     public async suggestTags(content: string): Promise<ContentRegionTags[]> {
-        // Dynamic import to avoid issues if basic loading fails or for lazy loading
-        // @ts-ignore
-        const { chunkit } = await import('semantic-chunking');
+        if (!this.embedder) await this.initialize();
 
         console.log(`🤔 Thinking about tags for content length: ${content.length}`);
 
-        // 1. Chunk the content using semantic-chunking
-        // We use the same model name as defined in the class constant for consistency
-        const chunks = await chunkit(
-            [{ document_name: 'input', document_text: content }],
-            {
-                onnxEmbeddingModel: this.MODEL_NAME, // 'Xenova/bge-small-en-v1.5'
-                returnEmbedding: true, // Get vectors directly from chunker
-                similarityThreshold: 0.5, // Adjustable threshold
-                logging: false
-            }
-        );
+        // 1. Chunk content using Industry Standard Splitter (LangChain)
+        // We use specific separators to catch semantic shifts in run-on sentences
+        const splitter = new RecursiveCharacterTextSplitter({
+            separators: [".", "!", "?", "\n", " but ", " and ", " then ", " "],
+            chunkSize: 100, // Reasonable size for a "thought"
+            chunkOverlap: 20, // Overlap to maintain context
+        });
 
+        const docs = await splitter.createDocuments([content]);
         const regions: ContentRegionTags[] = [];
-        let searchCursor = 0;
 
         // 2. Process each chunk
-        for (const chunk of chunks) {
-            const chunkText = chunk.text;
-            if (!chunkText || chunkText.trim().length === 0) continue;
+        for (const doc of docs) {
+            const chunkText = doc.pageContent;
 
-            // Robustly find the chunk in the original text, ignoring whitespace differences
-            const match = this.findFuzzyMatch(content, chunkText, searchCursor);
+            // 3. Embed the chunk
+            const output = await this.embedder(chunkText, { pooling: 'mean', normalize: true });
+            const vector = Array.from(output.data) as number[];
 
-            if (match) {
-                // Advance cursor only if we found a match (maintaining order)
-                searchCursor = match.end;
+            // 4. Search Qdrant
+            const result = await this.qdrant.search(this.COLLECTION_NAME, {
+                vector: vector,
+                limit: 3,
+                score_threshold: 0.45,
+                filter: {
+                    must: [
+                        { key: "type", match: { value: "TAG" } }
+                    ]
+                }
+            });
 
-                // 3. Search Qdrant for this chunk
-                // chunk.embedding is returned because returnEmbedding: true
-                const vector = Array.from(chunk.embedding as number[]);
+            const tagScores = result.map(hit => ({
+                name: hit.payload?.original_name as string,
+                score: hit.score
+            })).filter(t => t.name);
 
-                const result = await this.qdrant.search(this.COLLECTION_NAME, {
-                    vector: vector,
-                    limit: 3,
-                    score_threshold: 0.4,
-                    filter: {
-                        must: [
-                            {
-                                key: "type",
-                                match: { value: "TAG" }
-                            }
-                        ]
-                    }
-                });
+            if (tagScores.length > 0) {
+                // Find accurate position in original text
+                const match = this.findFuzzyMatch(content, chunkText, 0); // Simplified logic
 
-                const tagScores = result.map(hit => ({
-                    name: hit.payload?.original_name as string,
-                    score: hit.score
-                })).filter(t => t.name);
+                // Fallback indices if fuzzy match fails (LangChain doesn't give offsets by default)
+                // In a real prod app, better offset tracking is needed.
+                const start = match ? match.start : content.indexOf(chunkText);
+                const end = match ? match.end : start + chunkText.length;
 
-                if (tagScores.length > 0) {
+                if (start !== -1) {
                     regions.push({
-                        regionContent: content.substring(match.start, match.end), // Use original text content
-                        regionStartIndex: match.start,
-                        regionEndIndex: match.end,
+                        regionContent: chunkText,
+                        regionStartIndex: start,
+                        regionEndIndex: end,
                         tagScores: tagScores
                     });
                 }
-            } else {
-                console.warn(`Could not align chunk to original text: "${chunkText.substring(0, 20)}..."`);
             }
         }
 
@@ -205,6 +201,13 @@ export class BrainLogic {
                 // Or we missed the start? 
                 // If we are getting here inside a match, it implies mismatch.
                 // If search has space but text doesn't, strict mismatch unless we allow ignoring space in search.
+                sIdx++;
+                continue;
+            }
+
+            // Check if search char is punctuation (likely injected by us) and text char is space/other
+            if (/[.,!?;]/.test(sChar) && !/[.,!?;]/.test(tChar)) {
+                // Skip the injected punctuation in search
                 sIdx++;
                 continue;
             }
