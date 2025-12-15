@@ -3,6 +3,8 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 import { v4 as uuidv4 } from 'uuid';
 import { ContentRegionTags } from './model';
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { findFuzzyMatch } from '../../utils/textUtils';
+import { config } from '../../config';
 
 // Configuration: Force local execution (no remote API calls to HuggingFace)
 env.allowLocalModels = false;
@@ -13,13 +15,9 @@ export class BrainLogic {
     private qdrant: QdrantClient;
     private embedder: any = null;
 
-    // Constants
-    private readonly COLLECTION_NAME = "vekku_brain";
-    private readonly MODEL_NAME = "Xenova/bge-small-en-v1.5";
-
     private constructor() {
-        // Connect to Qdrant (ensure it's running on localhost:6333)
-        this.qdrant = new QdrantClient({ url: 'http://localhost:6333' });
+        // Connect to Qdrant
+        this.qdrant = new QdrantClient({ url: config.qdrant.url });
     }
 
     public static getInstance(): BrainLogic {
@@ -37,19 +35,19 @@ export class BrainLogic {
 
         // 1. Create Collection if missing
         const result = await this.qdrant.getCollections();
-        const exists = result.collections.some(c => c.name === this.COLLECTION_NAME);
+        const exists = result.collections.some(c => c.name === config.qdrant.collectionName);
 
         if (!exists) {
-            console.log(`📦 Creating collection: ${this.COLLECTION_NAME}`);
-            await this.qdrant.createCollection(this.COLLECTION_NAME, {
+            console.log(`📦 Creating collection: ${config.qdrant.collectionName}`);
+            await this.qdrant.createCollection(config.qdrant.collectionName, {
                 vectors: { size: 384, distance: 'Cosine' } // BGE-Small is 384 dim
             });
         }
 
         // 2. Load AI Model (Singleton)
         if (!this.embedder) {
-            console.log(`🧠 Loading AI Model: ${this.MODEL_NAME}...`);
-            this.embedder = await pipeline('feature-extraction', this.MODEL_NAME);
+            console.log(`🧠 Loading AI Model: ${config.ai.modelName}...`);
+            this.embedder = await pipeline('feature-extraction', config.ai.modelName);
             console.log("✅ Model Loaded!");
         }
     }
@@ -69,7 +67,8 @@ export class BrainLogic {
         const vector = Array.from(output.data) as number[];
 
         // 2. Save to Qdrant
-        await this.qdrant.upsert(this.COLLECTION_NAME, {
+        // 2. Save to Qdrant
+        await this.qdrant.upsert(config.qdrant.collectionName, {
             wait: true,
             points: [
                 {
@@ -119,7 +118,8 @@ export class BrainLogic {
             const vector = Array.from(output.data) as number[];
 
             // 4. Search Qdrant
-            const result = await this.qdrant.search(this.COLLECTION_NAME, {
+            // 4. Search Qdrant
+            const result = await this.qdrant.search(config.qdrant.collectionName, {
                 vector: vector,
                 limit: 3,
                 score_threshold: 0.45,
@@ -137,7 +137,7 @@ export class BrainLogic {
 
             if (tagScores.length > 0) {
                 // Find accurate position in original text
-                const match = this.findFuzzyMatch(content, chunkText, 0); // Simplified logic
+                const match = findFuzzyMatch(content, chunkText, 0); // Simplified logic
 
                 // Fallback indices if fuzzy match fails (LangChain doesn't give offsets by default)
                 // In a real prod app, better offset tracking is needed.
@@ -162,73 +162,5 @@ export class BrainLogic {
      * Helper to find where 'search' appears in 'text' starting from 'fromIndex',
      * ignoring differences in whitespace sequences.
      */
-    private findFuzzyMatch(text: string, search: string, fromIndex: number): { start: number, end: number } | null {
-        let tIdx = fromIndex;
-        let sIdx = 0;
-        let matchStart = -1;
 
-        while (tIdx < text.length && sIdx < search.length) {
-            const tChar = text[tIdx];
-            const sChar = search[sIdx];
-
-            // If characters match, proceed
-            if (tChar === sChar) {
-                if (matchStart === -1) matchStart = tIdx;
-                tIdx++;
-                sIdx++;
-                continue;
-            }
-
-            // If mismatch, check if it's due to whitespace
-            const tIsSpace = /\s/.test(tChar);
-            const sIsSpace = /\s/.test(sChar);
-
-            if (tIsSpace && sIsSpace) {
-                // Both are whitespace, consume both until non-whitespace
-                // Actually, just skip whitespace in both until they match or one runs out
-                // Simple approach: skip whitespace in Text
-                while (tIdx < text.length && /\s/.test(text[tIdx])) tIdx++;
-                // Skip whitespace in Search
-                while (sIdx < search.length && /\s/.test(search[sIdx])) sIdx++;
-                // Loop will continue and compare next non-space chars
-                continue;
-            } else if (tIsSpace) {
-                // Text has extra whitespace, skip it
-                tIdx++;
-                continue;
-            } else if (sIsSpace) {
-                // Search has extra whitespace? (Less likely if search is normalized, but possible)
-                // Or we missed the start? 
-                // If we are getting here inside a match, it implies mismatch.
-                // If search has space but text doesn't, strict mismatch unless we allow ignoring space in search.
-                sIdx++;
-                continue;
-            }
-
-            // Check if search char is punctuation (likely injected by us) and text char is space/other
-            if (/[.,!?;]/.test(sChar) && !/[.,!?;]/.test(tChar)) {
-                // Skip the injected punctuation in search
-                sIdx++;
-                continue;
-            }
-
-            // Real mismatch
-            // Reset search (naive backtracking - if we were matching)
-            if (matchStart !== -1) {
-                // Reset to character after matchStart
-                tIdx = matchStart + 1;
-                sIdx = 0;
-                matchStart = -1;
-            } else {
-                tIdx++;
-            }
-        }
-
-        if (sIdx >= search.length) {
-            // Found complete match
-            return { start: matchStart, end: tIdx };
-        }
-
-        return null;
-    }
 }

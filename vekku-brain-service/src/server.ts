@@ -4,8 +4,10 @@ import bodyParser from 'body-parser';
 import { BrainController } from './controllers/BrainController';
 import { BrainLogic } from './services/brain-logic/BrainLogic';
 
+import { config } from './config';
+
 const app = express();
-const PORT = 3000;
+const PORT = config.port;
 
 // Middleware
 app.use(cors());
