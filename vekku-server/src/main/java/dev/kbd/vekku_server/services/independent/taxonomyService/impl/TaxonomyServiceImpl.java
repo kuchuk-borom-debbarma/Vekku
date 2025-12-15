@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.services.independent.taxonomyService.neo4jTaxonomyService;
+package dev.kbd.vekku_server.services.independent.taxonomyService.impl;
 
 import java.util.List;
 
@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import dev.kbd.vekku_server.services.independent.taxonomyService.TaxonomyService;
-import dev.kbd.vekku_server.services.independent.taxonomyService.neo4jTaxonomyService.models.Tag;
+import dev.kbd.vekku_server.services.independent.taxonomyService.models.Tag;
 import org.springframework.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -54,6 +54,11 @@ public class TaxonomyServiceImpl implements TaxonomyService {
 
     public List<Tag> getAncestors(String tagName) {
         return repo.findAllAncestors(tagName);
+    }
+
+    @Override
+    public List<Tag> getAllTags() {
+        return repo.findAll();
     }
 
 }
