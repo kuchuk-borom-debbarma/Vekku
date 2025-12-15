@@ -7,6 +7,10 @@
     "server-spring": {
       "Name": "server-spring",
       "Path": "vekku-server"
+    },
+    "vekku-client": {
+      "Name": "vekku-client",
+      "Path": "vekku-client"
     }
   },
   "repo_aware_context_message": true
