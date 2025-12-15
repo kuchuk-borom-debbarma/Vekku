@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ContentRegionTags } from './model';
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { findFuzzyMatch } from '../../utils/textUtils';
+import { cosineSimilarity } from '../../utils/mathUtils';
 import { config } from '../../config';
 
 // Configuration: Force local execution (no remote API calls to HuggingFace)
@@ -159,8 +160,30 @@ export class BrainLogic {
     }
 
     /**
-     * Helper to find where 'search' appears in 'text' starting from 'fromIndex',
-     * ignoring differences in whitespace sequences.
+     * ⚖️ SCORE: Evaluates relevance of specific tags against content.
+     * Embeds the content and each tag, then calculates Cosine Similarity.
      */
+    public async scoreTags(tags: string[], content: string): Promise<{ name: string, score: number }[]> {
+        if (!this.embedder) await this.initialize();
 
+        console.log(`⚖️ Scoring ${tags.length} tags against content ("${content.substring(0, 20)}...")`);
+
+        // 1. Embed Content
+        const contentOutput = await this.embedder(content, { pooling: 'mean', normalize: true });
+        const contentVector = Array.from(contentOutput.data) as number[];
+
+        const results: { name: string, score: number }[] = [];
+
+        // 2. Embed & Score each Tag
+        // Optimization: In prod, we should fetch tag vectors from Qdrant if they exist.
+        for (const tag of tags) {
+            const tagOutput = await this.embedder(tag, { pooling: 'mean', normalize: true });
+            const tagVector = Array.from(tagOutput.data) as number[];
+
+            const score = cosineSimilarity(contentVector, tagVector);
+            results.push({ name: tag, score });
+        }
+
+        return results;
+    }
 }

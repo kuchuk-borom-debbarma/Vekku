@@ -51,5 +51,27 @@ export const BrainController = {
             console.error("❌ Error in SuggestTags:", error);
             return res.status(500).json({ error: error.message });
         }
+    },
+
+    /**
+     * POST /score-tags
+     * Body: { tags: string[], content: string }
+     * Returns: { scores: [{ name: string, score: number }] }
+     */
+    ScoreTags: async (req: Request, res: Response) => {
+        const { tags, content } = req.body;
+
+        if (!tags || !content) {
+            return res.status(400).json({ error: "tags and content are required" });
+        }
+
+        try {
+            const brain = BrainLogic.getInstance();
+            const scores = await brain.scoreTags(tags, content);
+            return res.json({ scores });
+        } catch (error: any) {
+            console.error("❌ Error in ScoreTags:", error);
+            return res.status(500).json({ error: error.message });
+        }
     }
 };

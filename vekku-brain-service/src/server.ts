@@ -18,6 +18,7 @@ app.use(bodyParser.json());
 app.post('/learn', BrainController.Learn);
 
 app.post('/suggest-tags', BrainController.SuggestTags);
+app.post('/score-tags', BrainController.ScoreTags);
 
 // Initialize AI/DB *before* accepting requests
 const brain = BrainLogic.getInstance();
