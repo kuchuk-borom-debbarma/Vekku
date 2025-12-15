@@ -5,10 +5,6 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 
-import dev.kbd.vekku_server.services.independent.brainService.model.ContentRegionTags;
-import java.util.List;
-import java.util.Set;
-
 import lombok.RequiredArgsConstructor;
 
 /**
