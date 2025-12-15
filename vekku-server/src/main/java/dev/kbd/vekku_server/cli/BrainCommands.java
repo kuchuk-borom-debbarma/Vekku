@@ -1,6 +1,8 @@
 package dev.kbd.vekku_server.cli;
 
 import dev.kbd.vekku_server.services.independent.brainService.BrainService;
+
+import dev.kbd.vekku_server.services.orchestrator.TagOrchestratorService;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
@@ -21,16 +23,17 @@ import lombok.RequiredArgsConstructor;
 public class BrainCommands {
 
     private final BrainService brainService;
+    private final TagOrchestratorService orchestrator;
 
     @ShellMethod(key = "brain learn", value = "Teach the AI a concept (Tag)")
     public void brainLearn(@ShellOption String tag) {
         brainService.learnTag(tag);
     }
 
-    @ShellMethod(key = "brain suggest", value = "Get tag suggestions for text")
+    @ShellMethod(key = "brain suggest", value = "Get tag suggestions for text (Smart Refinement)")
     public void suggest(@ShellOption String text) {
         // Now returns a List of ContentRegionTags (Semantic Chunks)
-        var regions = brainService.suggestTags(text);
+        var regions = orchestrator.suggestTags(text);
 
         System.out.println("🧠 Based on: \"" + text + "\"");
         if (regions.isEmpty()) {
