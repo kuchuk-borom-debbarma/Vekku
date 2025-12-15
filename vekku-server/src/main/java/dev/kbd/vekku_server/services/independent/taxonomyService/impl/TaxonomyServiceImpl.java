@@ -66,4 +66,9 @@ public class TaxonomyServiceImpl implements TaxonomyService {
         return repo.findAll();
     }
 
+    @Override
+    public List<List<Tag>> getPaths(String tagName) {
+        return repo.findPathsToTag(tagName);
+    }
+
 }

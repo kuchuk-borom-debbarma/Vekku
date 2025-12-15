@@ -39,4 +39,21 @@ public interface Neo4jRepo extends Neo4jRepository<Tag, Long> {
      */
     @Query("MATCH (parent:Tag {name: $name})<-[:CHILD_OF]-(child:Tag) RETURN child")
     List<Tag> findChildrenByName(String name);
+
+    /**
+     * <b>FIND ALL PATHS TO ROOT:</b>
+     * <p>
+     * Finds all paths starting from a root node (no parents) down to the specified
+     * tag.
+     * <ul>
+     * <li><code>MATCH p=(root)-[:CHILD_OF*]->(leaf:Tag {name: $name})</code>: Finds
+     * paths ending at 'leaf'.</li>
+     * <li><code>WHERE NOT ()-[:CHILD_OF]->(root)</code>: Ensures 'root' is truly a
+     * root (no incoming child_of).</li>
+     * <li><code>RETURN nodes(p)</code>: Returns the list of nodes for each path
+     * found.</li>
+     * </ul>
+     */
+    @Query("MATCH p=(root)-[:CHILD_OF*]->(leaf:Tag {name: $name}) WHERE NOT ()-[:CHILD_OF]->(root) RETURN nodes(p)")
+    List<List<Tag>> findPathsToTag(String name);
 }

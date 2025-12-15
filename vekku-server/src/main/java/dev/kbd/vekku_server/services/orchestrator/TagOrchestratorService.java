@@ -7,6 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import dev.kbd.vekku_server.services.independent.brainService.BrainService;
 import dev.kbd.vekku_server.services.independent.brainService.model.ContentRegionTags;
+import dev.kbd.vekku_server.services.independent.brainService.model.TagPath;
+import dev.kbd.vekku_server.services.independent.brainService.model.TagScore;
 import dev.kbd.vekku_server.services.independent.taxonomyService.TaxonomyService;
 import dev.kbd.vekku_server.services.independent.taxonomyService.models.Tag;
 import lombok.RequiredArgsConstructor;
@@ -62,14 +64,27 @@ public class TagOrchestratorService {
                 exploreAndScore(tag.name(), tag.score(), 0, accumulatedScores, visited, region.regionContent());
             }
 
-            List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> finalTags = pruneAndRank(
-                    accumulatedScores);
+            List<TagScore> finalTags = pruneAndRank(accumulatedScores);
+
+            // Fetch and Construct Paths for Final Tags
+            List<TagPath> tagPaths = new java.util.ArrayList<>();
+            for (TagScore finalTag : finalTags) {
+                List<List<Tag>> paths = taxonomyService.getPaths(finalTag.name());
+                for (List<Tag> path : paths) {
+                    List<TagScore> pathWithScores = path.stream()
+                            .map(node -> new TagScore(node.getName(),
+                                    accumulatedScores.getOrDefault(node.getName(), 0.0)))
+                            .toList();
+                    tagPaths.add(new TagPath(pathWithScores, finalTag.score()));
+                }
+            }
 
             refinedRegions.add(new ContentRegionTags(
                     region.regionContent(),
                     region.regionStartIndex(),
                     region.regionEndIndex(),
-                    finalTags));
+                    finalTags,
+                    tagPaths));
         }
 
         return refinedRegions;
@@ -103,8 +118,7 @@ public class TagOrchestratorService {
 
         // Batch Score children with Brain
         List<String> childNames = children.stream().map(Tag::getName).toList();
-        List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> childScores = brainService
-                .scoreTags(childNames, content);
+        List<TagScore> childScores = brainService.scoreTags(childNames, content); // Auto-resolved import
 
         for (var child : childScores) {
             // Optimization: Only explore if child has some relevance (> 0.4)
@@ -118,7 +132,7 @@ public class TagOrchestratorService {
      * Filters out generic parents if specific children are present.
      * e.g., If [Java, Programming] exists, keep only [Java].
      */
-    private List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> pruneAndRank(
+    private List<TagScore> pruneAndRank(
             java.util.Map<String, Double> accumulatedScores) {
         // 1. Sort by Score (Desc)
         List<String> sortedTags = accumulatedScores.entrySet().stream()
@@ -148,8 +162,8 @@ public class TagOrchestratorService {
         return sortedTags.stream()
                 .filter(t -> !toRemove.contains(t))
                 .limit(5) // Top 5
-                .map(name -> new dev.kbd.vekku_server.services.independent.brainService.model.TagScore(name,
-                        accumulatedScores.get(name)))
+                .limit(5) // Top 5
+                .map(name -> new TagScore(name, accumulatedScores.get(name)))
                 .toList();
     }
 }

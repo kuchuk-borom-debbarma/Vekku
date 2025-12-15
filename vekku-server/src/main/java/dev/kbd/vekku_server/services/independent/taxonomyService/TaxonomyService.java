@@ -12,4 +12,6 @@ public interface TaxonomyService {
     List<Tag> getChildren(String tagName);
 
     List<Tag> getAllTags();
+
+    List<List<Tag>> getPaths(String tagName);
 }
