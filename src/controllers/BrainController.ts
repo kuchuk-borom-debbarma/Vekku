@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { BrainLogic } from '../services/BrainLogic';
+import { BrainLogic } from '../services/brain-logic/BrainLogic';
 
 // Express Controller
 export const BrainController = {
