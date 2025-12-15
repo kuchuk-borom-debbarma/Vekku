@@ -6,7 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.http.MediaType;
 
-import java.util.Set;
+import dev.kbd.vekku_server.services.independent.brainService.model.ContentRegionTags;
+import java.util.List;
 
 @Service
 public class RemoteBrainService implements BrainService {
@@ -32,10 +33,10 @@ public class RemoteBrainService implements BrainService {
     }
 
     @Override
-    public Set<String> suggestTags(String content) {
+    public List<ContentRegionTags> suggestTags(String content) {
         record SuggestTagsRequest(String content) {
         }
-        record SuggestTagsResponse(Set<String> tags) {
+        record SuggestTagsResponse(List<ContentRegionTags> regions) {
         }
 
         SuggestTagsResponse response = restClient.post()
@@ -45,6 +46,6 @@ public class RemoteBrainService implements BrainService {
                 .retrieve()
                 .body(SuggestTagsResponse.class);
 
-        return response != null ? response.tags() : Set.of();
+        return response != null ? response.regions() : List.of();
     }
 }
