@@ -6,8 +6,9 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 
-import dev.kbd.vekku_server.services.independent.tagService.TagService;
-import dev.kbd.vekku_server.services.independent.tagService.neo4jTagService.models.Tag;
+import dev.kbd.vekku_server.services.independent.taxonomyService.TaxonomyService;
+import dev.kbd.vekku_server.services.independent.taxonomyService.neo4jTaxonomyService.models.Tag;
+import dev.kbd.vekku_server.services.orchestrator.TagOrchestratorService;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -24,13 +25,14 @@ import lombok.RequiredArgsConstructor;
 @ShellComponent
 @RequiredArgsConstructor
 public class TagCommands {
-    final TagService tagService;
+    final TaxonomyService taxonomyService;
+    final TagOrchestratorService tagOrchestratorService;
 
     // Command: tag create <name> --parent <parentName>
     @ShellMethod(key = "tag create", value = "Create a tag with optional parent")
     public void createTag(@ShellOption(help = "The name of the tag") String tagName,
             @ShellOption(defaultValue = "", help = "The parent tag name") String parentTagName) {
-        Tag t = tagService.createTag(tagName, parentTagName);
+        Tag t = tagOrchestratorService.createTag(tagName, parentTagName);
         System.out.println("Created tag: " + t.getName());
 
         if (!t.getParents().isEmpty()) {
@@ -43,7 +45,7 @@ public class TagCommands {
     public void showAncestors(@ShellOption(help = "The tag to analyze") String name) {
         System.out.println("🔍 Hierarchy for '" + name + "':");
 
-        List<Tag> ancestors = tagService.getAncestors(name);
+        List<Tag> ancestors = taxonomyService.getAncestors(name);
 
         if (ancestors.isEmpty()) {
             System.out.println("   (No parents found)");

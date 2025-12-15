@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.services.independent.tagService.neo4jTagService.models;
+package dev.kbd.vekku_server.services.independent.taxonomyService.neo4jTaxonomyService.models;
 
 import java.util.HashSet;
 import java.util.Set;
