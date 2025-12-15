@@ -1,5 +1,9 @@
 {
   "repositories": {
+    "brain-service": {
+      "Name": "brain-service",
+      "Path": "vekku-brain-service"
+    },
     "server-spring": {
       "Name": "server-spring",
       "Path": "vekku-server"
