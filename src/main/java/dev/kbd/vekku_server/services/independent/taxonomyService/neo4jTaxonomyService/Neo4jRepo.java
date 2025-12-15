@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.services.independent.tagService.neo4jTagService;
+package dev.kbd.vekku_server.services.independent.taxonomyService.neo4jTaxonomyService;
 
 import java.util.List;
 import java.util.Optional;
@@ -7,10 +7,10 @@ import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.stereotype.Repository;
 
-import dev.kbd.vekku_server.services.independent.tagService.neo4jTagService.models.Tag;
+import dev.kbd.vekku_server.services.independent.taxonomyService.neo4jTaxonomyService.models.Tag;
 
 @Repository
-public interface Neo4jTagRepo extends Neo4jRepository<Tag, Long> {
+public interface Neo4jRepo extends Neo4jRepository<Tag, Long> {
     Optional<Tag> findByName(String name);
 
     /**

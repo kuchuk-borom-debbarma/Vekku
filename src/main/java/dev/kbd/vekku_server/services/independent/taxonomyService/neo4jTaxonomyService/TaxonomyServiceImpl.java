@@ -1,12 +1,12 @@
-package dev.kbd.vekku_server.services.independent.tagService.neo4jTagService;
+package dev.kbd.vekku_server.services.independent.taxonomyService.neo4jTaxonomyService;
 
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import dev.kbd.vekku_server.services.independent.tagService.TagService;
-import dev.kbd.vekku_server.services.independent.tagService.neo4jTagService.models.Tag;
+import dev.kbd.vekku_server.services.independent.taxonomyService.TaxonomyService;
+import dev.kbd.vekku_server.services.independent.taxonomyService.neo4jTaxonomyService.models.Tag;
 import org.springframework.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -15,8 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class Neo4jTagService implements TagService {
-    private final Neo4jTagRepo repo;
+public class TaxonomyServiceImpl implements TaxonomyService {
+    private final Neo4jRepo repo;
 
     /**
      * Creates a new tag and optionally links it to a parent.
