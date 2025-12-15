@@ -30,4 +30,13 @@ public interface Neo4jRepo extends Neo4jRepository<Tag, Long> {
      */
     @Query("MATCH (t:Tag {name: $name})-[:CHILD_OF*]->(parent:Tag) RETURN parent")
     List<Tag> findAllAncestors(String name);
+
+    /**
+     * <b>FIND IMMEDIATE CHILDREN:</b>
+     * <p>
+     * Finds tags that have a CHILD_OF relationship pointing TO this tag.
+     * <code>(child)-[:CHILD_OF]->(parent)</code>
+     */
+    @Query("MATCH (parent:Tag {name: $name})<-[:CHILD_OF]-(child:Tag) RETURN child")
+    List<Tag> findChildrenByName(String name);
 }

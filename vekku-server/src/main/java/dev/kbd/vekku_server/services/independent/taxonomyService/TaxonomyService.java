@@ -9,5 +9,7 @@ public interface TaxonomyService {
 
     List<Tag> getAncestors(String tagName);
 
+    List<Tag> getChildren(String tagName);
+
     List<Tag> getAllTags();
 }

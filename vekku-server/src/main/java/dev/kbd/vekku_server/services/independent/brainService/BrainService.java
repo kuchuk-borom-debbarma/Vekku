@@ -35,4 +35,14 @@ public interface BrainService {
      * This allows for granular tagging of long content.
      */
     public List<ContentRegionTags> suggestTags(String content);
+
+    /**
+     * ⚖️ SCORE: Evaluates relevance of specific tags against content.
+     * <p>
+     * Used during the Refinement phase to check if a specific "Child Tag" (which
+     * wasn't
+     * in the initial search results) is relevant to the text.
+     */
+    public List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> scoreTags(List<String> tags,
+            String content);
 }

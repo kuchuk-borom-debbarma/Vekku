@@ -57,6 +57,11 @@ public class TaxonomyServiceImpl implements TaxonomyService {
     }
 
     @Override
+    public List<Tag> getChildren(String tagName) {
+        return repo.findChildrenByName(tagName);
+    }
+
+    @Override
     public List<Tag> getAllTags() {
         return repo.findAll();
     }

@@ -70,4 +70,22 @@ public class RemoteBrainService implements BrainService {
 
         return response != null ? response.regions() : List.of();
     }
+
+    @Override
+    public List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> scoreTags(List<String> tags,
+            String content) {
+        record ScoreTagsRequest(List<String> tags, String content) {
+        }
+        record ScoreTagsResponse(List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> scores) {
+        }
+
+        ScoreTagsResponse response = restClient.post()
+                .uri("/score-tags")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ScoreTagsRequest(tags, content))
+                .retrieve()
+                .body(ScoreTagsResponse.class);
+
+        return response != null ? response.scores() : List.of();
+    }
 }
