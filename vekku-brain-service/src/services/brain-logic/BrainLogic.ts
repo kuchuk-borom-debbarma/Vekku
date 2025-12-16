@@ -1,4 +1,4 @@
-import { pipeline, env } from '@huggingface/transformers';
+import { pipeline, env, FeatureExtractionPipeline } from '@huggingface/transformers';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { v4 as uuidv4 } from 'uuid';
 import { ContentRegionTags } from './model';
@@ -14,7 +14,7 @@ env.useBrowserCache = false;
 export class BrainLogic {
     private static instance: BrainLogic;
     private qdrant: QdrantClient;
-    private embedder: any = null;
+    private embedder: FeatureExtractionPipeline | null = null;
 
     private constructor() {
         // Connect to Qdrant
@@ -48,7 +48,7 @@ export class BrainLogic {
         // 2. Load AI Model (Singleton)
         if (!this.embedder) {
             console.log(`🧠 Loading AI Model: ${config.ai.modelName}...`);
-            this.embedder = await pipeline('feature-extraction', config.ai.modelName);
+            this.embedder = (await pipeline('feature-extraction', config.ai.modelName) as unknown) as FeatureExtractionPipeline;
             console.log("✅ Model Loaded!");
         }
     }
@@ -64,7 +64,7 @@ export class BrainLogic {
 
         // 1. Convert Text -> Vector
         // The model returns a Tensor, we need a plain array
-        const output = await this.embedder(tagName, { pooling: 'mean', normalize: true });
+        const output = await this.embedder!(tagName, { pooling: 'mean', normalize: true });
         const vector = Array.from(output.data) as number[];
 
         // 2. Save to Qdrant
@@ -115,7 +115,7 @@ export class BrainLogic {
             const chunkText = doc.pageContent;
 
             // 3. Embed the chunk
-            const output = await this.embedder(chunkText, { pooling: 'mean', normalize: true });
+            const output = await this.embedder!(chunkText, { pooling: 'mean', normalize: true });
             const vector = Array.from(output.data) as number[];
 
             // 4. Search Qdrant
@@ -169,7 +169,7 @@ export class BrainLogic {
         console.log(`⚖️ Scoring ${tags.length} tags against content ("${content.substring(0, 20)}...")`);
 
         // 1. Embed Content
-        const contentOutput = await this.embedder(content, { pooling: 'mean', normalize: true });
+        const contentOutput = await this.embedder!(content, { pooling: 'mean', normalize: true });
         const contentVector = Array.from(contentOutput.data) as number[];
 
         const results: { name: string, score: number }[] = [];
@@ -177,7 +177,7 @@ export class BrainLogic {
         // 2. Embed & Score each Tag
         // Optimization: In prod, we should fetch tag vectors from Qdrant if they exist.
         for (const tag of tags) {
-            const tagOutput = await this.embedder(tag, { pooling: 'mean', normalize: true });
+            const tagOutput = await this.embedder!(tag, { pooling: 'mean', normalize: true });
             const tagVector = Array.from(tagOutput.data) as number[];
 
             const score = cosineSimilarity(contentVector, tagVector);

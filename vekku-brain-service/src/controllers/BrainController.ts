@@ -22,9 +22,10 @@ export const BrainController = {
 
             // Respond success
             return res.json({});
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("❌ Error in Learn:", error);
-            return res.status(500).json({ error: error.message });
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            return res.status(500).json({ error: errorMessage });
         }
     },
 
@@ -47,9 +48,10 @@ export const BrainController = {
 
             // Return the full structure as requested
             return res.json({ regions });
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("❌ Error in SuggestTags:", error);
-            return res.status(500).json({ error: error.message });
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            return res.status(500).json({ error: errorMessage });
         }
     },
 
@@ -69,9 +71,10 @@ export const BrainController = {
             const brain = BrainLogic.getInstance();
             const scores = await brain.scoreTags(tags, content);
             return res.json({ scores });
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("❌ Error in ScoreTags:", error);
-            return res.status(500).json({ error: error.message });
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            return res.status(500).json({ error: errorMessage });
         }
     }
 };
