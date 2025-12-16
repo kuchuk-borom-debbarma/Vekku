@@ -69,9 +69,68 @@ public class TagOrchestratorService {
             // Fetch and Construct Paths for Final Tags
             List<TagPath> tagPaths = new java.util.ArrayList<>();
             for (TagScore finalTag : finalTags) {
-                List<List<Tag>> paths = taxonomyService.getPaths(finalTag.name());
-                for (List<Tag> path : paths) {
-                    List<TagScore> pathWithScores = path.stream()
+                // Use Serialized Paths to avoid mapping issues
+                List<String> rawPaths = taxonomyService.getSerializedPaths(finalTag.name());
+
+                List<List<Tag>> paths = new java.util.ArrayList<>();
+                for (String raw : rawPaths) {
+                    if (raw == null || raw.isEmpty())
+                        continue;
+                    String[] names = raw.split("\\$\\$\\$");
+                    List<Tag> pathNodes = new java.util.ArrayList<>();
+                    for (String n : names) {
+                        pathNodes.add(new Tag(n)); // Create detached Tag
+                    }
+                    paths.add(pathNodes);
+                }
+
+                List<Tag> bestPath = null;
+
+                if (paths.size() == 1) {
+                    bestPath = paths.get(0);
+                } else if (paths.size() > 1) {
+                    // Disambiguate: "Highest Score at Root Wins"
+                    double bestRootScore = -1.0;
+
+                    // 1. Identify Roots and Score them if needed
+                    java.util.Set<String> rootsToScore = new java.util.HashSet<>();
+                    for (List<Tag> path : paths) {
+                        if (path.isEmpty())
+                            continue;
+                        // Path is [Leaf, ..., Root] (Neo4j returns Leaf->Root)
+                        String rootName = path.get(path.size() - 1).getName();
+                        if (!accumulatedScores.containsKey(rootName)) {
+                            rootsToScore.add(rootName);
+                        }
+                    }
+
+                    if (!rootsToScore.isEmpty()) {
+                        List<TagScore> rootScores = brainService.scoreTags(new java.util.ArrayList<>(rootsToScore),
+                                region.regionContent());
+                        for (TagScore rs : rootScores) {
+                            accumulatedScores.put(rs.name(), rs.score());
+                        }
+                    }
+
+                    // 2. Select Best Path
+                    for (List<Tag> path : paths) {
+                        if (path.isEmpty())
+                            continue;
+                        String rootName = path.get(path.size() - 1).getName();
+                        double rootScore = accumulatedScores.getOrDefault(rootName, 0.0);
+                        if (rootScore > bestRootScore) {
+                            bestRootScore = rootScore;
+                            bestPath = path;
+                        }
+                    }
+                }
+
+                if (bestPath != null) {
+                    // Neo4j returns [Leaf, ..., Root]. Reverse to get [Root, ..., Leaf]
+                    List<Tag> rootToLeaf = new java.util.ArrayList<>(bestPath);
+                    java.util.Collections.reverse(rootToLeaf);
+
+                    List<TagScore> pathWithScores = rootToLeaf.stream()
                             .map(node -> new TagScore(node.getName(),
                                     accumulatedScores.getOrDefault(node.getName(), 0.0)))
                             .toList();

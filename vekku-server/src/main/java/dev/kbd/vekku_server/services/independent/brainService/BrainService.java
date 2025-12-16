@@ -1,6 +1,7 @@
 package dev.kbd.vekku_server.services.independent.brainService;
 
 import dev.kbd.vekku_server.services.independent.brainService.model.ContentRegionTags;
+import dev.kbd.vekku_server.services.independent.brainService.model.TagScore;
 import java.util.List;
 
 public interface BrainService {
@@ -36,6 +37,8 @@ public interface BrainService {
      */
     public List<ContentRegionTags> suggestTags(String content);
 
+    List<ContentRegionTags> suggestTags(String content);
+
     /**
      * ⚖️ SCORE: Evaluates relevance of specific tags against content.
      * <p>
@@ -43,6 +46,5 @@ public interface BrainService {
      * wasn't
      * in the initial search results) is relevant to the text.
      */
-    public List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> scoreTags(List<String> tags,
-            String content);
+    List<TagScore> scoreTags(List<String> tags, String content);
 }

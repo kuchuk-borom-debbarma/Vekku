@@ -11,7 +11,15 @@ public interface TaxonomyService {
 
     List<Tag> getChildren(String tagName);
 
+    List<Tag> getParents(String tagName);
+
     List<Tag> getAllTags();
 
     List<List<Tag>> getPaths(String tagName);
+
+    List<List<String>> getPathNames(String tagName);
+
+    long countNodes(String tagName);
+
+    List<String> getSerializedPaths(String tagName);
 }

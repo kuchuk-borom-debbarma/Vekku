@@ -24,6 +24,7 @@ public class BrainCommands {
 
     private final BrainService brainService;
     private final TagOrchestratorService orchestrator;
+    private final dev.kbd.vekku_server.services.independent.taxonomyService.TaxonomyService taxonomyService;
 
     @ShellMethod(key = "brain learn", value = "Teach the AI a concept (Tag)")
     public void brainLearn(@ShellOption String tag) {
@@ -43,13 +44,61 @@ public class BrainCommands {
                 System.out
                         .println("   👉 Region [" + region.regionStartIndex() + "-" + region.regionEndIndex() + "]: \""
                                 + region.regionContent() + "\"");
-                if (region.tagScores().isEmpty()) {
+
+                // Print Flat Tags (if any exist independently, though Orchestrator populates
+                // both)
+                if (!region.tagScores().isEmpty()) {
+                    System.out.println("      🔹 Flat Suggestions:");
+                    region.tagScores().forEach(tagScore -> System.out
+                            .println("         🏷️ " + tagScore.name() + " ("
+                                    + String.format("%.2f", tagScore.score()) + ")"));
+                }
+
+                // Print Taxonomy Paths
+                if (!region.taxonomyPaths().isEmpty()) {
+                    System.out.println("      🌳 Hierarchy Paths:");
+                    for (var path : region.taxonomyPaths()) {
+                        String pathStr = path.path().stream()
+                                .map(node -> node.name() + "(" + String.format("%.2f", node.score()) + ")")
+                                .collect(java.util.stream.Collectors.joining(" -> "));
+                        System.out.println("         🚀 " + pathStr);
+                    }
+                } else if (region.tagScores().isEmpty()) {
                     System.out.println("      (No tags)");
-                } else {
-                    region.tagScores().forEach(tagScore -> System.out.println("      🏷️ " + tagScore.name()
-                            + " (score: " + String.format("%.2f", tagScore.score()) + ")"));
                 }
             }
+        }
+    }
+
+    @ShellMethod(key = "brain graph", value = "Debug: Show graph neighbors")
+    public void debugGraph(@ShellOption String name) {
+        System.out.println("Debugging Graph for: " + name);
+        // Using injected taxonomyService directly
+        var parents = taxonomyService.getParents(name);
+        if (parents.isEmpty()) {
+            System.out.println(name + " has NO parents (Root?)");
+        } else {
+            System.out.println(name + " is Child Of:");
+            parents.forEach(p -> System.out.println("  -> " + p.getName()));
+        }
+    }
+
+    @ShellMethod(key = "brain debug-path", value = "Debug: Show raw path names")
+    public void debugPath(@ShellOption String name) {
+        System.out.println("Debugging Paths for: " + name);
+        var paths = taxonomyService.getPathNames(name);
+        System.out.println("Paths found: " + paths.size());
+        for (var p : paths) {
+            System.out.println(" Path: " + p);
+        }
+    }
+
+    @ShellMethod(key = "brain check-node", value = "Debug: Count nodes")
+    public void checkNode(@ShellOption String name) {
+        long count = taxonomyService.countNodes(name);
+        System.out.println("Node count for '" + name + "': " + count);
+        if (count > 1) {
+            System.out.println("⚠️ WARNING: Duplicate Nodes detected!");
         }
     }
 }

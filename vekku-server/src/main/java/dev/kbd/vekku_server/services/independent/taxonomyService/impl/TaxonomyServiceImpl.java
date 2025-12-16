@@ -67,8 +67,27 @@ public class TaxonomyServiceImpl implements TaxonomyService {
     }
 
     @Override
+    public List<Tag> getParents(String tagName) {
+        return repo.findParentsByName(tagName);
+    }
+
+    @Override
     public List<List<Tag>> getPaths(String tagName) {
         return repo.findPathsToTag(tagName);
     }
 
+    @Override
+    public List<List<String>> getPathNames(String tagName) {
+        return repo.findPathNames(tagName);
+    }
+
+    @Override
+    public long countNodes(String tagName) {
+        return repo.countNodesByName(tagName);
+    }
+
+    @Override
+    public List<String> getSerializedPaths(String tagName) {
+        return repo.findSerializedPaths(tagName);
+    }
 }

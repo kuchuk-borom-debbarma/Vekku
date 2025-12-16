@@ -40,20 +40,45 @@ public interface Neo4jRepo extends Neo4jRepository<Tag, Long> {
     @Query("MATCH (parent:Tag {name: $name})<-[:CHILD_OF]-(child:Tag) RETURN child")
     List<Tag> findChildrenByName(String name);
 
+    @Query("MATCH (child:Tag {name: $name})-[:CHILD_OF]->(parent:Tag) RETURN parent")
+    List<Tag> findParentsByName(String name);
+
     /**
      * <b>FIND ALL PATHS TO ROOT:</b>
      * <p>
-     * Finds all paths starting from a root node (no parents) down to the specified
-     * tag.
+     * Finds all paths starting from the given tag up to a root node.
      * <ul>
-     * <li><code>MATCH p=(root)-[:CHILD_OF*]->(leaf:Tag {name: $name})</code>: Finds
-     * paths ending at 'leaf'.</li>
-     * <li><code>WHERE NOT ()-[:CHILD_OF]->(root)</code>: Ensures 'root' is truly a
-     * root (no incoming child_of).</li>
-     * <li><code>RETURN nodes(p)</code>: Returns the list of nodes for each path
-     * found.</li>
+     * <li><code>MATCH p=(leaf:Tag {name: $name})-[:CHILD_OF*0..]->(root)</code>:
+     * Finds
+     * paths from leaf traversing UP to root.</li>
+     * <li><code>WHERE NOT (root)-[:CHILD_OF]->()</code>: Ensures 'root' has no
+     * parents (is top-level).</li>
+     * <li><code>RETURN nodes(p)</code>: Returns the list of nodes [Leaf, Parent,
+     * ..., Root].</li>
      * </ul>
      */
-    @Query("MATCH p=(root)-[:CHILD_OF*]->(leaf:Tag {name: $name}) WHERE NOT ()-[:CHILD_OF]->(root) RETURN nodes(p)")
+    @Query("MATCH p=(leaf:Tag {name: $name})-[:CHILD_OF*0..]->(root) WHERE NOT (root)-[:CHILD_OF]->() RETURN nodes(p)")
     List<List<Tag>> findPathsToTag(String name);
+
+    @Query("MATCH p=(leaf:Tag {name: $name})-[:CHILD_OF*0..]->(root) WHERE NOT (root)-[:CHILD_OF]->() RETURN [n IN nodes(p) | n.name]")
+    List<List<String>> findPathNames(String name);
+
+    @Query("MATCH (n:Tag {name: $name}) RETURN count(n)")
+    long countNodesByName(String name);
+
+    @Query("MATCH (n:Tag {name: $name}) RETURN elementId(n)")
+    List<String> findNodeIds(String name);
+
+    /**
+     * <b>SERIALIZED PATH:</b>
+     * <p>
+     * Returns paths as a delimiter-separated string to avoid SDN List mapping
+     * issues.
+     * Format: "Leaf$$$Parent$$$Root"
+     * Delimiter: "$$$"
+     */
+    @Query("MATCH p=(leaf:Tag {name: $name})-[:CHILD_OF*0..]->(root) WHERE NOT (root)-[:CHILD_OF]->() " +
+            "WITH nodes(p) as pathNodes " +
+            "RETURN reduce(s = head(pathNodes).name, n IN tail(pathNodes) | s + '$$$' + n.name)")
+    List<String> findSerializedPaths(String name);
 }
