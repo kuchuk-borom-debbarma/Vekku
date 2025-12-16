@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": ".",
+			"name": "Vekku"
+		},
+		{
+			"name": "Main Server",
+			"path": "vekku-server"
+		},
+		{
+			"name": "Client",
+			"path": "vekku-client"
+		},
+		{
+			"name": "Brain Service",
+			"path": "vekku-brain-service"
+		}
+	]
+}
