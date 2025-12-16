@@ -27,7 +27,7 @@ public interface BrainService {
      * searches
      * to look ONLY for tags.
      */
-    public void learnTag(String tagName);
+    void learnTag(String tagName);
 
     /**
      * 🔎 SUGGEST: Finds tags conceptually related to content.
@@ -35,8 +35,6 @@ public interface BrainService {
      * Returns a list of semantic regions, each with its own specific tags.
      * This allows for granular tagging of long content.
      */
-    public List<ContentRegionTags> suggestTags(String content);
-
     List<ContentRegionTags> suggestTags(String content);
 
     /**

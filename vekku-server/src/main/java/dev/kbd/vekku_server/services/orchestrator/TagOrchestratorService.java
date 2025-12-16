@@ -1,6 +1,12 @@
 package dev.kbd.vekku_server.services.orchestrator;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,92 +57,14 @@ public class TagOrchestratorService {
 
         log.debug("Getting raw result from brain service");
         List<ContentRegionTags> contentRegionTags = brainService.suggestTags(content);
-        List<ContentRegionTags> refinedRegions = new java.util.ArrayList<>();
+        List<ContentRegionTags> refinedRegions = new ArrayList<>();
 
         log.debug("Refining tags with Recursive Deepening");
 
         for (var region : contentRegionTags) {
-            java.util.Map<String, Double> accumulatedScores = new java.util.HashMap<>();
-            java.util.Set<String> visited = new java.util.HashSet<>();
-
-            for (var tag : region.tagScores()) {
-                // Start exploration from each initial suggestion
-                exploreAndScore(tag.name(), tag.score(), 0, accumulatedScores, visited, region.regionContent());
-            }
-
+            Map<String, Double> accumulatedScores = exploreHierarchy(region, region.regionContent());
             List<TagScore> finalTags = pruneAndRank(accumulatedScores);
-
-            // Fetch and Construct Paths for Final Tags
-            List<TagPath> tagPaths = new java.util.ArrayList<>();
-            for (TagScore finalTag : finalTags) {
-                // Use Serialized Paths to avoid mapping issues
-                List<String> rawPaths = taxonomyService.getSerializedPaths(finalTag.name());
-
-                List<List<Tag>> paths = new java.util.ArrayList<>();
-                for (String raw : rawPaths) {
-                    if (raw == null || raw.isEmpty())
-                        continue;
-                    String[] names = raw.split("\\$\\$\\$");
-                    List<Tag> pathNodes = new java.util.ArrayList<>();
-                    for (String n : names) {
-                        pathNodes.add(new Tag(n)); // Create detached Tag
-                    }
-                    paths.add(pathNodes);
-                }
-
-                List<Tag> bestPath = null;
-
-                if (paths.size() == 1) {
-                    bestPath = paths.get(0);
-                } else if (paths.size() > 1) {
-                    // Disambiguate: "Highest Score at Root Wins"
-                    double bestRootScore = -1.0;
-
-                    // 1. Identify Roots and Score them if needed
-                    java.util.Set<String> rootsToScore = new java.util.HashSet<>();
-                    for (List<Tag> path : paths) {
-                        if (path.isEmpty())
-                            continue;
-                        // Path is [Leaf, ..., Root] (Neo4j returns Leaf->Root)
-                        String rootName = path.get(path.size() - 1).getName();
-                        if (!accumulatedScores.containsKey(rootName)) {
-                            rootsToScore.add(rootName);
-                        }
-                    }
-
-                    if (!rootsToScore.isEmpty()) {
-                        List<TagScore> rootScores = brainService.scoreTags(new java.util.ArrayList<>(rootsToScore),
-                                region.regionContent());
-                        for (TagScore rs : rootScores) {
-                            accumulatedScores.put(rs.name(), rs.score());
-                        }
-                    }
-
-                    // 2. Select Best Path
-                    for (List<Tag> path : paths) {
-                        if (path.isEmpty())
-                            continue;
-                        String rootName = path.get(path.size() - 1).getName();
-                        double rootScore = accumulatedScores.getOrDefault(rootName, 0.0);
-                        if (rootScore > bestRootScore) {
-                            bestRootScore = rootScore;
-                            bestPath = path;
-                        }
-                    }
-                }
-
-                if (bestPath != null) {
-                    // Neo4j returns [Leaf, ..., Root]. Reverse to get [Root, ..., Leaf]
-                    List<Tag> rootToLeaf = new java.util.ArrayList<>(bestPath);
-                    java.util.Collections.reverse(rootToLeaf);
-
-                    List<TagScore> pathWithScores = rootToLeaf.stream()
-                            .map(node -> new TagScore(node.getName(),
-                                    accumulatedScores.getOrDefault(node.getName(), 0.0)))
-                            .toList();
-                    tagPaths.add(new TagPath(pathWithScores, finalTag.score()));
-                }
-            }
+            List<TagPath> tagPaths = resolveTagPaths(finalTags, region.regionContent(), accumulatedScores);
 
             refinedRegions.add(new ContentRegionTags(
                     region.regionContent(),
@@ -149,6 +77,97 @@ public class TagOrchestratorService {
         return refinedRegions;
     }
 
+    private Map<String, Double> exploreHierarchy(ContentRegionTags region, String content) {
+        Map<String, Double> accumulatedScores = new HashMap<>();
+        Set<String> visited = new HashSet<>();
+
+        for (var tag : region.tagScores()) {
+            exploreAndScore(tag.name(), tag.score(), 0, accumulatedScores, visited, content);
+        }
+        return accumulatedScores;
+    }
+
+    private List<TagPath> resolveTagPaths(List<TagScore> finalTags, String content,
+            Map<String, Double> accumulatedScores) {
+        List<TagPath> tagPaths = new ArrayList<>();
+        for (TagScore finalTag : finalTags) {
+            List<List<Tag>> paths = getPathsForTag(finalTag.name());
+            List<Tag> bestPath = selectBestPath(paths, accumulatedScores, content);
+
+            if (bestPath != null) {
+                // Neo4j returns [Leaf, ..., Root]. Reverse to get [Root, ..., Leaf]
+                List<Tag> rootToLeaf = new ArrayList<>(bestPath);
+                Collections.reverse(rootToLeaf);
+
+                List<TagScore> pathWithScores = rootToLeaf.stream()
+                        .map(node -> new TagScore(node.getName(),
+                                accumulatedScores.getOrDefault(node.getName(), 0.0)))
+                        .toList();
+                tagPaths.add(new TagPath(pathWithScores, finalTag.score()));
+            }
+        }
+        return tagPaths;
+    }
+
+    private List<List<Tag>> getPathsForTag(String tagName) {
+        List<String> rawPaths = taxonomyService.getSerializedPaths(tagName);
+        List<List<Tag>> paths = new ArrayList<>();
+        for (String raw : rawPaths) {
+            if (raw == null || raw.isEmpty())
+                continue;
+            String[] names = raw.split("\\$\\$\\$");
+            List<Tag> pathNodes = new ArrayList<>();
+            for (String n : names) {
+                pathNodes.add(new Tag(n)); // Create detached Tag
+            }
+            paths.add(pathNodes);
+        }
+        return paths;
+    }
+
+    private List<Tag> selectBestPath(List<List<Tag>> paths, Map<String, Double> accumulatedScores, String content) {
+        if (paths.isEmpty())
+            return null;
+        if (paths.size() == 1)
+            return paths.get(0);
+
+        // Disambiguate: "Highest Score at Root Wins"
+        double bestRootScore = -1.0;
+        List<Tag> bestPath = null;
+
+        // 1. Identify Roots and Score them if needed
+        Set<String> rootsToScore = new HashSet<>();
+        for (List<Tag> path : paths) {
+            if (path.isEmpty())
+                continue;
+            // Path is [Leaf, ..., Root] (Neo4j returns Leaf->Root)
+            String rootName = path.get(path.size() - 1).getName();
+            if (!accumulatedScores.containsKey(rootName)) {
+                rootsToScore.add(rootName);
+            }
+        }
+
+        if (!rootsToScore.isEmpty()) {
+            List<TagScore> rootScores = brainService.scoreTags(new ArrayList<>(rootsToScore), content);
+            for (TagScore rs : rootScores) {
+                accumulatedScores.put(rs.name(), rs.score());
+            }
+        }
+
+        // 2. Select Best Path
+        for (List<Tag> path : paths) {
+            if (path.isEmpty())
+                continue;
+            String rootName = path.get(path.size() - 1).getName();
+            double rootScore = accumulatedScores.getOrDefault(rootName, 0.0);
+            if (rootScore > bestRootScore) {
+                bestRootScore = rootScore;
+                bestPath = path;
+            }
+        }
+        return bestPath;
+    }
+
     /**
      * Recursively explores the tag hierarchy downwards (Drill Down).
      * <p>
@@ -159,8 +178,8 @@ public class TagOrchestratorService {
      * 4. Recurse depth-first.
      */
     private void exploreAndScore(String tagName, double currentScore, int depth,
-            java.util.Map<String, Double> accumulatedScores,
-            java.util.Set<String> visited,
+            Map<String, Double> accumulatedScores,
+            Set<String> visited,
             String content) {
         // Stop if max depth reached or cycle detected
         if (depth > 2 || visited.contains(tagName))
@@ -192,14 +211,14 @@ public class TagOrchestratorService {
      * e.g., If [Java, Programming] exists, keep only [Java].
      */
     private List<TagScore> pruneAndRank(
-            java.util.Map<String, Double> accumulatedScores) {
+            Map<String, Double> accumulatedScores) {
         // 1. Sort by Score (Desc)
         List<String> sortedTags = accumulatedScores.entrySet().stream()
-                .sorted(java.util.Map.Entry.<String, Double>comparingByValue().reversed())
-                .map(java.util.Map.Entry::getKey)
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
                 .toList();
 
-        java.util.Set<String> toRemove = new java.util.HashSet<>();
+        Set<String> toRemove = new HashSet<>();
 
         // 2. Prune Ancestors
         // O(N^2) but N is small (usually < 20 tags)
@@ -220,7 +239,6 @@ public class TagOrchestratorService {
         // 3. Construct Final List
         return sortedTags.stream()
                 .filter(t -> !toRemove.contains(t))
-                .limit(5) // Top 5
                 .limit(5) // Top 5
                 .map(name -> new TagScore(name, accumulatedScores.get(name)))
                 .toList();
