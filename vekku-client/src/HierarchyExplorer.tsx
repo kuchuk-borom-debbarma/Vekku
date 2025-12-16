@@ -17,7 +17,7 @@ export default function HierarchyExplorer() {
     const navigate = useNavigate();
     const [data, setData] = useState<GraphData>({ nodes: [], links: [] });
     const [loading, setLoading] = useState(true);
-    const graphRef = useRef<any>();
+    const graphRef = useRef<any>(null);
 
     useEffect(() => {
         fetch('/api/taxonomy/tree')
@@ -122,7 +122,7 @@ export default function HierarchyExplorer() {
                     nodePointerAreaPaint={(node: any, color, ctx) => {
                         ctx.fillStyle = color;
                         const bckgDimensions = node.__bckgDimensions;
-                        bckgDimensions && ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, ...bckgDimensions);
+                        bckgDimensions && ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1]);
                     }}
                 />
             )}

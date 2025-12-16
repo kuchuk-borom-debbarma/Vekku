@@ -16,16 +16,32 @@ export default function Home() {
                 The Knowledge Graph Taxonomy Engine
             </p>
 
-            <button
-                onClick={() => navigate('/tag-hierarchy')}
-                style={{
-                    fontSize: '1.2rem',
-                    padding: '1rem 2rem',
-                    cursor: 'pointer'
-                }}
-            >
-                Show Tag Hierarchy
-            </button>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+                <button
+                    onClick={() => navigate('/tag-hierarchy')}
+                    style={{
+                        fontSize: '1.2rem',
+                        padding: '1rem 2rem',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Show Tag Hierarchy
+                </button>
+                <button
+                    onClick={() => navigate('/tag-suggestion')}
+                    style={{
+                        fontSize: '1.2rem',
+                        padding: '1rem 2rem',
+                        cursor: 'pointer',
+                        background: 'var(--color-primary, #646cff)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px'
+                    }}
+                >
+                    Playground: Tag Suggestion
+                </button>
+            </div>
         </div>
     );
 }
