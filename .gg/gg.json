@@ -4,6 +4,10 @@
       "Name": "brain-service",
       "Path": "vekku-brain-service"
     },
+    "client-dev": {
+      "Name": "client-dev",
+      "Path": "vekku-dev-client"
+    },
     "server-spring": {
       "Name": "server-spring",
       "Path": "vekku-server"
