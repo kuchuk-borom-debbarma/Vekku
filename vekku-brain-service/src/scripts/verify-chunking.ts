@@ -1,11 +1,10 @@
-import { BrainLogic } from './services/brain-logic/BrainLogic';
+import { TextSplitter } from '../services/core/TextSplitter';
 
 async function run() {
-    const logic = BrainLogic.getInstance();
+    const splitter = new TextSplitter();
 
-    console.log("⏳ Initializing Brain...");
-    // We need to initialize to load the model
-    await logic.initialize();
+    console.log("⏳ Initializing TextSplitter...");
+    // Implicitly initializes embedding service on first call
 
     // User's provided text
     const text = `The Modern Stack: Balancing Code, Capital, and Culinary Arts
@@ -36,9 +35,8 @@ The foundation of these dishes lies in the Ingredients. While heavy sauces comfo
     // console.log("\n📝 Input text:", text.substring(0, 50) + "...");
     // console.log("-----------------------------------");
 
-    // Access private method using 'any' casting to bypass TS compiler check for verification
-    // We use a threshold of 0.5 for clear separation
-    const chunks = await (logic as any).semanticTextSplit(text, 0.45);
+    // Use TextSplitter directly
+    const chunks = await splitter.split(text, 0.45);
 
     console.log(`\n✅ Generated ${chunks.length} chunks:`);
     chunks.forEach((chunk: string, i: number) => {

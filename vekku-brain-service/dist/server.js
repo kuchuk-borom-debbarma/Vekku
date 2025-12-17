@@ -1,64 +1,29 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const grpc = __importStar(require("@grpc/grpc-js"));
-const protoLoader = __importStar(require("@grpc/proto-loader"));
-const path_1 = __importDefault(require("path"));
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const body_parser_1 = __importDefault(require("body-parser"));
 const BrainController_1 = require("./controllers/BrainController");
-const PROTO_PATH = path_1.default.join(__dirname, '../protos/brain.proto');
-const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
-    keepCase: true,
-    longs: String,
-    enums: String,
-    defaults: true,
-    oneofs: true
-});
-const brainProto = grpc.loadPackageDefinition(packageDefinition);
-const server = new grpc.Server();
-server.addService(brainProto.brain.BrainService.service, {
-    Analyze: BrainController_1.BrainController.analyze,
-    Learn: BrainController_1.BrainController.learn
-});
-const PORT = 50051;
-server.bindAsync(`0.0.0.0:${PORT}`, grpc.ServerCredentials.createInsecure(), (err, port) => {
-    if (err) {
-        console.error(err);
-        return;
-    }
-    console.log(`🧠 Brain Service running on port ${port}`);
+const BrainLogic_1 = require("./services/brain-logic/BrainLogic");
+const config_1 = require("./config");
+const app = (0, express_1.default)();
+const PORT = config_1.config.port;
+// Middleware
+app.use((0, cors_1.default)());
+app.use(body_parser_1.default.json());
+// Routes
+// POST because we are sending data (even if suggest is technically a read, we send a body)
+app.post('/learn', BrainController_1.BrainController.Learn);
+app.post('/raw-tags', BrainController_1.BrainController.GetRawTags);
+app.post('/region-tags', BrainController_1.BrainController.GetRegionTags);
+app.post('/score-tags', BrainController_1.BrainController.ScoreTags);
+// Initialize AI/DB *before* accepting requests
+const brain = BrainLogic_1.BrainLogic.getInstance();
+brain.initialize().then(() => {
+    app.listen(PORT, () => {
+        console.log(`🤖 Vekku Brain Service (REST) running on port ${PORT}`);
+    });
 });

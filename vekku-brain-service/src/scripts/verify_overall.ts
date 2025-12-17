@@ -1,5 +1,5 @@
 
-import { BrainLogic } from './src/services/brain-logic/BrainLogic';
+import { BrainLogic } from '../services/brain-logic/BrainLogic';
 import { env } from '@huggingface/transformers';
 
 // Force local
@@ -31,12 +31,12 @@ async function verifyOverallTags() {
     const result = await brain.suggestTags(text, 0.4, 10);
 
     console.log("\n--- REGIONS ---");
-    result.regions.forEach((r, i) => {
-        console.log(`[Region ${i}] "${r.regionContent.substring(0, 30)}..." -> Tags: ${r.tagScores.map(t => t.name).join(", ")}`);
+    result.regions.forEach((r: any, i: number) => {
+        console.log(`[Region ${i}] "${r.regionContent.substring(0, 30)}..." -> Tags: ${r.tagScores.map((t: any) => t.name).join(", ")}`);
     });
 
     console.log("\n--- OVERALL TAGS (Global) ---");
-    result.overallTags.forEach(t => {
+    result.overallTags.forEach((t: any) => {
         console.log(`Tag: ${t.name}, Score: ${t.score.toFixed(4)}`);
     });
 
