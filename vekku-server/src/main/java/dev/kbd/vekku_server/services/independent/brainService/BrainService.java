@@ -34,8 +34,12 @@ public interface BrainService {
      * <p>
      * Returns a list of semantic regions, each with its own specific tags.
      * This allows for granular tagging of long content.
+     * 
+     * @param content   The text content to analyze
+     * @param threshold Minimum similarity score (0.0 - 1.0)
+     * @param topK      Maximum number of tags to retrieve from vector search
      */
-    List<ContentRegionTags> suggestTags(String content);
+    List<ContentRegionTags> suggestTags(String content, Double threshold, Integer topK);
 
     /**
      * ⚖️ SCORE: Evaluates relevance of specific tags against content.

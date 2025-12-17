@@ -32,9 +32,11 @@ public class BrainCommands {
     }
 
     @ShellMethod(key = "brain suggest", value = "Get tag suggestions for text (Smart Refinement)")
-    public void suggest(@ShellOption String text) {
+    public void suggest(@ShellOption String text,
+            @ShellOption(defaultValue = "0.3") double threshold,
+            @ShellOption(defaultValue = "50") int topK) {
         // Now returns a List of ContentRegionTags (Semantic Chunks)
-        var regions = orchestrator.suggestTags(text);
+        var regions = orchestrator.suggestTags(text, threshold, topK);
 
         System.out.println("🧠 Based on: \"" + text + "\"");
         if (regions.isEmpty()) {

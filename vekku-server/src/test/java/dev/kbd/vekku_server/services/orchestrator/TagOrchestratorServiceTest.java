@@ -45,7 +45,7 @@ class TagOrchestratorServiceTest {
                 TagScore coding = new TagScore("Coding", 0.7);
                 ContentRegionTags region = new ContentRegionTags(content, 0, 10, List.of(sde, coding), List.of());
 
-                when(brainService.suggestTags(content)).thenReturn(List.of(region));
+                when(brainService.suggestTags(eq(content), anyDouble(), anyInt())).thenReturn(List.of(region));
 
                 // 2. Mock Taxonomy (SDE -> Coding -> Java)
                 Tag tagSDE = new Tag("SDE");
@@ -72,7 +72,7 @@ class TagOrchestratorServiceTest {
                 // Service will reverse it to [SDE, Coding, Java]
                 when(taxonomyService.getPaths("Java")).thenReturn(List.of(List.of(tagJava, tagCoding, tagSDE)));
 
-                List<ContentRegionTags> result = orchestrator.suggestTags(content);
+                List<ContentRegionTags> result = orchestrator.suggestTags(content, 0.3, 50);
 
                 // 5. Verify
                 assertFalse(result.isEmpty());
@@ -100,7 +100,7 @@ class TagOrchestratorServiceTest {
                 String content = "React JS";
                 ContentRegionTags region = new ContentRegionTags(content, 0, 8, List.of(new TagScore("React", 0.9)),
                                 List.of());
-                when(brainService.suggestTags(content)).thenReturn(List.of(region));
+                when(brainService.suggestTags(eq(content), anyDouble(), anyInt())).thenReturn(List.of(region));
 
                 // Mock Taxonomy
                 // Library -> React
@@ -126,7 +126,7 @@ class TagOrchestratorServiceTest {
                                                 new TagScore("Library", 0.8),
                                                 new TagScore("Meta", 0.2)));
 
-                List<ContentRegionTags> result = orchestrator.suggestTags(content);
+                List<ContentRegionTags> result = orchestrator.suggestTags(content, 0.3, 50);
 
                 assertEquals(1, result.size());
                 List<dev.kbd.vekku_server.services.independent.brainService.model.TagPath> paths = result.get(0)

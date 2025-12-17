@@ -52,11 +52,11 @@ public class TagOrchestratorService {
         return tag;
     }
 
-    public List<ContentRegionTags> suggestTags(String content) {
+    public List<ContentRegionTags> suggestTags(String content, Double threshold, Integer topK) {
         log.info("Orchestrating Tag suggestion for content length: {}", content.length());
 
         log.debug("Getting raw result from brain service");
-        List<ContentRegionTags> contentRegionTags = brainService.suggestTags(content);
+        List<ContentRegionTags> contentRegionTags = brainService.suggestTags(content, threshold, topK);
         List<ContentRegionTags> refinedRegions = new ArrayList<>();
 
         log.debug("Refining tags with Recursive Deepening");

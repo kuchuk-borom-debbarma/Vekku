@@ -30,11 +30,14 @@ public class BrainController {
      * @return List of ContentRegionTags suggestions.
      */
     @PostMapping("/suggest")
-    public List<ContentRegionTags> suggestTags(@RequestBody String content) {
-        log.info("Received tag suggestion request for content length: {}", content.length());
+    public List<ContentRegionTags> suggestTags(@RequestBody String content,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0.3") Double threshold,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "50") Integer topK) {
+        log.info("Received tag suggestion request for content length: {} (Threshold: {}, TopK: {})", content.length(),
+                threshold, topK);
         // TODO: We might want a DTO here later if we need to pass more than just raw
         // text (e.g., existing tags, context).
         // For now, raw string body is sufficient.
-        return tagOrchestratorService.suggestTags(content);
+        return tagOrchestratorService.suggestTags(content, threshold, topK);
     }
 }

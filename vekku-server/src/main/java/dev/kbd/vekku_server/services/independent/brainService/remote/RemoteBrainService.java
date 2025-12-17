@@ -55,8 +55,8 @@ public class RemoteBrainService implements BrainService {
      * scores.
      */
     @Override
-    public List<ContentRegionTags> suggestTags(String content) {
-        record SuggestTagsRequest(String content) {
+    public List<ContentRegionTags> suggestTags(String content, Double threshold, Integer topK) {
+        record SuggestTagsRequest(String content, Double threshold, Integer topK) {
         }
         record SuggestTagsResponse(List<ContentRegionTags> regions) {
         }
@@ -64,7 +64,7 @@ public class RemoteBrainService implements BrainService {
         SuggestTagsResponse response = restClient.post()
                 .uri("/suggest-tags")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new SuggestTagsRequest(content))
+                .body(new SuggestTagsRequest(content, threshold, topK))
                 .retrieve()
                 .body(SuggestTagsResponse.class);
 
