@@ -141,26 +141,26 @@ export class BrainLogic {
      * 🧩 GET REGION TAGS: Chunk-based tag retrieval
      * Splits content into chunks and finds tags for each chunk.
      */
+    /**
+     * 🧩 GET REGION TAGS: Chunk-based tag retrieval
+     * Splits content into chunks and finds tags for each chunk.
+     */
     public async getRegionTags(content: string, threshold: number = 0.3): Promise<ContentRegionTags[]> {
         if (!this.embedder) await this.initialize();
 
-        console.log(`🧩 Getting region tags...`);
+        console.log(`🧩 Getting region tags (Semantic Chunking)...`);
 
-        const splitter = new RecursiveCharacterTextSplitter({
-            separators: [".", "!", "?", "\n", " but ", " and ", " then ", " "],
-            chunkSize: 100,
-            chunkOverlap: 20,
-        });
+        // 1. Smart Semantic Split
+        // We use a similarity threshold to decide when to break a chunk.
+        // Higher = More sensitive to shifts (smaller chunks). Lower = larger chunks.
+        const semanticChunks = await this.semanticTextSplit(content, 0.45);
 
-        const docs = await splitter.createDocuments([content]);
         const regions: ContentRegionTags[] = [];
 
-        for (const doc of docs) {
-            const chunkText = doc.pageContent;
+        for (const chunkText of semanticChunks) {
 
             // Embed chunk
-            const chunkOutput = await this.embedder!(chunkText, { pooling: 'mean', normalize: true });
-            const chunkVector = Array.from(chunkOutput.data) as number[];
+            const chunkVector = await this.getVector(chunkText);
 
             // Search specifically for this chunk
             const chunkResults = await this.qdrant.search(config.qdrant.collectionName, {
@@ -204,6 +204,60 @@ export class BrainLogic {
         }
 
         return regions;
+    }
+
+    /**
+     * Splits text into chunks based on semantic similarity between sentences.
+     */
+    private async semanticTextSplit(content: string, similarityThreshold: number): Promise<string[]> {
+        // 1. Split into sentences (Naive regex, keeping punctuation)
+        // Matches non-punctuation followed by punctuation and optional space
+        const sentences = content.match(/[^.!?]+[.!?]+(\s+|$)/g) || [content];
+
+        if (sentences.length === 0) return [];
+
+        const chunks: string[] = [];
+        let currentChunk: string[] = [sentences[0]];
+
+        let lastSentenceVector = await this.getVector(sentences[0]);
+
+        for (let i = 1; i < sentences.length; i++) {
+            const sentence = sentences[i];
+            const currentVector = await this.getVector(sentence);
+
+            const sim = cosineSimilarity(lastSentenceVector, currentVector);
+
+            // Log for debugging flow
+            // console.log(`Sim: ${sim.toFixed(2)} | "${sentences[i-1].slice(0,10)}..." vs "${sentence.slice(0,10)}..."`);
+
+            if (sim >= similarityThreshold) {
+                // Similar topic, grow chunk
+                currentChunk.push(sentence);
+            } else {
+                // Topic shifted! Save old chunk and start new.
+                chunks.push(currentChunk.join(""));
+                currentChunk = [sentence];
+            }
+
+            // We compare against the immediate previous sentence to detect "Shifts"
+            lastSentenceVector = currentVector;
+        }
+
+        // Add the last chunk
+        if (currentChunk.length > 0) {
+            chunks.push(currentChunk.join(""));
+        }
+
+        return chunks;
+    }
+
+    /**
+     * Helper to embed a single string.
+     */
+    private async getVector(text: string): Promise<number[]> {
+        if (!this.embedder) await this.initialize();
+        const output = await this.embedder!(text, { pooling: 'mean', normalize: true });
+        return Array.from(output.data) as number[];
     }
 
     /**
