@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import dev.kbd.vekku_server.services.independent.brainService.model.ContentRegionTags;
+import dev.kbd.vekku_server.services.independent.brainService.model.SuggestTagsResponse;
 import dev.kbd.vekku_server.services.orchestrator.TagOrchestratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,7 @@ public class BrainController {
      * @return List of ContentRegionTags suggestions.
      */
     @PostMapping("/suggest")
-    public List<ContentRegionTags> suggestTags(@RequestBody String content,
+    public SuggestTagsResponse suggestTags(@RequestBody String content,
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0.3") Double threshold,
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "50") Integer topK) {
         log.info("Received tag suggestion request for content length: {} (Threshold: {}, TopK: {})", content.length(),

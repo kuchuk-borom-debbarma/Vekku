@@ -15,6 +15,8 @@ import dev.kbd.vekku_server.services.independent.brainService.model.TagScore;
 import dev.kbd.vekku_server.services.independent.taxonomyService.TaxonomyService;
 import dev.kbd.vekku_server.services.independent.taxonomyService.models.Tag;
 
+import dev.kbd.vekku_server.services.independent.brainService.model.SuggestTagsResponse;
+
 import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,7 +47,8 @@ class TagOrchestratorServiceTest {
                 TagScore coding = new TagScore("Coding", 0.7);
                 ContentRegionTags region = new ContentRegionTags(content, 0, 10, List.of(sde, coding), List.of());
 
-                when(brainService.suggestTags(eq(content), anyDouble(), anyInt())).thenReturn(List.of(region));
+                SuggestTagsResponse mockResponse = new SuggestTagsResponse(List.of(region), List.of());
+                when(brainService.suggestTags(eq(content), anyDouble(), anyInt())).thenReturn(mockResponse);
 
                 // 2. Mock Taxonomy (SDE -> Coding -> Java)
                 Tag tagSDE = new Tag("SDE");
@@ -66,13 +69,12 @@ class TagOrchestratorServiceTest {
                                 .thenReturn(List.of(new TagScore("Coding", 0.85)));
                 when(brainService.scoreTags(List.of("Java"), content)).thenReturn(List.of(new TagScore("Java", 0.95)));
 
-                // Note: In logic we fetch paths using getPaths.
-                // We need to mock getPaths for Java to return [Java, Coding, SDE] (Leaf ->
-                // Root)
-                // Service will reverse it to [SDE, Coding, Java]
-                when(taxonomyService.getPaths("Java")).thenReturn(List.of(List.of(tagJava, tagCoding, tagSDE)));
+                // Note: In logic we fetch paths using getSerializedPaths.
+                // Format: Leaf$$$Parent$$$Root
+                when(taxonomyService.getSerializedPaths("Java")).thenReturn(List.of("Java$$$Coding$$$SDE"));
 
-                List<ContentRegionTags> result = orchestrator.suggestTags(content, 0.3, 50);
+                SuggestTagsResponse resultResponse = orchestrator.suggestTags(content, 0.3, 50);
+                List<ContentRegionTags> result = resultResponse.regions();
 
                 // 5. Verify
                 assertFalse(result.isEmpty());
@@ -100,7 +102,8 @@ class TagOrchestratorServiceTest {
                 String content = "React JS";
                 ContentRegionTags region = new ContentRegionTags(content, 0, 8, List.of(new TagScore("React", 0.9)),
                                 List.of());
-                when(brainService.suggestTags(eq(content), anyDouble(), anyInt())).thenReturn(List.of(region));
+                SuggestTagsResponse mockResponse = new SuggestTagsResponse(List.of(region), List.of());
+                when(brainService.suggestTags(eq(content), anyDouble(), anyInt())).thenReturn(mockResponse);
 
                 // Mock Taxonomy
                 // Library -> React
@@ -114,9 +117,9 @@ class TagOrchestratorServiceTest {
                 when(taxonomyService.getChildren("React")).thenReturn(List.of());
 
                 // getPaths for React (Leaf -> Root)
-                when(taxonomyService.getPaths("React")).thenReturn(List.of(
-                                List.of(react, library),
-                                List.of(react, meta)));
+                when(taxonomyService.getSerializedPaths("React")).thenReturn(List.of(
+                                "React$$$Library",
+                                "React$$$Meta"));
 
                 // Mock Brain Scoring for Roots (Library vs Meta)
                 // Library score > Meta score -> System should choose Library path
@@ -126,7 +129,8 @@ class TagOrchestratorServiceTest {
                                                 new TagScore("Library", 0.8),
                                                 new TagScore("Meta", 0.2)));
 
-                List<ContentRegionTags> result = orchestrator.suggestTags(content, 0.3, 50);
+                SuggestTagsResponse resultResponse = orchestrator.suggestTags(content, 0.3, 50);
+                List<ContentRegionTags> result = resultResponse.regions();
 
                 assertEquals(1, result.size());
                 List<dev.kbd.vekku_server.services.independent.brainService.model.TagPath> paths = result.get(0)

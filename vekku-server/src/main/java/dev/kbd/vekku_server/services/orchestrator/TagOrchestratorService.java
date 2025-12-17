@@ -17,6 +17,7 @@ import dev.kbd.vekku_server.services.independent.brainService.model.TagPath;
 import dev.kbd.vekku_server.services.independent.brainService.model.TagScore;
 import dev.kbd.vekku_server.services.independent.taxonomyService.TaxonomyService;
 import dev.kbd.vekku_server.services.independent.taxonomyService.models.Tag;
+import dev.kbd.vekku_server.services.independent.brainService.model.SuggestTagsResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,11 +53,12 @@ public class TagOrchestratorService {
         return tag;
     }
 
-    public List<ContentRegionTags> suggestTags(String content, Double threshold, Integer topK) {
+    public SuggestTagsResponse suggestTags(String content, Double threshold, Integer topK) {
         log.info("Orchestrating Tag suggestion for content length: {}", content.length());
 
         log.debug("Getting raw result from brain service");
-        List<ContentRegionTags> contentRegionTags = brainService.suggestTags(content, threshold, topK);
+        SuggestTagsResponse brainResponse = brainService.suggestTags(content, threshold, topK);
+        List<ContentRegionTags> contentRegionTags = brainResponse.regions();
         List<ContentRegionTags> refinedRegions = new ArrayList<>();
 
         log.debug("Refining tags with Recursive Deepening");
@@ -74,7 +76,7 @@ public class TagOrchestratorService {
                     tagPaths));
         }
 
-        return refinedRegions;
+        return new SuggestTagsResponse(refinedRegions, brainResponse.overallTags());
     }
 
     private Map<String, Double> exploreHierarchy(ContentRegionTags region, String content) {

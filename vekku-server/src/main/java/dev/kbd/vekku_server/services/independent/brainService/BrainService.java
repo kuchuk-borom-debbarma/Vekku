@@ -1,7 +1,7 @@
 package dev.kbd.vekku_server.services.independent.brainService;
 
-import dev.kbd.vekku_server.services.independent.brainService.model.ContentRegionTags;
 import dev.kbd.vekku_server.services.independent.brainService.model.TagScore;
+import dev.kbd.vekku_server.services.independent.brainService.model.SuggestTagsResponse;
 import java.util.List;
 
 public interface BrainService {
@@ -32,14 +32,15 @@ public interface BrainService {
     /**
      * 🔎 SUGGEST: Finds tags conceptually related to content.
      * <p>
-     * Returns a list of semantic regions, each with its own specific tags.
-     * This allows for granular tagging of long content.
+     * Returns a detailed response containing:
+     * 1. Semantic regions with their specific tags
+     * 2. Overall/Global tags for the entire content
      * 
      * @param content   The text content to analyze
      * @param threshold Minimum similarity score (0.0 - 1.0)
      * @param topK      Maximum number of tags to retrieve from vector search
      */
-    List<ContentRegionTags> suggestTags(String content, Double threshold, Integer topK);
+    SuggestTagsResponse suggestTags(String content, Double threshold, Integer topK);
 
     /**
      * ⚖️ SCORE: Evaluates relevance of specific tags against content.

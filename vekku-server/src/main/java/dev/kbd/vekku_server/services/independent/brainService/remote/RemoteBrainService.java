@@ -7,6 +7,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.http.MediaType;
 
 import dev.kbd.vekku_server.services.independent.brainService.model.ContentRegionTags;
+import dev.kbd.vekku_server.services.independent.brainService.model.SuggestTagsResponse;
 import java.util.List;
 
 /**
@@ -52,13 +53,11 @@ public class RemoteBrainService implements BrainService {
     /**
      * Sends content to the Brain Service to get semantic tag suggestions.
      * The response contains a list of regions (chunks) with their respective tag
-     * scores.
+     * scores, as well as OVERALL topic tags.
      */
     @Override
-    public List<ContentRegionTags> suggestTags(String content, Double threshold, Integer topK) {
+    public SuggestTagsResponse suggestTags(String content, Double threshold, Integer topK) {
         record SuggestTagsRequest(String content, Double threshold, Integer topK) {
-        }
-        record SuggestTagsResponse(List<ContentRegionTags> regions) {
         }
 
         SuggestTagsResponse response = restClient.post()
@@ -68,7 +67,7 @@ public class RemoteBrainService implements BrainService {
                 .retrieve()
                 .body(SuggestTagsResponse.class);
 
-        return response != null ? response.regions() : List.of();
+        return response != null ? response : new SuggestTagsResponse(List.of(), List.of());
     }
 
     @Override

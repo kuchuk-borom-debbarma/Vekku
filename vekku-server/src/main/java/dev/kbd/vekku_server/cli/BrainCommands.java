@@ -35,12 +35,23 @@ public class BrainCommands {
     public void suggest(@ShellOption String text,
             @ShellOption(defaultValue = "0.3") double threshold,
             @ShellOption(defaultValue = "50") int topK) {
-        // Now returns a List of ContentRegionTags (Semantic Chunks)
-        var regions = orchestrator.suggestTags(text, threshold, topK);
+        // Now returns a SuggestTagsResponse containing Regions and Overall Tags
+        var response = orchestrator.suggestTags(text, threshold, topK);
+        var regions = response.regions();
+        var overallTags = response.overallTags();
 
         System.out.println("🧠 Based on: \"" + text + "\"");
+
+        // Print Overall Tags
+        if (!overallTags.isEmpty()) {
+            System.out.println("   🌍 Overall Topics:");
+            overallTags.forEach(t -> System.out
+                    .println("      ⭐ " + t.name() + " (" + String.format("%.2f", t.score()) + ")"));
+            System.out.println("   --------------------------------------------------");
+        }
+
         if (regions.isEmpty()) {
-            System.out.println("   (No tags confident enough to suggest)");
+            System.out.println("   (No specific regions found)");
         } else {
             for (var region : regions) {
                 System.out
