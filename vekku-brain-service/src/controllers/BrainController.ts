@@ -30,11 +30,11 @@ export const BrainController = {
     },
 
     /**
-     * POST /suggest-tags
-     * Body: { content: string }
-     * Returns: ContentRegionTags[] - Detailed semantic regions with tags
+     * POST /raw-tags
+     * Body: { content: string, threshold?: number, topK?: number }
+     * Returns: { name: string, score: number }[]
      */
-    SuggestTags: async (req: Request, res: Response) => {
+    GetRawTags: async (req: Request, res: Response) => {
         const { content, threshold, topK } = req.body;
 
         if (!content) {
@@ -43,13 +43,36 @@ export const BrainController = {
 
         try {
             const brain = BrainLogic.getInstance();
-            // Get detailed regions with semantic chunking & Overall Tags
-            const result = await brain.suggestTags(content, threshold, topK);
+            // Get raw tags from embedding
+            const result = await brain.getRawTagsByEmbedding(content, threshold, topK);
 
-            // Return the full structure as requested
-            return res.json(result);
+            return res.json({ tags: result });
         } catch (error: unknown) {
-            console.error("❌ Error in SuggestTags:", error);
+            console.error("❌ Error in GetRawTags:", error);
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            return res.status(500).json({ error: errorMessage });
+        }
+    },
+
+    /**
+     * POST /region-tags
+     * Body: { content: string, threshold?: number }
+     * Returns: ContentRegionTags[]
+     */
+    GetRegionTags: async (req: Request, res: Response) => {
+        const { content, threshold } = req.body;
+
+        if (!content) {
+            return res.status(400).json({ error: "content is required" });
+        }
+
+        try {
+            const brain = BrainLogic.getInstance();
+            const result = await brain.getRegionTags(content, threshold);
+
+            return res.json({ regions: result });
+        } catch (error: unknown) {
+            console.error("❌ Error in GetRegionTags:", error);
             const errorMessage = error instanceof Error ? error.message : "Unknown error";
             return res.status(500).json({ error: errorMessage });
         }

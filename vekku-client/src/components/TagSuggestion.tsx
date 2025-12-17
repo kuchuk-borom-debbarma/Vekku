@@ -6,29 +6,26 @@ interface TagScore {
     score: number;
 }
 
-interface TagPath {
-    path: TagScore[]; // Detailed path with scores per node
-    finalScore: number;
-}
-
 interface ContentRegionTags {
     regionContent: string;
     regionStartIndex: number;
     regionEndIndex: number;
     tagScores: TagScore[];
-    taxonomyPaths: TagPath[];
 }
 
-interface SuggestTagsResponse {
+interface RawTagsResponse {
+    tags: TagScore[];
+}
+
+interface RegionTagsResponse {
     regions: ContentRegionTags[];
-    overallTags: TagScore[];
 }
 
 export default function TagSuggestion() {
     const navigate = useNavigate();
     const [content, setContent] = useState('');
-    const [suggestions, setSuggestions] = useState<ContentRegionTags[]>([]);
-    const [overallTags, setOverallTags] = useState<TagScore[]>([]);
+    const [rawTags, setRawTags] = useState<TagScore[]>([]);
+    const [regionTags, setRegionTags] = useState<ContentRegionTags[]>([]);
     const [loading, setLoading] = useState(false);
     const [hoveredRegionIndex, setHoveredRegionIndex] = useState<number | null>(null);
 
@@ -36,24 +33,51 @@ export default function TagSuggestion() {
     const [threshold, setThreshold] = useState(0.3);
     const [topK, setTopK] = useState(50);
 
-    const handleSuggest = () => {
+    const handleGetRawTags = () => {
         if (!content.trim()) return;
 
         setLoading(true);
-        fetch('/api/brain/suggest', {
+        setRawTags([]); // Clear previous
+        fetch('/api/brain/raw', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content, threshold, topK })
         })
             .then(res => {
-                if (!res.ok) throw new Error('Failed to fetch suggestions');
+                if (!res.ok) throw new Error('Failed to fetch raw tags');
                 return res.json();
             })
-            .then((data: SuggestTagsResponse) => {
-                setSuggestions(data.regions);
-                setOverallTags(data.overallTags);
+            // server returns list directly based on controller: return brainService.getRawTagsByEmbedding(...)
+            // but wait, BrainController.java returns List<TagScore> directly.
+            // Let's verify if Spring wraps it or if it is just a JSON array.
+            // "return brainService.getRawTagsByEmbedding(...)" -> returns List.
+            // So it is an array.
+            .then((data: TagScore[]) => {
+                setRawTags(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error(err);
+                setLoading(false);
+            });
+    };
+
+    const handleGetRegionTags = () => {
+        if (!content.trim()) return;
+
+        setLoading(true);
+        setRegionTags([]); // Clear previous
+        fetch('/api/brain/regions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content, threshold })
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to fetch region tags');
+                return res.json();
+            })
+            .then((data: ContentRegionTags[]) => {
+                setRegionTags(data);
                 setLoading(false);
             })
             .catch(err => {
@@ -79,7 +103,7 @@ export default function TagSuggestion() {
                 ← Back
             </button>
 
-            <h1>Tag Suggestion Playground</h1>
+            <h1>Tagging Playground (Embedding IO)</h1>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', gap: '1rem' }}>
@@ -134,40 +158,59 @@ export default function TagSuggestion() {
                         fontFamily: 'inherit'
                     }}
                 />
-                <button
-                    onClick={handleSuggest}
-                    disabled={loading}
-                    style={{
-                        alignSelf: 'flex-start',
-                        padding: '0.8rem 2rem',
-                        background: 'var(--color-primary, #646cff)',
-                        border: 'none',
-                        borderRadius: '6px',
-                        color: 'white',
-                        fontWeight: 'bold',
-                        cursor: loading ? 'not-allowed' : 'pointer',
-                        opacity: loading ? 0.7 : 1
-                    }}
-                >
-                    {loading ? 'Analyzing...' : 'Suggest Tags'}
-                </button>
+
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button
+                        onClick={handleGetRawTags}
+                        disabled={loading}
+                        style={{
+                            padding: '0.8rem 2rem',
+                            background: '#ff9800',
+                            border: 'none',
+                            borderRadius: '6px',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            opacity: loading ? 0.7 : 1,
+                            flex: 1
+                        }}
+                    >
+                        Get Raw Tags
+                    </button>
+                    <button
+                        onClick={handleGetRegionTags}
+                        disabled={loading}
+                        style={{
+                            padding: '0.8rem 2rem',
+                            background: '#00bcd4',
+                            border: 'none',
+                            borderRadius: '6px',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            opacity: loading ? 0.7 : 1,
+                            flex: 1
+                        }}
+                    >
+                        Get Region Tags
+                    </button>
+                </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {overallTags.length > 0 && (
+                {/* RAW TAGS SECTION */}
+                {rawTags.length > 0 && (
                     <div style={{
-                        background: 'linear-gradient(145deg, #1e1e1e, #252525)',
+                        background: 'linear-gradient(145deg, #251e1e, #252525)',
                         border: '1px solid #444',
                         borderRadius: '8px',
                         padding: '1.5rem',
-                        marginBottom: '1rem'
                     }}>
-                        <h3 style={{ marginTop: 0, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            🌍 Overall Topics
-                            <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#aaa' }}>(Weighted Consensus)</span>
+                        <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#ffcc80' }}>
+                            🏷️ Raw Tags (Embedding Similarity)
                         </h3>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
-                            {overallTags.map((tag, index) => (
+                            {rawTags.map((tag, index) => (
                                 <span
                                     key={index}
                                     style={{
@@ -177,18 +220,16 @@ export default function TagSuggestion() {
                                         padding: '0.5rem 1rem',
                                         background: '#333',
                                         borderRadius: '6px',
-                                        fontSize: '1rem',
-                                        border: '1px solid #555',
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                        fontSize: '0.9rem',
+                                        border: '1px solid #555'
                                     }}
                                 >
                                     <span style={{ fontWeight: 'bold', color: '#fff' }}>{tag.name}</span>
                                     <span style={{
-                                        color: tag.score > 2.0 ? '#4caf50' : tag.score > 1.0 ? '#ff9800' : '#f44336',
-                                        fontSize: '0.85rem',
-                                        fontWeight: 'bold'
+                                        color: '#aaa',
+                                        fontSize: '0.85rem'
                                     }}>
-                                        {tag.score.toFixed(2)}
+                                        {tag.score.toFixed(3)}
                                     </span>
                                 </span>
                             ))}
@@ -196,84 +237,63 @@ export default function TagSuggestion() {
                     </div>
                 )}
 
-                {suggestions.map((region, index) => (
-                    <div
-                        key={index}
-                        style={{
-                            background: '#1a1a1a',
-                            border: '1px solid #333',
-                            borderRadius: '8px',
-                            padding: '1.5rem',
-                            borderLeft: hoveredRegionIndex === index ? '4px solid #646cff' : '4px solid transparent',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        {/* Region Content */}
-                        <div style={{
-                            marginBottom: '1rem',
-                            padding: '1rem',
-                            background: hoveredRegionIndex === index ? 'rgba(100, 108, 255, 0.1)' : '#252525',
-                            borderRadius: '4px',
-                            fontStyle: 'italic',
-                            transition: 'background 0.2s'
-                        }}>
-                            "{region.regionContent}"
-                        </div>
-
-                        {/* Tag Scores */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-                            {region.tagScores.map((tag, tIndex) => (
-                                <span
-                                    key={tIndex}
-                                    onMouseEnter={() => setHoveredRegionIndex(index)}
-                                    onMouseLeave={() => setHoveredRegionIndex(null)}
+                {/* REGION TAGS SECTION */}
+                {regionTags.length > 0 && (
+                    <div>
+                        <h3 style={{ color: '#80deea' }}>🧩 Content Regions</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {regionTags.map((region, index) => (
+                                <div
+                                    key={index}
                                     style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        padding: '0.4rem 0.8rem',
-                                        background: '#333',
-                                        borderRadius: '20px',
-                                        fontSize: '0.9rem',
-                                        cursor: 'default',
-                                        border: '1px solid #444'
+                                        background: '#1a1a1a',
+                                        border: '1px solid #333',
+                                        borderRadius: '8px',
+                                        padding: '1.5rem',
+                                        borderLeft: hoveredRegionIndex === index ? '4px solid #00bcd4' : '4px solid transparent',
+                                        transition: 'all 0.2s'
                                     }}
                                 >
-                                    <span style={{ fontWeight: 'bold', color: '#fff' }}>{tag.name}</span>
-                                    <span style={{
-                                        color: tag.score > 0.8 ? '#4caf50' : tag.score > 0.5 ? '#ff9800' : '#f44336',
-                                        fontSize: '0.8rem'
+                                    <div style={{
+                                        marginBottom: '1rem',
+                                        padding: '1rem',
+                                        background: hoveredRegionIndex === index ? 'rgba(0, 188, 212, 0.1)' : '#252525',
+                                        borderRadius: '4px',
+                                        fontStyle: 'italic'
                                     }}>
-                                        {Math.round(tag.score * 100)}%
-                                    </span>
-                                </span>
-                            ))}
-                        </div>
+                                        "{region.regionContent}"
+                                    </div>
 
-                        {/* Taxonomy Paths */}
-                        <div style={{ fontSize: '0.9rem', color: '#aaa' }}>
-                            <div style={{ marginBottom: '0.5rem', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px' }}>Taxonomy Paths</div>
-                            {(!region.taxonomyPaths || region.taxonomyPaths.length === 0) ? (
-                                <div>No robust paths found.</div>
-                            ) : (
-                                region.taxonomyPaths.map((pathObj, pIndex) => (
-                                    <div key={pIndex} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                                        {pathObj.path.map((node, nIndex) => (
-                                            <span key={nIndex} style={{ display: 'flex', alignItems: 'center' }}>
-                                                <span style={{ color: nIndex === pathObj.path.length - 1 ? '#fff' : '#888' }}>
-                                                    {node.name}
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                        {region.tagScores.map((tag, tIndex) => (
+                                            <span
+                                                key={tIndex}
+                                                onMouseEnter={() => setHoveredRegionIndex(index)}
+                                                onMouseLeave={() => setHoveredRegionIndex(null)}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    padding: '0.4rem 0.8rem',
+                                                    background: '#333',
+                                                    borderRadius: '20px',
+                                                    fontSize: '0.9rem',
+                                                    cursor: 'default',
+                                                    border: '1px solid #444'
+                                                }}
+                                            >
+                                                <span style={{ fontWeight: 'bold', color: '#fff' }}>{tag.name}</span>
+                                                <span style={{ color: '#aaa', fontSize: '0.8rem' }}>
+                                                    {tag.score.toFixed(2)}
                                                 </span>
-                                                {nIndex < pathObj.path.length - 1 && (
-                                                    <span style={{ margin: '0 0.5rem', color: '#444' }}>›</span>
-                                                )}
                                             </span>
                                         ))}
                                     </div>
-                                ))
-                            )}
+                                </div>
+                            ))}
                         </div>
                     </div>
-                ))}
+                )}
             </div>
         </div>
     );

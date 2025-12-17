@@ -1,6 +1,6 @@
 import { pipeline, env, FeatureExtractionPipeline } from '@huggingface/transformers';
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { v4 as uuidv4 } from 'uuid';
+import { v5 as uuidv5 } from 'uuid';
 import { ContentRegionTags } from './model';
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { findFuzzyMatch } from '../../utils/textUtils';
@@ -10,6 +10,9 @@ import { config } from '../../config';
 // Configuration: Force local execution (no remote API calls to HuggingFace)
 env.allowLocalModels = false;
 env.useBrowserCache = false;
+
+// Namespace for Tag UUID generation (Randomly generated constant to ensure uniqueness of our namespace)
+const TAG_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'; // Standard DNS namespace as a placeholder, or custom
 
 export class BrainLogic {
     private static instance: BrainLogic;
@@ -57,10 +60,13 @@ export class BrainLogic {
      * 🧠 LEARN: The Logic from your Javadoc
      * Embeds the tag and saves it with "type=TAG"
      */
-    public async learnTag(tagName: string): Promise<void> {
+    public async learnTag(inputTagName: string): Promise<void> {
         if (!this.embedder) await this.initialize();
 
-        console.log(`🎓 Learning concept: "${tagName}"`);
+        // Normalize to lowercase to ensure "Java" == "java"
+        const tagName = inputTagName.toLowerCase().trim();
+
+        console.log(`🎓 Learning concept: "${tagName}" (Input: "${inputTagName}")`);
 
         // 1. Convert Text -> Vector
         // The model returns a Tensor, we need a plain array
@@ -68,84 +74,121 @@ export class BrainLogic {
         const vector = Array.from(output.data) as number[];
 
         // 2. Save to Qdrant
-        // 2. Save to Qdrant
+        // We use a Deterministic UUID based on the tagName.
+        // This ensures if we "learn" the same tag again, we ID-match and basicallly upsert/overwrite
+        // instead of creating a duplicate ghost entry.
+        const deterministicId = uuidv5(tagName, TAG_NAMESPACE);
+
         await this.qdrant.upsert(config.qdrant.collectionName, {
             wait: true,
             points: [
                 {
-                    id: uuidv4(), // Generate unique ID
+                    id: deterministicId,
                     vector: vector,
                     payload: {
-                        original_name: tagName,
+                        original_name: tagName, // Storing normalized name
                         type: "TAG" // <--- Crucial Metadata
                     }
                 }
             ]
         });
 
-        console.log(`✅ Learned: ${tagName}`);
+        console.log(`✅ Learned: ${tagName} (ID: ${deterministicId})`);
     }
 
     /**
-     * 🔎 SUGGEST: Finds tags conceptually related to content
-     * Splits content into semantic regions and finds tags for each region.
-     */
     /**
-     * 🔎 SUGGEST: Finds tags conceptually related to content
-     * Splits content into regions using LangChain and finds tags for each region.
-     * Also calculates OVERALL tags by aggregating results from all regions.
+     * 🔎 GET RAW TAGS: Purely embedding-based tag retrieval
+     * Embeds the content and finds the closest tags in the vector space.
      */
-    public async suggestTags(content: string, threshold: number = 0.3, topK: number = 50): Promise<{ regions: ContentRegionTags[], overallTags: { name: string, score: number }[] }> {
+    public async getRawTagsByEmbedding(content: string, threshold: number = 0.3, topK: number = 50): Promise<{ name: string, score: number }[]> {
         if (!this.embedder) await this.initialize();
 
-        console.log(`🤔 Thinking about tags for content length: ${content.length} (Threshold: ${threshold}, TopK: ${topK})`);
+        console.log(`🤔 Getting raw tags...`);
 
-        // 1. Chunk content using Industry Standard Splitter (LangChain)
-        // We use specific separators to catch semantic shifts in run-on sentences
+        // Note: Models have token limits. We take the first ~2000 chars 
+        // to capture the intro/core definition.
+        const summaryText = content.slice(0, 2000);
+
+        const globalOutput = await this.embedder!(summaryText, { pooling: 'mean', normalize: true });
+        const globalVector = Array.from(globalOutput.data) as number[];
+
+        const globalSearchResult = await this.qdrant.search(config.qdrant.collectionName, {
+            vector: globalVector,
+            limit: topK * 2, // Fetch more to account for duplicates
+            score_threshold: threshold,
+            filter: { must: [{ key: "type", match: { value: "TAG" } }] }
+        });
+
+        // Deduplicate by name, keeping highest score
+        const uniqueTags = new Map<string, number>();
+        for (const hit of globalSearchResult) {
+            const name = hit.payload?.original_name as string;
+            if (name) {
+                if (!uniqueTags.has(name) || hit.score > uniqueTags.get(name)!) {
+                    uniqueTags.set(name, hit.score);
+                }
+            }
+        }
+
+        return Array.from(uniqueTags.entries())
+            .map(([name, score]) => ({ name, score }))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, topK);
+    }
+
+    /**
+     * 🧩 GET REGION TAGS: Chunk-based tag retrieval
+     * Splits content into chunks and finds tags for each chunk.
+     */
+    public async getRegionTags(content: string, threshold: number = 0.3): Promise<ContentRegionTags[]> {
+        if (!this.embedder) await this.initialize();
+
+        console.log(`🧩 Getting region tags...`);
+
         const splitter = new RecursiveCharacterTextSplitter({
             separators: [".", "!", "?", "\n", " but ", " and ", " then ", " "],
-            chunkSize: 100, // Reasonable size for a "thought"
-            chunkOverlap: 20, // Overlap to maintain context
+            chunkSize: 100,
+            chunkOverlap: 20,
         });
 
         const docs = await splitter.createDocuments([content]);
         const regions: ContentRegionTags[] = [];
 
-        // Map to store aggregated scores for overall calculation
-        // Key: Tag Name, Value: Sum of scores
-        const globalTagScores = new Map<string, number>();
-
-        // 2. Process each chunk
         for (const doc of docs) {
             const chunkText = doc.pageContent;
 
-            // 3. Embed the chunk
-            const output = await this.embedder!(chunkText, { pooling: 'mean', normalize: true });
-            const vector = Array.from(output.data) as number[];
+            // Embed chunk
+            const chunkOutput = await this.embedder!(chunkText, { pooling: 'mean', normalize: true });
+            const chunkVector = Array.from(chunkOutput.data) as number[];
 
-            // 4. Search Qdrant
-            const result = await this.qdrant.search(config.qdrant.collectionName, {
-                vector: vector,
-                limit: topK,
+            // Search specifically for this chunk
+            const chunkResults = await this.qdrant.search(config.qdrant.collectionName, {
+                vector: chunkVector,
+                limit: 10, // Fetch slightly more to account for duplicates
                 score_threshold: threshold,
-                filter: {
-                    must: [
-                        { key: "type", match: { value: "TAG" } }
-                    ]
-                }
+                filter: { must: [{ key: "type", match: { value: "TAG" } }] }
             });
 
-            const tagScores = result.map(hit => ({
-                name: hit.payload?.original_name as string,
-                score: hit.score
-            })).filter(t => t.name);
+            // Deduplicate tags for this chunk
+            const uniqueChunkTags = new Map<string, number>();
+            for (const hit of chunkResults) {
+                const name = hit.payload?.original_name as string;
+                if (name) {
+                    if (!uniqueChunkTags.has(name) || hit.score > uniqueChunkTags.get(name)!) {
+                        uniqueChunkTags.set(name, hit.score);
+                    }
+                }
+            }
+
+            const tagScores = Array.from(uniqueChunkTags.entries())
+                .map(([name, score]) => ({ name, score }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 5); // Start with top 5 distinct
 
             if (tagScores.length > 0) {
-                // Find accurate position in original text
-                const match = findFuzzyMatch(content, chunkText, 0); // Simplified logic
-
-                // Fallback indices if fuzzy match fails (LangChain doesn't give offsets by default)
-                // In a real prod app, better offset tracking is needed.
+                // Find fuzzy position
+                const match = findFuzzyMatch(content, chunkText, 0);
                 const start = match ? match.start : content.indexOf(chunkText);
                 const end = match ? match.end : start + chunkText.length;
 
@@ -156,31 +199,11 @@ export class BrainLogic {
                         regionEndIndex: end,
                         tagScores: tagScores
                     });
-
-                    // Aggregate scores for Global Tags
-                    tagScores.forEach(t => {
-                        const currentSum = globalTagScores.get(t.name) || 0;
-                        globalTagScores.set(t.name, currentSum + t.score);
-                    });
                 }
             }
         }
 
-        // 5. Calculate Overall Tags (Weighted Consensus)
-        // Formula: Sum(Scores) * (1 / log(TotalChunks + 1))
-        // We add +1 to log to avoid division by zero or negative results for few chunks
-        const totalChunks = regions.length;
-        const decayFactor = totalChunks > 1 ? (1.0 / Math.log(totalChunks + Math.E)) : 1.0;
-
-        const overallTags = Array.from(globalTagScores.entries())
-            .map(([name, totalScore]) => ({
-                name,
-                score: totalScore * decayFactor
-            }))
-            .sort((a, b) => b.score - a.score)
-            .slice(0, topK); // Return top K global tags
-
-        return { regions, overallTags };
+        return regions;
     }
 
     /**
