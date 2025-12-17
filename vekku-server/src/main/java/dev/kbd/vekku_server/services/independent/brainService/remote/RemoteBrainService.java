@@ -69,8 +69,8 @@ public class RemoteBrainService implements BrainService {
         }
 
         @Override
-        public List<ContentRegionTags> getRegionTags(String content, Double threshold) {
-                record RegionTagsRequest(String content, Double threshold) {
+        public List<ContentRegionTags> getRegionTags(String content, Double threshold, Integer topK) {
+                record RegionTagsRequest(String content, Double threshold, Integer topK) {
                 }
                 record RegionTagsResponse(List<ContentRegionTags> regions) {
                 }
@@ -78,7 +78,7 @@ public class RemoteBrainService implements BrainService {
                 RegionTagsResponse response = restClient.post()
                                 .uri("/region-tags")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .body(new RegionTagsRequest(content, threshold))
+                                .body(new RegionTagsRequest(content, threshold, topK))
                                 .retrieve()
                                 .body(RegionTagsResponse.class);
 

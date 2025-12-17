@@ -33,10 +33,18 @@ public class BrainController {
     /**
      * Get Raw Tags purely from Embedding Model
      */
+    public record TagRequest(String content, Double threshold, Integer topK) {
+    }
+
+    /**
+     * Get Raw Tags purely from Embedding Model
+     */
     @PostMapping("/raw")
-    public List<TagScore> getRawTags(@RequestBody String content,
-            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0.3") Double threshold,
-            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "50") Integer topK) {
+    public List<TagScore> getRawTags(@RequestBody TagRequest request) {
+        String content = request.content();
+        Double threshold = request.threshold() != null ? request.threshold() : 0.3;
+        Integer topK = request.topK() != null ? request.topK() : 50;
+
         log.info("Requesting Raw Tags (Len: {}, Thresh: {}, TopK: {})", content.length(), threshold, topK);
         return brainService.getRawTagsByEmbedding(content, threshold, topK);
     }
@@ -45,9 +53,12 @@ public class BrainController {
      * Get Content Regions with Tags
      */
     @PostMapping("/regions")
-    public List<ContentRegionTags> getRegionTags(@RequestBody String content,
-            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0.3") Double threshold) {
-        log.info("Requesting Region Tags (Len: {}, Thresh: {})", content.length(), threshold);
-        return brainService.getRegionTags(content, threshold);
+    public List<ContentRegionTags> getRegionTags(@RequestBody TagRequest request) {
+        String content = request.content();
+        Double threshold = request.threshold() != null ? request.threshold() : 0.3;
+        Integer topK = request.topK() != null ? request.topK() : 5;
+
+        log.info("Requesting Region Tags (Len: {}, Thresh: {}, TopK: {})", content.length(), threshold, topK);
+        return brainService.getRegionTags(content, threshold, topK);
     }
 }

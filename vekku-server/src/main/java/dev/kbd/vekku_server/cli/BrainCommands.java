@@ -39,7 +39,7 @@ public class BrainCommands {
         System.out.println("   --------------------------------------------------");
 
         // 2. Get Region Tags
-        var regions = brainService.getRegionTags(text, threshold);
+        var regions = brainService.getRegionTags(text, threshold, topK);
 
         if (regions.isEmpty()) {
             System.out.println("   (No specific regions found)");

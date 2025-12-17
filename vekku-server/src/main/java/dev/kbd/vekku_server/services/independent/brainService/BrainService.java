@@ -37,7 +37,7 @@ public interface BrainService {
     /**
      * 🧩 GET REGION TAGS: Chunk-based tag retrieval
      */
-    List<ContentRegionTags> getRegionTags(String content, Double threshold);
+    List<ContentRegionTags> getRegionTags(String content, Double threshold, Integer topK);
 
     /**
      * ⚖️ SCORE: Evaluates relevance of specific tags against content.
