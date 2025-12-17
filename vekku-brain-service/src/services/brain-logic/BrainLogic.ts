@@ -145,7 +145,7 @@ export class BrainLogic {
      * 🧩 GET REGION TAGS: Chunk-based tag retrieval
      * Splits content into chunks and finds tags for each chunk.
      */
-    public async getRegionTags(content: string, threshold: number = 0.3): Promise<ContentRegionTags[]> {
+    public async getRegionTags(content: string, threshold: number = 0.3, topK: number = 5): Promise<ContentRegionTags[]> {
         if (!this.embedder) await this.initialize();
 
         console.log(`🧩 Getting region tags (Semantic Chunking)...`);
@@ -184,7 +184,7 @@ export class BrainLogic {
             const tagScores = Array.from(uniqueChunkTags.entries())
                 .map(([name, score]) => ({ name, score }))
                 .sort((a, b) => b.score - a.score)
-                .slice(0, 5); // Start with top 5 distinct
+                .slice(0, topK); // Start with top K distinct
 
             if (tagScores.length > 0) {
                 // Find fuzzy position
@@ -210,9 +210,13 @@ export class BrainLogic {
      * Splits text into chunks based on semantic similarity between sentences.
      */
     private async semanticTextSplit(content: string, similarityThreshold: number): Promise<string[]> {
-        // 1. Split into sentences (Naive regex, keeping punctuation)
-        // Matches non-punctuation followed by punctuation and optional space
-        const sentences = content.match(/[^.!?]+[.!?]+(\s+|$)/g) || [content];
+        // 1. Split into "sentences" preserving formatting
+        // We split by newlines OR by punctuation followed by space.
+        // Lookbehind (?<=[.!?]) ensures the punctuation stays with the sentence.
+        const rawSen = content.split(/(?<=[.!?])\s+|\n+/);
+
+        // Filter out empty lines
+        const sentences = rawSen.map(s => s.trim()).filter(s => s.length > 0);
 
         if (sentences.length === 0) return [];
 
@@ -227,25 +231,22 @@ export class BrainLogic {
 
             const sim = cosineSimilarity(lastSentenceVector, currentVector);
 
-            // Log for debugging flow
             // console.log(`Sim: ${sim.toFixed(2)} | "${sentences[i-1].slice(0,10)}..." vs "${sentence.slice(0,10)}..."`);
 
             if (sim >= similarityThreshold) {
-                // Similar topic, grow chunk
+                // Similar topic, grow chunk. Add space for readability.
                 currentChunk.push(sentence);
             } else {
-                // Topic shifted! Save old chunk and start new.
-                chunks.push(currentChunk.join(""));
+                // Topic shifted!
+                chunks.push(currentChunk.join(" ")); // Join with space
                 currentChunk = [sentence];
             }
 
-            // We compare against the immediate previous sentence to detect "Shifts"
             lastSentenceVector = currentVector;
         }
 
-        // Add the last chunk
         if (currentChunk.length > 0) {
-            chunks.push(currentChunk.join(""));
+            chunks.push(currentChunk.join(" "));
         }
 
         return chunks;

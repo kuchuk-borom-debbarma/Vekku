@@ -60,7 +60,7 @@ export const BrainController = {
      * Returns: ContentRegionTags[]
      */
     GetRegionTags: async (req: Request, res: Response) => {
-        const { content, threshold } = req.body;
+        const { content, threshold, topK } = req.body;
 
         if (!content) {
             return res.status(400).json({ error: "content is required" });
@@ -68,7 +68,7 @@ export const BrainController = {
 
         try {
             const brain = BrainLogic.getInstance();
-            const result = await brain.getRegionTags(content, threshold);
+            const result = await brain.getRegionTags(content, threshold, topK);
 
             return res.json({ regions: result });
         } catch (error: unknown) {
