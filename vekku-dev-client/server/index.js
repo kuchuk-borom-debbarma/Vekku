@@ -19,7 +19,8 @@ const PORT = 3001;
 const processes = {
     brain: { process: null, pid: null, status: 'stopped' },
     server: { process: null, pid: null, status: 'stopped' },
-    client: { process: null, pid: null, status: 'stopped' }
+    client: { process: null, pid: null, status: 'stopped' },
+    docker: { process: null, pid: null, status: 'stopped' }
 };
 
 // WebSocket for logs
@@ -44,7 +45,8 @@ function getStatus() {
     return {
         brain: processes.brain.status,
         server: processes.server.status,
-        client: processes.client.status
+        client: processes.client.status,
+        docker: processes.docker.status
     };
 }
 
@@ -55,6 +57,7 @@ function streamLog(service, data, isError = false) {
 }
 
 function startService(name) {
+    // If it's already running (and not null), don't restart unless we are sure
     if (processes[name].process) {
         broadcast('log', { service: 'system', text: `Service ${name} is already running.` });
         return;
@@ -74,6 +77,10 @@ function startService(name) {
         cmd = 'npm';
         args = ['run', 'dev'];
         cwd = path.join(PROJECT_ROOT, 'vekku-client');
+    } else if (name === 'docker') {
+        cmd = 'docker-compose';
+        args = ['up'];
+        cwd = path.join(PROJECT_ROOT, 'vekku-server'); // Contains docker-compose.yaml
     } else {
         return;
     }
@@ -102,9 +109,14 @@ function startService(name) {
 function stopService(name) {
     if (processes[name].process) {
         broadcast('log', { service: 'system', text: `Stopping ${name}...` });
-        // Use tree-kill or negative PID for process groups if needed, but for now simple kill
-        // Since shell:true spawns a shell, killing the process might just kill the shell.
-        // For simplicity in this dev tool, we try standard kill.
+
+        if (name === 'docker') {
+            // For docker, we want to ensure containers match the process state better
+            // Killing 'docker-compose up' usually stops containers but let's just kill the process for now.
+            // The user can use "Reset" to force down -v.
+            // Optionally we could spawn 'docker-compose stop' here.
+        }
+
         processes[name].process.kill();
         // Force update just in case it doesn't fire close immediately
         processes[name].status = 'stopping';
@@ -133,6 +145,32 @@ app.post('/api/stop/:service', (req, res) => {
     }
 });
 
+app.post('/api/reset/docker', (req, res) => {
+    // Special handler to reset docker volumes
+    if (processes.docker.process) {
+        stopService('docker');
+    }
+
+    broadcast('log', { service: 'system', text: 'Executing Docker Reset (down -v)...' });
+
+    // Wait a moment for stop to register if it was running
+    setTimeout(() => {
+        const cwd = path.join(PROJECT_ROOT, 'vekku-server');
+        const resetProc = spawn('docker-compose', ['down', '-v'], { cwd, shell: true });
+
+        resetProc.stdout.on('data', d => streamLog('docker', d));
+        resetProc.stderr.on('data', d => streamLog('docker', d, true));
+
+        resetProc.on('close', (code) => {
+            broadcast('log', { service: 'system', text: `Docker reset completed with code ${code}` });
+            // Auto restart after reset
+            startService('docker');
+        });
+
+        res.json({ success: true, message: 'Resetting docker volumes...' });
+    }, 1000);
+});
+
 app.post('/api/restart/:service', (req, res) => {
     const { service } = req.params;
     if (processes[service]) {
@@ -145,11 +183,31 @@ app.post('/api/restart/:service', (req, res) => {
     }
 });
 
+app.post('/api/write/:service', (req, res) => {
+    const { service } = req.params;
+    const { data } = req.body;
+
+    if (processes[service] && processes[service].process) {
+        try {
+            processes[service].process.stdin.write(data);
+            res.json({ success: true });
+        } catch (e) {
+            console.error(`Failed to write to ${service}:`, e);
+            res.status(500).json({ error: e.message });
+        }
+    } else {
+        res.status(404).json({ error: 'Service not running' });
+    }
+});
+
 // Auto-start all on server launch
 setTimeout(() => {
-    startService('brain');
-    startService('server');
-    startService('client');
+    startService('docker'); // Start DBs first
+    setTimeout(() => {
+        startService('brain');
+        startService('server');
+        startService('client');
+    }, 5000); // Give docker a head start
 }, 1000);
 
 app.listen(PORT, () => {

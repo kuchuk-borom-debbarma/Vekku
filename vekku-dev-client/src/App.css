@@ -34,27 +34,42 @@ body {
   padding: 0.5rem 1rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: 50px;
+  gap: 2rem;
+  /* Spacing between title and controls */
+  height: 60px;
+  /* Increased height slightly */
 }
 
 .header h1 {
-  font-size: 1rem;
+  font-size: 1.1rem;
   margin: 0;
   color: var(--accent-color);
+  white-space: nowrap;
 }
 
 .controls {
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
   align-items: center;
+  flex: 1;
+  overflow-x: auto;
+  /* Allow scroll if too small */
 }
 
 .control-group {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+
+.control-group:hover {
+  border-color: #444;
 }
 
 .status-indicator {
@@ -99,9 +114,11 @@ button.active {
 }
 
 .view-controls {
-  margin-left: 2rem;
+  margin-left: auto;
+  /* Push to right */
   display: flex;
   gap: 0.5rem;
+  align-items: center;
 }
 
 .log-grid {

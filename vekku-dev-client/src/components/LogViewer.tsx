@@ -25,8 +25,9 @@ export const LogViewer: React.FC<LogViewerProps> = ({ service, wsUrl, label }) =
             },
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: 12,
-            disableStdin: true, // Read-only
+            disableStdin: false, // Enable input
             convertEol: true, // Handle \n vs \r\n
+            cursorBlink: true,
         });
 
         const fitAddon = new FitAddon();
@@ -41,6 +42,18 @@ export const LogViewer: React.FC<LogViewerProps> = ({ service, wsUrl, label }) =
                 fitAddon.fit();
             }, 0);
         }
+
+        // Handle Input
+        term.onData((data) => {
+            // Send data to server
+            fetch(`http://localhost:3001/api/write/${service}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data })
+            }).catch(err => {
+                console.error("Failed to send input", err);
+            });
+        });
 
         // WebSocket Connection
         const ws = new WebSocket(wsUrl);
