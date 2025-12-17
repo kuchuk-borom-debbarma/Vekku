@@ -10,8 +10,3 @@ export type TagScore = {
     name: string
     score: number
 }
-
-export type SuggestTagsResponse = {
-    regions: ContentRegionTags[]
-    overallTags: TagScore[]
-}
