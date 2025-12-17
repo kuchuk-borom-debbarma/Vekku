@@ -15,6 +15,10 @@
 		{
 			"name": "Brain Service",
 			"path": "vekku-brain-service"
+		},
+		{
+			"path": "vekku-dev-client",
+			"name": "Dev Client"
 		}
 	]
 }
