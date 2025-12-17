@@ -1,6 +1,6 @@
 package dev.kbd.vekku_server.cli;
 
-import dev.kbd.vekku_server.services.independent.brainService.BrainService;
+import dev.kbd.vekku_server.services.brain.BrainService;
 
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 public class BrainCommands {
 
     private final BrainService brainService;
-    private final dev.kbd.vekku_server.services.independent.taxonomyService.TaxonomyService taxonomyService;
+    private final dev.kbd.vekku_server.services.taxonomy.TaxonomyService taxonomyService;
 
     @ShellMethod(key = "brain learn", value = "Teach the AI a concept (Tag)")
     public void brainLearn(@ShellOption String tag) {

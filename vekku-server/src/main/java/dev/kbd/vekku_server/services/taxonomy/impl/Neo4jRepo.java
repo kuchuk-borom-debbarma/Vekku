@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.services.independent.taxonomyService.impl;
+package dev.kbd.vekku_server.services.taxonomy.impl;
 
 import java.util.List;
 import java.util.Optional;
@@ -7,7 +7,7 @@ import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.stereotype.Repository;
 
-import dev.kbd.vekku_server.services.independent.taxonomyService.models.Tag;
+import dev.kbd.vekku_server.services.taxonomy.models.Tag;
 
 @Repository
 public interface Neo4jRepo extends Neo4jRepository<Tag, Long> {

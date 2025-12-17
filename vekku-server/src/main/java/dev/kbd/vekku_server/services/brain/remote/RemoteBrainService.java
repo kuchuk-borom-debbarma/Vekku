@@ -1,12 +1,12 @@
-package dev.kbd.vekku_server.services.independent.brainService.remote;
+package dev.kbd.vekku_server.services.brain.remote;
 
-import dev.kbd.vekku_server.services.independent.brainService.BrainService;
+import dev.kbd.vekku_server.services.brain.BrainService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.http.MediaType;
 
-import dev.kbd.vekku_server.services.independent.brainService.model.ContentRegionTags;
+import dev.kbd.vekku_server.services.brain.model.ContentRegionTags;
 import java.util.List;
 
 /**
@@ -50,12 +50,12 @@ public class RemoteBrainService implements BrainService {
         }
 
         @Override
-        public List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> getRawTagsByEmbedding(
+        public List<dev.kbd.vekku_server.services.brain.model.TagScore> getRawTagsByEmbedding(
                         String content, Double threshold, Integer topK) {
                 record RawTagsRequest(String content, Double threshold, Integer topK) {
                 }
                 record RawTagsResponse(
-                                List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> tags) {
+                                List<dev.kbd.vekku_server.services.brain.model.TagScore> tags) {
                 }
 
                 RawTagsResponse response = restClient.post()
@@ -86,12 +86,12 @@ public class RemoteBrainService implements BrainService {
         }
 
         @Override
-        public List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> scoreTags(List<String> tags,
+        public List<dev.kbd.vekku_server.services.brain.model.TagScore> scoreTags(List<String> tags,
                         String content) {
                 record ScoreTagsRequest(List<String> tags, String content) {
                 }
                 record ScoreTagsResponse(
-                                List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> scores) {
+                                List<dev.kbd.vekku_server.services.brain.model.TagScore> scores) {
                 }
 
                 ScoreTagsResponse response = restClient.post()

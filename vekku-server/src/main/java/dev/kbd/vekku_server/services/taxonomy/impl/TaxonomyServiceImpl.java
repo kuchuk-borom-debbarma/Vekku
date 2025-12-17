@@ -1,12 +1,12 @@
-package dev.kbd.vekku_server.services.independent.taxonomyService.impl;
+package dev.kbd.vekku_server.services.taxonomy.impl;
 
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import dev.kbd.vekku_server.services.independent.taxonomyService.TaxonomyService;
-import dev.kbd.vekku_server.services.independent.taxonomyService.models.Tag;
+import dev.kbd.vekku_server.services.taxonomy.TaxonomyService;
+import dev.kbd.vekku_server.services.taxonomy.models.Tag;
 import org.springframework.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;

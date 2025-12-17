@@ -6,8 +6,8 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 
-import dev.kbd.vekku_server.services.independent.taxonomyService.TaxonomyService;
-import dev.kbd.vekku_server.services.independent.taxonomyService.models.Tag;
+import dev.kbd.vekku_server.services.taxonomy.TaxonomyService;
+import dev.kbd.vekku_server.services.taxonomy.models.Tag;
 import dev.kbd.vekku_server.services.orchestrator.TagOrchestratorService;
 import lombok.RequiredArgsConstructor;
 

@@ -2,7 +2,7 @@ package dev.kbd.vekku_server.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.kbd.vekku_server.services.independent.brainService.BrainService;
+import dev.kbd.vekku_server.services.brain.BrainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.shell.standard.ShellComponent;

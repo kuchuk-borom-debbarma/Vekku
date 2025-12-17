@@ -3,9 +3,9 @@ package dev.kbd.vekku_server.services.orchestrator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import dev.kbd.vekku_server.services.independent.brainService.BrainService;
-import dev.kbd.vekku_server.services.independent.taxonomyService.TaxonomyService;
-import dev.kbd.vekku_server.services.independent.taxonomyService.models.Tag;
+import dev.kbd.vekku_server.services.brain.BrainService;
+import dev.kbd.vekku_server.services.taxonomy.TaxonomyService;
+import dev.kbd.vekku_server.services.taxonomy.models.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

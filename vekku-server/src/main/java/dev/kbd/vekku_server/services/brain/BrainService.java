@@ -1,7 +1,7 @@
-package dev.kbd.vekku_server.services.independent.brainService;
+package dev.kbd.vekku_server.services.brain;
 
-import dev.kbd.vekku_server.services.independent.brainService.model.TagScore;
-import dev.kbd.vekku_server.services.independent.brainService.model.ContentRegionTags;
+import dev.kbd.vekku_server.services.brain.model.TagScore;
+import dev.kbd.vekku_server.services.brain.model.ContentRegionTags;
 import java.util.List;
 
 public interface BrainService {

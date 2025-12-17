@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.services.independent.taxonomyService.models;
+package dev.kbd.vekku_server.services.taxonomy.models;
 
 import java.util.HashSet;
 import java.util.Set;

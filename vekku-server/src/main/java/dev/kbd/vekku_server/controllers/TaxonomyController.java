@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import dev.kbd.vekku_server.services.independent.taxonomyService.TaxonomyService;
-import dev.kbd.vekku_server.services.independent.taxonomyService.models.Tag;
+import dev.kbd.vekku_server.services.taxonomy.TaxonomyService;
+import dev.kbd.vekku_server.services.taxonomy.models.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
