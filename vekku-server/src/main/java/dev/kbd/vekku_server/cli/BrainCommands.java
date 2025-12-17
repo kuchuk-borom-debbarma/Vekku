@@ -2,28 +2,17 @@ package dev.kbd.vekku_server.cli;
 
 import dev.kbd.vekku_server.services.independent.brainService.BrainService;
 
-import dev.kbd.vekku_server.services.orchestrator.TagOrchestratorService;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.springframework.shell.standard.ShellOption;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * <b>AI INTERFACE (CLI):</b>
- * <p>
- * This class lets us talk to the 'Brain' (Vector Database + Embedding Model)
- * from the terminal.
- * It's magical because we can input raw text ("How to cook") and get back
- * related Tags ("Food", "Cooking"),
- * even if we never explicitly used those words.
- */
 @ShellComponent
 @RequiredArgsConstructor
 public class BrainCommands {
 
     private final BrainService brainService;
-    private final TagOrchestratorService orchestrator;
     private final dev.kbd.vekku_server.services.independent.taxonomyService.TaxonomyService taxonomyService;
 
     @ShellMethod(key = "brain learn", value = "Teach the AI a concept (Tag)")
@@ -31,24 +20,26 @@ public class BrainCommands {
         brainService.learnTag(tag);
     }
 
-    @ShellMethod(key = "brain suggest", value = "Get tag suggestions for text (Smart Refinement)")
+    @ShellMethod(key = "brain suggest", value = "Get tag suggestions (Raw & Regions)")
     public void suggest(@ShellOption String text,
             @ShellOption(defaultValue = "0.3") double threshold,
             @ShellOption(defaultValue = "50") int topK) {
-        // Now returns a SuggestTagsResponse containing Regions and Overall Tags
-        var response = orchestrator.suggestTags(text, threshold, topK);
-        var regions = response.regions();
-        var overallTags = response.overallTags();
 
-        System.out.println("🧠 Based on: \"" + text + "\"");
+        System.out.println("🧠 Analyzing: \"" + text.substring(0, Math.min(text.length(), 50)) + "...\"");
 
-        // Print Overall Tags
-        if (!overallTags.isEmpty()) {
-            System.out.println("   🌍 Overall Topics:");
-            overallTags.forEach(t -> System.out
+        // 1. Get Raw Tags
+        var rawTags = brainService.getRawTagsByEmbedding(text, threshold, topK);
+        System.out.println("   🌍 Overall Raw Tags:");
+        if (rawTags.isEmpty()) {
+            System.out.println("      (No tags found)");
+        } else {
+            rawTags.forEach(t -> System.out
                     .println("      ⭐ " + t.name() + " (" + String.format("%.2f", t.score()) + ")"));
-            System.out.println("   --------------------------------------------------");
         }
+        System.out.println("   --------------------------------------------------");
+
+        // 2. Get Region Tags
+        var regions = brainService.getRegionTags(text, threshold);
 
         if (regions.isEmpty()) {
             System.out.println("   (No specific regions found)");
@@ -56,28 +47,16 @@ public class BrainCommands {
             for (var region : regions) {
                 System.out
                         .println("   👉 Region [" + region.regionStartIndex() + "-" + region.regionEndIndex() + "]: \""
-                                + region.regionContent() + "\"");
+                                + region.regionContent().replace("\n", " ").substring(0,
+                                        Math.min(region.regionContent().length(), 40))
+                                + "...\"");
 
-                // Print Flat Tags (if any exist independently, though Orchestrator populates
-                // both)
                 if (!region.tagScores().isEmpty()) {
-                    System.out.println("      🔹 Flat Suggestions:");
                     region.tagScores().forEach(tagScore -> System.out
                             .println("         🏷️ " + tagScore.name() + " ("
                                     + String.format("%.2f", tagScore.score()) + ")"));
-                }
-
-                // Print Taxonomy Paths
-                if (!region.taxonomyPaths().isEmpty()) {
-                    System.out.println("      🌳 Hierarchy Paths:");
-                    for (var path : region.taxonomyPaths()) {
-                        String pathStr = path.path().stream()
-                                .map(node -> node.name() + "(" + String.format("%.2f", node.score()) + ")")
-                                .collect(java.util.stream.Collectors.joining(" -> "));
-                        System.out.println("         🚀 " + pathStr);
-                    }
-                } else if (region.tagScores().isEmpty()) {
-                    System.out.println("      (No tags)");
+                } else {
+                    System.out.println("         (No tags)");
                 }
             }
         }

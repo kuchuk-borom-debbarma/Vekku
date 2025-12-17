@@ -1,7 +1,7 @@
 package dev.kbd.vekku_server.services.independent.brainService;
 
 import dev.kbd.vekku_server.services.independent.brainService.model.TagScore;
-import dev.kbd.vekku_server.services.independent.brainService.model.SuggestTagsResponse;
+import dev.kbd.vekku_server.services.independent.brainService.model.ContentRegionTags;
 import java.util.List;
 
 public interface BrainService {
@@ -30,17 +30,14 @@ public interface BrainService {
     void learnTag(String tagName);
 
     /**
-     * 🔎 SUGGEST: Finds tags conceptually related to content.
-     * <p>
-     * Returns a detailed response containing:
-     * 1. Semantic regions with their specific tags
-     * 2. Overall/Global tags for the entire content
-     * 
-     * @param content   The text content to analyze
-     * @param threshold Minimum similarity score (0.0 - 1.0)
-     * @param topK      Maximum number of tags to retrieve from vector search
+     * 🔎 GET RAW TAGS: Purely embedding-based tag retrieval
      */
-    SuggestTagsResponse suggestTags(String content, Double threshold, Integer topK);
+    List<TagScore> getRawTagsByEmbedding(String content, Double threshold, Integer topK);
+
+    /**
+     * 🧩 GET REGION TAGS: Chunk-based tag retrieval
+     */
+    List<ContentRegionTags> getRegionTags(String content, Double threshold);
 
     /**
      * ⚖️ SCORE: Evaluates relevance of specific tags against content.

@@ -7,7 +7,6 @@ import org.springframework.web.client.RestClient;
 import org.springframework.http.MediaType;
 
 import dev.kbd.vekku_server.services.independent.brainService.model.ContentRegionTags;
-import dev.kbd.vekku_server.services.independent.brainService.model.SuggestTagsResponse;
 import java.util.List;
 
 /**
@@ -26,65 +25,82 @@ import java.util.List;
 @Service
 public class RemoteBrainService implements BrainService {
 
-    private final RestClient restClient;
+        private final RestClient restClient;
 
-    public RemoteBrainService(@Value("${brain-service.url}") String brainServiceUrl,
-            RestClient.Builder restClientBuilder) {
-        this.restClient = restClientBuilder.baseUrl(brainServiceUrl).build();
-    }
-
-    /**
-     * Sends a "Learn" request to the Brain Service.
-     * The service will embed this tag and store it in Qdrant.
-     */
-    @Override
-    public void learnTag(String tagName) {
-        record LearnRequest(String tag_name) {
+        public RemoteBrainService(@Value("${brain-service.url}") String brainServiceUrl,
+                        RestClient.Builder restClientBuilder) {
+                this.restClient = restClientBuilder.baseUrl(brainServiceUrl).build();
         }
 
-        restClient.post()
-                .uri("/learn")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(new LearnRequest(tagName))
-                .retrieve()
-                .toBodilessEntity();
-    }
+        /**
+         * Sends a "Learn" request to the Brain Service.
+         * The service will embed this tag and store it in Qdrant.
+         */
+        @Override
+        public void learnTag(String tagName) {
+                record LearnRequest(String tag_name) {
+                }
 
-    /**
-     * Sends content to the Brain Service to get semantic tag suggestions.
-     * The response contains a list of regions (chunks) with their respective tag
-     * scores, as well as OVERALL topic tags.
-     */
-    @Override
-    public SuggestTagsResponse suggestTags(String content, Double threshold, Integer topK) {
-        record SuggestTagsRequest(String content, Double threshold, Integer topK) {
+                restClient.post()
+                                .uri("/learn")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(new LearnRequest(tagName))
+                                .retrieve()
+                                .toBodilessEntity();
         }
 
-        SuggestTagsResponse response = restClient.post()
-                .uri("/suggest-tags")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(new SuggestTagsRequest(content, threshold, topK))
-                .retrieve()
-                .body(SuggestTagsResponse.class);
+        @Override
+        public List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> getRawTagsByEmbedding(
+                        String content, Double threshold, Integer topK) {
+                record RawTagsRequest(String content, Double threshold, Integer topK) {
+                }
+                record RawTagsResponse(
+                                List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> tags) {
+                }
 
-        return response != null ? response : new SuggestTagsResponse(List.of(), List.of());
-    }
+                RawTagsResponse response = restClient.post()
+                                .uri("/raw-tags")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(new RawTagsRequest(content, threshold, topK))
+                                .retrieve()
+                                .body(RawTagsResponse.class);
 
-    @Override
-    public List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> scoreTags(List<String> tags,
-            String content) {
-        record ScoreTagsRequest(List<String> tags, String content) {
+                return response != null ? response.tags() : List.of();
         }
-        record ScoreTagsResponse(List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> scores) {
+
+        @Override
+        public List<ContentRegionTags> getRegionTags(String content, Double threshold) {
+                record RegionTagsRequest(String content, Double threshold) {
+                }
+                record RegionTagsResponse(List<ContentRegionTags> regions) {
+                }
+
+                RegionTagsResponse response = restClient.post()
+                                .uri("/region-tags")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(new RegionTagsRequest(content, threshold))
+                                .retrieve()
+                                .body(RegionTagsResponse.class);
+
+                return response != null ? response.regions() : List.of();
         }
 
-        ScoreTagsResponse response = restClient.post()
-                .uri("/score-tags")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(new ScoreTagsRequest(tags, content))
-                .retrieve()
-                .body(ScoreTagsResponse.class);
+        @Override
+        public List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> scoreTags(List<String> tags,
+                        String content) {
+                record ScoreTagsRequest(List<String> tags, String content) {
+                }
+                record ScoreTagsResponse(
+                                List<dev.kbd.vekku_server.services.independent.brainService.model.TagScore> scores) {
+                }
 
-        return response != null ? response.scores() : List.of();
-    }
+                ScoreTagsResponse response = restClient.post()
+                                .uri("/score-tags")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(new ScoreTagsRequest(tags, content))
+                                .retrieve()
+                                .body(ScoreTagsResponse.class);
+
+                return response != null ? response.scores() : List.of();
+        }
 }

@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import dev.kbd.vekku_server.services.independent.brainService.model.ContentRegionTags;
-import dev.kbd.vekku_server.services.independent.brainService.model.SuggestTagsResponse;
-import dev.kbd.vekku_server.services.orchestrator.TagOrchestratorService;
+import dev.kbd.vekku_server.services.independent.brainService.model.TagScore;
+import dev.kbd.vekku_server.services.independent.brainService.BrainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BrainController {
 
-    private final TagOrchestratorService tagOrchestratorService;
+    private final BrainService brainService;
 
     /**
      * Suggests tags for the given content.
@@ -30,15 +30,24 @@ public class BrainController {
      * @param content The text content to analyze.
      * @return List of ContentRegionTags suggestions.
      */
-    @PostMapping("/suggest")
-    public SuggestTagsResponse suggestTags(@RequestBody String content,
+    /**
+     * Get Raw Tags purely from Embedding Model
+     */
+    @PostMapping("/raw")
+    public List<TagScore> getRawTags(@RequestBody String content,
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0.3") Double threshold,
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "50") Integer topK) {
-        log.info("Received tag suggestion request for content length: {} (Threshold: {}, TopK: {})", content.length(),
-                threshold, topK);
-        // TODO: We might want a DTO here later if we need to pass more than just raw
-        // text (e.g., existing tags, context).
-        // For now, raw string body is sufficient.
-        return tagOrchestratorService.suggestTags(content, threshold, topK);
+        log.info("Requesting Raw Tags (Len: {}, Thresh: {}, TopK: {})", content.length(), threshold, topK);
+        return brainService.getRawTagsByEmbedding(content, threshold, topK);
+    }
+
+    /**
+     * Get Content Regions with Tags
+     */
+    @PostMapping("/regions")
+    public List<ContentRegionTags> getRegionTags(@RequestBody String content,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0.3") Double threshold) {
+        log.info("Requesting Region Tags (Len: {}, Thresh: {})", content.length(), threshold);
+        return brainService.getRegionTags(content, threshold);
     }
 }
