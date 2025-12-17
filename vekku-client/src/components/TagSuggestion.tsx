@@ -13,14 +13,6 @@ interface ContentRegionTags {
     tagScores: TagScore[];
 }
 
-interface RawTagsResponse {
-    tags: TagScore[];
-}
-
-interface RegionTagsResponse {
-    regions: ContentRegionTags[];
-}
-
 export default function TagSuggestion() {
     const navigate = useNavigate();
     const [content, setContent] = useState('');
