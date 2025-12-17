@@ -34,9 +34,12 @@ export const LogViewer: React.FC<LogViewerProps> = ({ service, wsUrl, label }) =
 
         if (terminalRef.current) {
             term.open(terminalRef.current);
-            fitAddon.fit();
             xtermRef.current = term;
             fitAddonRef.current = fitAddon;
+            // Trigger initial fit
+            setTimeout(() => {
+                fitAddon.fit();
+            }, 0);
         }
 
         // WebSocket Connection
@@ -78,10 +81,19 @@ export const LogViewer: React.FC<LogViewerProps> = ({ service, wsUrl, label }) =
         };
     }, [service, wsUrl]);
 
+    const clearLogs = () => {
+        xtermRef.current?.clear();
+    };
+
     return (
         <div className="log-viewer">
-            <div className="log-header">{label}</div>
-            <div className="terminal-container" ref={terminalRef} style={{ width: '100%', height: '100%' }} />
+            <div className="log-header">
+                <span>{label}</span>
+                <div className="log-controls">
+                    <button onClick={clearLogs} title="Clear Log Output">Clear</button>
+                </div>
+            </div>
+            <div className="terminal-container" ref={terminalRef} style={{ width: '100%' }} />
         </div>
     );
 };

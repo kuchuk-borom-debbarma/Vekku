@@ -53,16 +53,16 @@ function App() {
           {['brain', 'server', 'client'].map(svc => (
             <div key={svc} className="control-group">
               <span className={`status-indicator ${status[svc as keyof ServiceStatus]}`}></span>
-              <strong>{svc.toUpperCase()}</strong>
-              <button onClick={() => controlService(svc, 'restart')} title="Restart (Hotkeys: b, s, c)">↺</button>
+              <strong>{svc.toUpperCase()} <span style={{ opacity: 0.5, fontSize: '0.8em' }}>({svc[0]})</span></strong>
+              <button onClick={() => controlService(svc, 'restart')} title="Restart">↺</button>
               <button onClick={() => controlService(svc, 'stop')} title="Stop">⏹</button>
             </div>
           ))}
           <div className="view-controls">
-            <button onClick={() => setActiveService('all')} className={activeService === 'all' ? 'active' : ''}>All</button>
-            <button onClick={() => setActiveService('brain')} className={activeService === 'brain' ? 'active' : ''}>Brain</button>
-            <button onClick={() => setActiveService('server')} className={activeService === 'server' ? 'active' : ''}>Server</button>
-            <button onClick={() => setActiveService('client')} className={activeService === 'client' ? 'active' : ''}>Client</button>
+            <button onClick={() => setActiveService('all')} className={activeService === 'all' ? 'active' : ''}>All (0)</button>
+            <button onClick={() => setActiveService('brain')} className={activeService === 'brain' ? 'active' : ''}>Brain (1)</button>
+            <button onClick={() => setActiveService('server')} className={activeService === 'server' ? 'active' : ''}>Server (2)</button>
+            <button onClick={() => setActiveService('client')} className={activeService === 'client' ? 'active' : ''}>Client (3)</button>
           </div>
         </div>
       </header>
