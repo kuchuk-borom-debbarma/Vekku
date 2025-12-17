@@ -35,7 +35,7 @@ export const BrainController = {
      * Returns: ContentRegionTags[] - Detailed semantic regions with tags
      */
     SuggestTags: async (req: Request, res: Response) => {
-        const content = req.body.content;
+        const { content, threshold, topK } = req.body;
 
         if (!content) {
             return res.status(400).json({ error: "content is required" });
@@ -44,7 +44,7 @@ export const BrainController = {
         try {
             const brain = BrainLogic.getInstance();
             // Get detailed regions with semantic chunking
-            const regions = await brain.suggestTags(content);
+            const regions = await brain.suggestTags(content, threshold, topK);
 
             // Return the full structure as requested
             return res.json({ regions });

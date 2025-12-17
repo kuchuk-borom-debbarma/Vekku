@@ -94,10 +94,10 @@ export class BrainLogic {
      * 🔎 SUGGEST: Finds tags conceptually related to content
      * Splits content into regions using LangChain and finds tags for each region.
      */
-    public async suggestTags(content: string): Promise<ContentRegionTags[]> {
+    public async suggestTags(content: string, threshold: number = 0.3, topK: number = 50): Promise<ContentRegionTags[]> {
         if (!this.embedder) await this.initialize();
 
-        console.log(`🤔 Thinking about tags for content length: ${content.length}`);
+        console.log(`🤔 Thinking about tags for content length: ${content.length} (Threshold: ${threshold}, TopK: ${topK})`);
 
         // 1. Chunk content using Industry Standard Splitter (LangChain)
         // We use specific separators to catch semantic shifts in run-on sentences
@@ -119,11 +119,10 @@ export class BrainLogic {
             const vector = Array.from(output.data) as number[];
 
             // 4. Search Qdrant
-            // 4. Search Qdrant
             const result = await this.qdrant.search(config.qdrant.collectionName, {
                 vector: vector,
-                limit: 3,
-                score_threshold: 0.45,
+                limit: topK,
+                score_threshold: threshold,
                 filter: {
                     must: [
                         { key: "type", match: { value: "TAG" } }
