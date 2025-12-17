@@ -2,7 +2,6 @@ import { pipeline, env, FeatureExtractionPipeline } from '@huggingface/transform
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { v5 as uuidv5 } from 'uuid';
 import { ContentRegionTags } from './model';
-import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { findFuzzyMatch } from '../../utils/textUtils';
 import { cosineSimilarity } from '../../utils/mathUtils';
 import { config } from '../../config';
@@ -97,17 +96,38 @@ export class BrainLogic {
     }
 
     /**
+     * 🧠 LEARN: The Concept Ingestion Engine
+     * 
+     * HOW IT WORKS:
+     * 1. Normalization: We lowercase the input to avoid duplicates ("Java" == "java").
+     * 2. Embedding: We pass the string to the HuggingFace model (BGE-Small) to get a 384-dimensional vector.
+     *    This vector represents the "meaning" of the word in high-dimensional space.
+     * 3. ID Generation: We generate a Deterministic UUID (UUIDv5) based on the tag name.
+     *    This ensures idempotency: calling learnTag("Java") twice updates the same record instead of duplicating it.
+     * 4. STORAGE: We save the vector + payload (original name) into Qdrant.
+     *    We tag it with type="TAG" so we can distinguish concepts from document chunks later.
+     */
     /**
-     * 🔎 GET RAW TAGS: Purely embedding-based tag retrieval
-     * Embeds the content and finds the closest tags in the vector space.
+     * 🔎 GET RAW TAGS: Similarity Search
+     * 
+     * HOW IT WORKS:
+     * 1. Summary: We take the first 2000 chars of the content as a "Summary".
+     * 2. Embed: We convert this summary into a vector.
+     * 3. ANN Search: We ask Qdrant for the "Nearest Neighbors" to this vector.
+     *    - We filter for `type="TAG"`.
+     *    - We use Cosine Similarity as the distance metric.
+     * 4. Thresholding: We discard any results below the `threshold` (default 0.3).
+     * 5. Deduplication: The model might return similar tags. We keep the highest scoring version of each unique tag name.
      */
     public async getRawTagsByEmbedding(content: string, threshold: number = 0.3, topK: number = 50): Promise<{ name: string, score: number }[]> {
         if (!this.embedder) await this.initialize();
 
         console.log(`🤔 Getting raw tags...`);
 
-        // Note: Models have token limits. We take the first ~2000 chars 
-        // to capture the intro/core definition.
+        // Note: Transformer Models (like BERT) have a hard limit on input size, usually 512 tokens.
+        // 1 Token ~= 4 Characters. So 512 * 4 = ~2048 characters.
+        // If we send more, the model will just truncate it (or crash).
+        // Plus, the first 2000 chars usually contain the "Lead" (Main Topic) of the article.
         const summaryText = content.slice(0, 2000);
 
         const globalOutput = await this.embedder!(summaryText, { pooling: 'mean', normalize: true });
@@ -142,8 +162,15 @@ export class BrainLogic {
      * Splits content into chunks and finds tags for each chunk.
      */
     /**
-     * 🧩 GET REGION TAGS: Chunk-based tag retrieval
-     * Splits content into chunks and finds tags for each chunk.
+     * 🧩 GET REGION TAGS: The core "Smart Tagging" logic.
+     * 
+     * HOW IT WORKS:
+     * 1. Segmentation (The "Where"): We first split the document into "Semantic Regions" using `semanticTextSplit`.
+     *    This ensures we don't tag a region about "Apples" with "Stock Market" just because they are adjacent sentences.
+     * 2. Analysis (The "What"): For EACH region:
+     *    - We embed the region text.
+     *    - We query Qdrant for tags relevant to *that specific region*.
+     * 3. Localization: We find the start/end indices of the region in the original text (Fuzzy Matching) so the UI can highlight it.
      */
     public async getRegionTags(content: string, threshold: number = 0.3, topK: number = 5): Promise<ContentRegionTags[]> {
         if (!this.embedder) await this.initialize();
@@ -207,7 +234,20 @@ export class BrainLogic {
     }
 
     /**
-     * Splits text into chunks based on semantic similarity between sentences.
+     * 🧠 SEMANTIC TEXT SPLITTER
+     * 
+     * WHY WE NEED THIS:
+     * Standard splitters (chunk by 100 chars) are dumb. They split thoughts in half.
+     * We want to split ONLY when the topic changes (e.g., from "Fruit" to "Finance").
+     * 
+     * HOW IT WORKS:
+     * 1. Sentence Split: We break text into sentences using regex, preserving punctuation.
+     * 2. Sequential Embedding: We calculate the vector for Sentence N and Sentence N+1.
+     * 3. Similarity Check: We compare Cosine Similarity(N, N+1).
+     *    - If High Similarity (>0.45): They belong to the same thought. MERGE.
+     *    - If Low Similarity: Topic shifted. CUT.
+     * 
+     * RESULT: Variable length chunks that represent coherent ideas.
      */
     private async semanticTextSplit(content: string, similarityThreshold: number): Promise<string[]> {
         // 1. Split into "sentences" preserving formatting
