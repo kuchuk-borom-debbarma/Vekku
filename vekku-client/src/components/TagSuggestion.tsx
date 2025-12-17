@@ -29,6 +29,8 @@ export default function TagSuggestion() {
     const [loading, setLoading] = useState(false);
     const [hoveredRegionIndex, setHoveredRegionIndex] = useState<number | null>(null);
 
+    const [combinedTags, setCombinedTags] = useState<TagScore[]>([]);
+
     // Optional parameters
     const [threshold, setThreshold] = useState(0.3);
     const [topK, setTopK] = useState(50);
@@ -78,6 +80,30 @@ export default function TagSuggestion() {
             })
             .then((data: ContentRegionTags[]) => {
                 setRegionTags(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error(err);
+                setLoading(false);
+            });
+    };
+
+    const handleGetCombinedTags = () => {
+        if (!content.trim()) return;
+
+        setLoading(true);
+        setCombinedTags([]); // Clear previous
+        fetch('/api/brain/suggest-combined', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content, threshold, topK })
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to fetch combined tags');
+                return res.json();
+            })
+            .then((data: TagScore[]) => {
+                setCombinedTags(data);
                 setLoading(false);
             })
             .catch(err => {
@@ -194,10 +220,65 @@ export default function TagSuggestion() {
                     >
                         Get Region Tags
                     </button>
+                    <button
+                        onClick={handleGetCombinedTags}
+                        disabled={loading}
+                        style={{
+                            padding: '0.8rem 2rem',
+                            background: '#4CAF50',
+                            border: 'none',
+                            borderRadius: '6px',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            opacity: loading ? 0.7 : 1,
+                            flex: 1
+                        }}
+                    >
+                        Get Combined Tags
+                    </button>
                 </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {/* COMBINED TAGS SECTION */}
+                {combinedTags.length > 0 && (
+                    <div style={{
+                        background: 'linear-gradient(145deg, #1e251e, #252525)',
+                        border: '1px solid #4CAF50',
+                        borderRadius: '8px',
+                        padding: '1.5rem',
+                    }}>
+                        <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#81c784' }}>
+                            🌌 Combined Tags (Overall + Regions)
+                        </h3>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
+                            {combinedTags.map((tag, index) => (
+                                <span
+                                    key={index}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        padding: '0.5rem 1rem',
+                                        background: '#333',
+                                        borderRadius: '6px',
+                                        fontSize: '0.9rem',
+                                        border: '1px solid #555'
+                                    }}
+                                >
+                                    <span style={{ fontWeight: 'bold', color: '#fff' }}>{tag.name}</span>
+                                    <span style={{
+                                        color: '#aaa',
+                                        fontSize: '0.85rem'
+                                    }}>
+                                        {tag.score.toFixed(3)}
+                                    </span>
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 {/* RAW TAGS SECTION */}
                 {rawTags.length > 0 && (
                     <div style={{
