@@ -174,6 +174,49 @@ export class BrainLogic {
     }
 
     /**
+     * 🧠 SUGGEST COMBINED TAGS: Overall + Regional (Deduplicated)
+     * Returns a single list of TagScores.
+     * Logic: Overall tags are primary. Regional tags are added if they are unique.
+     * No score incrementing.
+     */
+    public async suggestOverallRegionCombinedTags(content: string, threshold: number = 0.3, topK: number = 10): Promise<{ name: string, score: number }[]> {
+        console.log(`🧠 Getting Combined Tags...`);
+
+        // 1. Get Overall Tags (Most powerful)
+        const overallTags = await this.getRawTagsByEmbedding(content, threshold, topK);
+
+        // 2. Get Regional Tags (Minor details)
+        const regions = await this.getRegionTags(content, threshold, topK);
+
+        // Flatten regional tags
+        const regionalTags: { name: string, score: number }[] = [];
+        regions.forEach(region => {
+            regionalTags.push(...region.tagScores);
+        });
+
+        // 3. Merge & Deduplicate
+        // Strategy: Use a Map. Add Overall first (higher priority). Add Regional only if missing.
+        const combinedMap = new Map<string, number>();
+
+        // Add Overall first
+        overallTags.forEach(tag => {
+            combinedMap.set(tag.name, tag.score);
+        });
+
+        // Add Regional if not exists
+        regionalTags.forEach(tag => {
+            if (!combinedMap.has(tag.name)) {
+                combinedMap.set(tag.name, tag.score);
+            }
+        });
+
+        // Convert back to array and sort by score desc
+        return Array.from(combinedMap.entries())
+            .map(([name, score]) => ({ name, score }))
+            .sort((a, b) => b.score - a.score);
+    }
+
+    /**
      * ⚖️ SCORE: Evaluates relevance of specific tags against content.
      */
     public async scoreTags(tags: string[], content: string): Promise<{ name: string, score: number }[]> {
