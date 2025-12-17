@@ -19,10 +19,16 @@ interface ContentRegionTags {
     taxonomyPaths: TagPath[];
 }
 
+interface SuggestTagsResponse {
+    regions: ContentRegionTags[];
+    overallTags: TagScore[];
+}
+
 export default function TagSuggestion() {
     const navigate = useNavigate();
     const [content, setContent] = useState('');
     const [suggestions, setSuggestions] = useState<ContentRegionTags[]>([]);
+    const [overallTags, setOverallTags] = useState<TagScore[]>([]);
     const [loading, setLoading] = useState(false);
     const [hoveredRegionIndex, setHoveredRegionIndex] = useState<number | null>(null);
 
@@ -45,8 +51,9 @@ export default function TagSuggestion() {
                 if (!res.ok) throw new Error('Failed to fetch suggestions');
                 return res.json();
             })
-            .then((data: ContentRegionTags[]) => {
-                setSuggestions(data);
+            .then((data: SuggestTagsResponse) => {
+                setSuggestions(data.regions);
+                setOverallTags(data.overallTags);
                 setLoading(false);
             })
             .catch(err => {
@@ -147,6 +154,48 @@ export default function TagSuggestion() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {overallTags.length > 0 && (
+                    <div style={{
+                        background: 'linear-gradient(145deg, #1e1e1e, #252525)',
+                        border: '1px solid #444',
+                        borderRadius: '8px',
+                        padding: '1.5rem',
+                        marginBottom: '1rem'
+                    }}>
+                        <h3 style={{ marginTop: 0, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            🌍 Overall Topics
+                            <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#aaa' }}>(Weighted Consensus)</span>
+                        </h3>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
+                            {overallTags.map((tag, index) => (
+                                <span
+                                    key={index}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        padding: '0.5rem 1rem',
+                                        background: '#333',
+                                        borderRadius: '6px',
+                                        fontSize: '1rem',
+                                        border: '1px solid #555',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                    }}
+                                >
+                                    <span style={{ fontWeight: 'bold', color: '#fff' }}>{tag.name}</span>
+                                    <span style={{
+                                        color: tag.score > 2.0 ? '#4caf50' : tag.score > 1.0 ? '#ff9800' : '#f44336',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 'bold'
+                                    }}>
+                                        {tag.score.toFixed(2)}
+                                    </span>
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {suggestions.map((region, index) => (
                     <div
                         key={index}
