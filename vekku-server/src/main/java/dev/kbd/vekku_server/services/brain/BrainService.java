@@ -47,4 +47,9 @@ public interface BrainService {
      * in the initial search results) is relevant to the text.
      */
     List<TagScore> scoreTags(List<String> tags, String content);
+
+    /**
+     * 🧠 SUGGEST COMBINED: Overall + Regional Tags (Deduplicated)
+     */
+    List<TagScore> suggestCombinedTags(String content, Double threshold, Integer topK);
 }
