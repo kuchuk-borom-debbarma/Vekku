@@ -26,6 +26,10 @@ export default function TagSuggestion() {
     const [loading, setLoading] = useState(false);
     const [hoveredRegionIndex, setHoveredRegionIndex] = useState<number | null>(null);
 
+    // Optional parameters
+    const [threshold, setThreshold] = useState(0.3);
+    const [topK, setTopK] = useState(50);
+
     const handleSuggest = () => {
         if (!content.trim()) return;
 
@@ -33,9 +37,9 @@ export default function TagSuggestion() {
         fetch('/api/brain/suggest', {
             method: 'POST',
             headers: {
-                'Content-Type': 'text/plain' // Sending raw string as body
+                'Content-Type': 'application/json'
             },
-            body: content
+            body: JSON.stringify({ content, threshold, topK })
         })
             .then(res => {
                 if (!res.ok) throw new Error('Failed to fetch suggestions');
@@ -71,6 +75,42 @@ export default function TagSuggestion() {
             <h1>Tag Suggestion Playground</h1>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+                        <label style={{ fontSize: '0.9rem', color: '#aaa' }}>Threshold (0.0 - 1.0)</label>
+                        <input
+                            type="number"
+                            step="0.05"
+                            min="0"
+                            max="1"
+                            value={threshold}
+                            onChange={(e) => setThreshold(parseFloat(e.target.value))}
+                            style={{
+                                padding: '0.5rem',
+                                background: '#1a1a1a',
+                                border: '1px solid #333',
+                                borderRadius: '4px',
+                                color: '#eee'
+                            }}
+                        />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+                        <label style={{ fontSize: '0.9rem', color: '#aaa' }}>Top K (Search Limit)</label>
+                        <input
+                            type="number"
+                            value={topK}
+                            onChange={(e) => setTopK(parseInt(e.target.value))}
+                            style={{
+                                padding: '0.5rem',
+                                background: '#1a1a1a',
+                                border: '1px solid #333',
+                                borderRadius: '4px',
+                                color: '#eee'
+                            }}
+                        />
+                    </div>
+                </div>
+
                 <textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
