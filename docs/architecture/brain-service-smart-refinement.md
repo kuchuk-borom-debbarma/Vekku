@@ -1,0 +1,99 @@
+# 1. Context-Aware Tag Resolution ("Smart Refinement")
+
+**Date:** 2025-12-16
+**Status:** Proposal / Design Phase
+
+## 1. Overview
+We are enhancing the Vekku tagging system by moving from a purely **Semantic** approach (vectors) to a **Hybrid** approach (Semantic + Structural).
+
+### The Problem
+- **Vector Search (Qdrant)** is excellent at "fuzzy matching" (finding "Canine" when you search "Dog"). However, it lacks precision and awareness of the specific taxonomy maintained in our system. It often suggests generic terms ("Programming") instead of specific ones ("TypeScript") or gets confused by polysemy ("Apple" fruit vs brand).
+- **Knowledge Graph (Neo4j)** represents the "Truth" of our taxonomy but cannot inherently understand unstructured text.
+
+### The Solution: "Smart Refinement"
+We propose a pipeline that uses the Vector store as a "Broad Net" and the Graph as a "context-aware filter" to refine suggestions.
+
+---
+
+## 2. The "Sieve" Architecture
+
+The process follows a **Scout -> Inspect -> Anchor** workflow.
+
+### Phase 1: The Scout (Broad Search)
+*   **Role:** Qdrant (Brain Service)
+*   **Action:** Query the vector database with the content chunk.
+*   **Goal:** Retrieve a wide set of potentially relevant candidates (e.g., Top 20), prioritizing recall over precision.
+*   **Output:** A list of "Loose Tags" (e.g., `[Apple, Stock, Market, Banana]`).
+
+### Phase 2: The Inspector (Structure Check)
+*   **Role:** Neo4j (Graph Service)
+*   **Action:** For every "Loose Tag", traverse its immediate neighborhood (Parents and Children).
+*   **Goal:** Identify **Clusters of### 3. Structural Constraint: "Distinct Identities"
+To resolve ambiguity (e.g., Apple), we enforced a **Tree Structure** (or distinct paths) rather than a merged DAG.
+*   **Distinct Nodes**: `Apple` (under Fruit) and `Apple` (under Brand) are **separate nodes** with unique IDs.
+*   **Result**: No confusion during traversal. A path is unique.
+
+### 4. Algorithm: "Recursive Deepening" (Drill Down)
+
+We traverse the graph *downwards* (from broad to specific), looking for the "Deepest Best Match".
+
+**The Logic:**
+"If a specific child describes the content better than its parent, replace the parent with the child."
+
+**Variables:**
+*   `S_parent`: Score of the current node.
+*   `S_child`: Score of a child node.
+*   `T_improve`: Improvement threshold (e.g., 1.05x). Child must be significantly better.
+
+**The Workflow:**
+1.  **Seed**: Brain suggests `Technology` (Score: 0.75).
+2.  **Inspect (Level 1)**:
+    *   Fetch all children of `Technology` (`Hardware`, `Software`, `AI`...).
+    *   **Score Children**: Brain scores each child against the content.
+    *   *Result*: `Software` scores **0.85**.
+3.  **Evaluate**:
+    *   Is `0.85 > 0.75`? **YES**.
+    *   **Action**: `Technology` is too generic. **Drill down** to `Software`.
+4.  **Inspect (Level 2)**:
+    *   Fetch children of `Software` (`Web`, `Mobile`, `Backend`...).
+    *   **Score Children**:
+        *   `Web`: 0.40
+        *   `Backend`: 0.50
+    *   *Result*: None of the children score higher than `Software` (0.85).
+5.  **Stop**: Return `Software`.
+
+**Why this wins**:
+*   **Precision**: We don't settle for "generic" tags if a better specific one exists.
+*   **Explainability**: "We chose 'Software' because it scored higher than 'Technology'."
+
+### 4. Performance Constraint & Fan-Out Control
+**Problem**: Some nodes (e.g., "Person", "Location") might have 10,000+ children. Checking all of them is too slow.
+**Solution**:
+1.  **Depth Threshold**: We only drill down 3 levels deep.
+2.  **Breadth Limit**: (Future) If a node has > 50 children, we might need a "Beam Search" (only pick top 10 most likely children based on name similarity first) or just stop.
+
+## Future: The Return of the DAG (Poly-Parenting)
+**Current Limitation**: We effectively treat the graph as a **Tree** (One Parent per Tag) to simplify the drill-down logic. This is not ideal for the real world (e.g., "SpringBoot" is a child of "Java" AND "Frameworks").
+
+**The Vision**:
+In the future, we will bring back the **Poly-Parent DAG**.
+*   **Path as Identity**: We will not just store "Apple" as the tag. We will store the **Tag Path**:
+    *   `Fruit -> Apple`
+    *   `Tech -> Brand -> Apple`
+*   **Logic Change**: The scoring and refinement will need to evaluate typically entire *paths* to disambiguate context, rather than just individual nodes.
+
+---
+
+## 3. Handling Poly-Hierarchy
+Vekku's graph allows tags to have multiple parents (e.g., `React` is child of `Library` AND `Meta`).
+*   **Benefit:** multiple parents provide **more signal paths**.
+*   In the anchoring phase, if *any* parent path connects well with the other tags in the text, that tag is validated.
+*   This makes the system highly robust against "isolated" false positives (random vector matches that have no structural relation to the rest of the content).
+
+## 4. Proposed Data Flow
+
+1.  **Input:** Unstructured Text Chunk.
+2.  **Step 1 (Vectors):** `BrainService` -> `Qdrant` -> Returns `List<CandidateTag>`.
+3.  **Step 2 (Enrichment):** `TagService` -> `Neo4j` -> Fetches `Parents` and `Children` for all candidates.
+4.  **Step 3 (Refinement):** Run `CoherenceAlgorithm(candidates, neighborhoods)`.
+5.  **Output:** `List<RefinedTag>` (Specific, Context-Validated).
