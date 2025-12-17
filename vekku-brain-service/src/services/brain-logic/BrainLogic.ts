@@ -93,8 +93,9 @@ export class BrainLogic {
     /**
      * 🔎 SUGGEST: Finds tags conceptually related to content
      * Splits content into regions using LangChain and finds tags for each region.
+     * Also calculates OVERALL tags by aggregating results from all regions.
      */
-    public async suggestTags(content: string, threshold: number = 0.3, topK: number = 50): Promise<ContentRegionTags[]> {
+    public async suggestTags(content: string, threshold: number = 0.3, topK: number = 50): Promise<{ regions: ContentRegionTags[], overallTags: { name: string, score: number }[] }> {
         if (!this.embedder) await this.initialize();
 
         console.log(`🤔 Thinking about tags for content length: ${content.length} (Threshold: ${threshold}, TopK: ${topK})`);
@@ -109,6 +110,10 @@ export class BrainLogic {
 
         const docs = await splitter.createDocuments([content]);
         const regions: ContentRegionTags[] = [];
+
+        // Map to store aggregated scores for overall calculation
+        // Key: Tag Name, Value: Sum of scores
+        const globalTagScores = new Map<string, number>();
 
         // 2. Process each chunk
         for (const doc of docs) {
@@ -151,11 +156,31 @@ export class BrainLogic {
                         regionEndIndex: end,
                         tagScores: tagScores
                     });
+
+                    // Aggregate scores for Global Tags
+                    tagScores.forEach(t => {
+                        const currentSum = globalTagScores.get(t.name) || 0;
+                        globalTagScores.set(t.name, currentSum + t.score);
+                    });
                 }
             }
         }
 
-        return regions;
+        // 5. Calculate Overall Tags (Weighted Consensus)
+        // Formula: Sum(Scores) * (1 / log(TotalChunks + 1))
+        // We add +1 to log to avoid division by zero or negative results for few chunks
+        const totalChunks = regions.length;
+        const decayFactor = totalChunks > 1 ? (1.0 / Math.log(totalChunks + Math.E)) : 1.0;
+
+        const overallTags = Array.from(globalTagScores.entries())
+            .map(([name, totalScore]) => ({
+                name,
+                score: totalScore * decayFactor
+            }))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, topK); // Return top K global tags
+
+        return { regions, overallTags };
     }
 
     /**

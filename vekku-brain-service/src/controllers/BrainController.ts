@@ -43,11 +43,11 @@ export const BrainController = {
 
         try {
             const brain = BrainLogic.getInstance();
-            // Get detailed regions with semantic chunking
-            const regions = await brain.suggestTags(content, threshold, topK);
+            // Get detailed regions with semantic chunking & Overall Tags
+            const result = await brain.suggestTags(content, threshold, topK);
 
             // Return the full structure as requested
-            return res.json({ regions });
+            return res.json(result);
         } catch (error: unknown) {
             console.error("❌ Error in SuggestTags:", error);
             const errorMessage = error instanceof Error ? error.message : "Unknown error";
