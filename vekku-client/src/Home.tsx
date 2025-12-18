@@ -29,6 +29,32 @@ export default function Home() {
                 <div style={{ padding: '2rem', background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
                     <h3>Protected Content</h3>
                     <p>You are successfully logged in as: {user?.email}</p>
+                    <div style={{ marginTop: '1rem' }}>
+                        <a href="/create" style={{
+                            padding: '0.8rem 1.5rem',
+                            backgroundColor: 'var(--color-primary)',
+                            color: 'white',
+                            textDecoration: 'none',
+                            borderRadius: '6px',
+                            fontWeight: 'bold'
+                        }}>
+                            + Create New Content
+                        </a>
+                    </div>
+                    <div style={{ marginTop: '0.5rem' }}>
+                        <a href="/docs" style={{
+                            padding: '0.8rem 1.5rem',
+                            backgroundColor: 'white',
+                            color: 'black',
+                            textDecoration: 'none',
+                            borderRadius: '6px',
+                            fontWeight: 'bold',
+                            border: '1px solid #ccc',
+                            display: 'inline-block'
+                        }}>
+                            View All Docs
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
