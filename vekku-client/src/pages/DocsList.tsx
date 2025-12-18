@@ -20,7 +20,12 @@ export default function DocsList() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetch('http://localhost:8080/api/docs')
+        const token = localStorage.getItem('accessToken');
+        fetch('http://localhost:8080/api/docs', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
             .then(res => res.json())
             .then(data => {
                 setDocs(data);

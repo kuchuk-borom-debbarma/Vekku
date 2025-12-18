@@ -23,7 +23,12 @@ export default function ViewDoc() {
 
     useEffect(() => {
         if (!id) return;
-        fetch(`http://localhost:8080/api/docs/${id}`)
+        const token = localStorage.getItem('accessToken');
+        fetch(`http://localhost:8080/api/docs/${id}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
             .then(res => res.json())
             .then(data => {
                 setDoc(data);

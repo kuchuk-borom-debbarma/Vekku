@@ -17,7 +17,10 @@ export default function CreateContent() {
         try {
             await fetch('http://localhost:8080/api/docs', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                },
                 body: JSON.stringify({ content, type: mode })
             });
             // Go to docs list or view the new doc? Let's go to list for now.
