@@ -21,6 +21,19 @@ public class TagController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping
+    public ResponseEntity<BrainService.TagListDto> getAllTags(
+            @RequestParam(defaultValue = "20") Integer limit,
+            @RequestParam(required = false) String offset) {
+        return ResponseEntity.ok(brainService.getAllTags(limit, offset));
+    }
+
+    @DeleteMapping("/{tagName}")
+    public ResponseEntity<Void> deleteTag(@PathVariable String tagName) {
+        brainService.deleteTag(tagName);
+        return ResponseEntity.ok().build();
+    }
+
     public record LearnTagRequest(String tagName) {
     }
 }

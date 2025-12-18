@@ -75,4 +75,25 @@ public class RemoteBrainService implements BrainService {
 
                 return response != null ? response.scores() : List.of();
         }
+
+        @Override
+        public TagListDto getAllTags(Integer limit, String offset) {
+                String uri = "/tags?limit=" + limit;
+                if (offset != null) {
+                        uri += "&offset=" + offset;
+                }
+
+                return restClient.get()
+                                .uri(uri)
+                                .retrieve()
+                                .body(TagListDto.class);
+        }
+
+        @Override
+        public void deleteTag(String tagName) {
+                restClient.delete()
+                                .uri("/tags/" + tagName)
+                                .retrieve()
+                                .toBodilessEntity();
+        }
 }

@@ -27,4 +27,20 @@ public interface BrainService {
      * ⚖️ SCORE: Evaluates relevance of specific tags against content.
      */
     List<TagScore> scoreTags(List<String> tags, String content);
+
+    /**
+     * 📜 GET ALL TAGS: Paginated list
+     */
+    TagListDto getAllTags(Integer limit, String offset);
+
+    /**
+     * 🗑️ DELETE TAG
+     */
+    void deleteTag(String tagName);
+
+    record TagListDto(java.util.List<TagScoreDto> tags, String nextOffset) {
+    }
+
+    record TagScoreDto(String id, String name) {
+    }
 }
