@@ -1,6 +1,6 @@
 package dev.kbd.vekku_server.cli;
 
-import dev.kbd.vekku_server.services.brain.BrainService;
+import dev.kbd.vekku_server.services.core.embedding.EmbeddingService;
 
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -12,13 +12,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class BrainCommands {
 
-    private final BrainService brainService;
+    private final EmbeddingService embeddingService;
 
     @ShellMethod(key = "brain learn", value = "Teach the AI a concept (Tag)")
     public void brainLearn(@ShellOption String tag, @ShellOption(defaultValue = "") String synonyms) {
         var synonymList = synonyms.isEmpty() ? java.util.List.of(tag)
                 : java.util.List.of(synonyms.split(","));
-        brainService.learnTag(java.util.UUID.randomUUID(), tag, synonymList);
+        embeddingService.learnTag(java.util.UUID.randomUUID(), tag, synonymList);
     }
 
     @ShellMethod(key = "brain suggest", value = "Get tag suggestions (Raw & Regions)")
@@ -29,7 +29,7 @@ public class BrainCommands {
         System.out.println("🧠 Analyzing: \"" + text.substring(0, Math.min(text.length(), 50)) + "...\"");
 
         // 1. Get Raw Tags
-        var rawTags = brainService.getRawTagsByEmbedding(text, threshold, topK);
+        var rawTags = embeddingService.getRawTagsByEmbedding(text, threshold, topK);
         System.out.println("   🌍 Overall Raw Tags:");
         if (rawTags.isEmpty()) {
             System.out.println("      (No tags found)");
@@ -40,7 +40,7 @@ public class BrainCommands {
         System.out.println("   --------------------------------------------------");
 
         // 2. Get Region Tags
-        var regions = brainService.getRegionTags(text, threshold, topK);
+        var regions = embeddingService.getRegionTags(text, threshold, topK);
 
         if (regions.isEmpty()) {
             System.out.println("   (No specific regions found)");

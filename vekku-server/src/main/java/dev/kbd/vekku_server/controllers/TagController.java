@@ -1,7 +1,8 @@
 package dev.kbd.vekku_server.controllers;
 
 import dev.kbd.vekku_server.model.Tag;
-import dev.kbd.vekku_server.services.TagService;
+import dev.kbd.vekku_server.services.core.tag.TagService;
+import dev.kbd.vekku_server.services.orchestration.TagOrchestrator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -23,22 +24,24 @@ import java.util.UUID;
 public class TagController {
 
     private final TagService tagService;
+    private final TagOrchestrator tagOrchestrator;
 
     @PostMapping
     public ResponseEntity<Tag> createTag(@RequestBody CreateTagRequest request) {
-        Tag tag = tagService.createTag(request.alias(), request.synonyms(), "user-default"); // simple user id for now
+        Tag tag = tagOrchestrator.createTag(request.alias(), request.synonyms(), "user-default"); // simple user id for
+                                                                                                  // now
         return ResponseEntity.ok(tag);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Tag> updateTag(@PathVariable UUID id, @RequestBody CreateTagRequest request) {
-        Tag tag = tagService.updateTag(id, request.alias(), request.synonyms());
+        Tag tag = tagOrchestrator.updateTag(id, request.alias(), request.synonyms());
         return ResponseEntity.ok(tag);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTag(@PathVariable UUID id) {
-        tagService.deleteTag(id);
+        tagOrchestrator.deleteTag(id);
         return ResponseEntity.ok().build();
     }
 
