@@ -60,4 +60,10 @@ export class QdrantService {
             points: points
         });
     }
+
+    public async deleteByFilter(filter: any) {
+        return await this.client.delete(config.qdrant.collectionName, {
+            filter: filter
+        });
+    }
 }

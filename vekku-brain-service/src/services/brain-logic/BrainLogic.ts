@@ -38,33 +38,44 @@ export class BrainLogic {
     }
 
     /**
-     * 🧠 LEARN: The Logic from your Javadoc
-     * Embeds the tag and saves it with "type=TAG"
+     * 🧠 LEARN: Semantic Tagging (One Vector per Synonym)
      */
-    public async learnTag(inputTagName: string): Promise<void> {
-        // Normalize to lowercase to ensure "Java" == "java"
-        const tagName = inputTagName.toLowerCase().trim();
+    public async learnTag(tagId: string, alias: string, synonyms: string[]): Promise<void> {
+        console.log(`🎓 Learning concept: "${alias}" (${synonyms.length} synonyms)`);
 
-        console.log(`🎓 Learning concept: "${tagName}" (Input: "${inputTagName}")`);
+        // 1. Clean up old vectors for this Tag ID
+        // (This ensures that if we removed a synonym from the list, it's gone from Qdrant)
+        await this.qdrantService.deleteByFilter({
+            must: [{ key: "tag_id", match: { value: tagId } }]
+        });
 
-        // 1. Convert Text -> Vector
-        const vector = await this.embeddingService.getVector(tagName);
+        // 2. Iterate and Learn
+        const points: any[] = [];
+        const uniqueSynonyms = new Set(synonyms.map(s => s.toLowerCase().trim()));
 
-        // 2. Save to Qdrant
-        const deterministicId = uuidv5(tagName, TAG_NAMESPACE);
+        for (const synonym of uniqueSynonyms) {
+            // Embed
+            const vector = await this.embeddingService.getVector(synonym);
+            // Deterministic ID for this point (TagID + Synonym)
+            const pointId = uuidv5(tagId + synonym, TAG_NAMESPACE);
 
-        await this.qdrantService.upsert([
-            {
-                id: deterministicId,
+            points.push({
+                id: pointId,
                 vector: vector,
                 payload: {
-                    original_name: tagName, // Storing normalized name
-                    type: "TAG" // <--- Crucial Metadata
+                    tag_id: tagId,
+                    alias: alias,
+                    original_name: synonym, // for debugging/exact match
+                    type: "TAG"
                 }
-            }
-        ]);
+            });
+        }
 
-        console.log(`✅ Learned: ${tagName} (ID: ${deterministicId})`);
+        if (points.length > 0) {
+            await this.qdrantService.upsert(points);
+        }
+
+        console.log(`✅ Learned "${alias}" with ${points.length} vectors.`);
     }
 
     /**
@@ -87,10 +98,13 @@ export class BrainLogic {
             { must: [{ key: "type", match: { value: "TAG" } }] }
         );
 
-        // Deduplicate by name, keeping highest score
+        // Deduplicate by ALIAS, keeping highest score
         const uniqueTags = new Map<string, number>();
         for (const hit of globalSearchResult) {
-            const name = hit.payload?.original_name as string;
+            const alias = hit.payload?.alias as string;
+            // Fallback to original_name if alias missing (backward compat or legacy data)
+            const name = alias || (hit.payload?.original_name as string);
+
             if (name) {
                 if (!uniqueTags.has(name) || hit.score > uniqueTags.get(name)!) {
                     uniqueTags.set(name, hit.score);
@@ -128,10 +142,12 @@ export class BrainLogic {
                 { must: [{ key: "type", match: { value: "TAG" } }] }
             );
 
-            // Deduplicate tags for this chunk
+            // Deduplicate by ALIAS
             const uniqueChunkTags = new Map<string, number>();
             for (const hit of chunkResults) {
-                const name = hit.payload?.original_name as string;
+                const alias = hit.payload?.alias as string;
+                const name = alias || (hit.payload?.original_name as string);
+
                 if (name) {
                     if (!uniqueChunkTags.has(name) || hit.score > uniqueChunkTags.get(name)!) {
                         uniqueChunkTags.set(name, hit.score);
@@ -215,11 +231,10 @@ export class BrainLogic {
      * 🗑️ DELETE TAG
      */
     public async deleteTag(tagName: string): Promise<void> {
-        const normalizedName = tagName.toLowerCase().trim();
-        const deterministicId = uuidv5(normalizedName, TAG_NAMESPACE);
-
-        console.log(`🗑️ Deleting tag: ${normalizedName} (ID: ${deterministicId})`);
-
-        await this.qdrantService.delete([deterministicId]);
+        console.log(`🗑️ Deleting tag by alias: ${tagName}`);
+        // We delete by ALIAS filter because we might not have the UUID here in this legacy endpoint
+        await this.qdrantService.deleteByFilter({
+            must: [{ key: "alias", match: { value: tagName } }]
+        });
     }
 }

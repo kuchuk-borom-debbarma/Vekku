@@ -6,19 +6,19 @@ export const BrainController = {
 
     /**
      * POST /learn
-     * Body: { tag_name: string }
+     * Body: { id: string, alias: string, synonyms: string[] }
      */
     Learn: async (req: Request, res: Response) => {
-        const tagName = req.body.tag_name;
+        const { id, alias, synonyms } = req.body;
 
-        if (!tagName) {
-            return res.status(400).json({ error: "tag_name is required" });
+        if (!id || !alias || !Array.isArray(synonyms)) {
+            return res.status(400).json({ error: "id, alias, and synonyms (array) are required" });
         }
 
         try {
             // Call the Logic
             const brain = BrainLogic.getInstance();
-            await brain.learnTag(tagName);
+            await brain.learnTag(id, alias, synonyms);
 
             // Respond success
             return res.json({});

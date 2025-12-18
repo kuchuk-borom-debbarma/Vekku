@@ -20,6 +20,8 @@ app.post('/learn', BrainController_1.BrainController.Learn);
 app.post('/raw-tags', BrainController_1.BrainController.GetRawTags);
 app.post('/region-tags', BrainController_1.BrainController.GetRegionTags);
 app.post('/score-tags', BrainController_1.BrainController.ScoreTags);
+app.get('/tags', BrainController_1.BrainController.GetAllTags);
+app.delete('/tags/:name', BrainController_1.BrainController.DeleteTag);
 // Initialize AI/DB *before* accepting requests
 const brain = BrainLogic_1.BrainLogic.getInstance();
 brain.initialize().then(() => {

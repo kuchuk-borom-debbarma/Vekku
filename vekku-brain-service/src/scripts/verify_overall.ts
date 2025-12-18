@@ -21,14 +21,17 @@ async function verifyOverallTags() {
     const brain = BrainLogic.getInstance();
 
     // Pre-teach some tags to ensure we have matches
-    await brain.learnTag("Space");
-    await brain.learnTag("Mars");
-    await brain.learnTag("Cooking");
-    await brain.learnTag("Pasta");
-    await brain.learnTag("Java"); // Control tag, shouldn't appear
+    await brain.learnTag("uuid-1", "Space", ["Space", "Cosmos"]);
+    await brain.learnTag("uuid-2", "Mars", ["Mars", "Red Planet"]);
+    await brain.learnTag("uuid-3", "Cooking", ["Cooking", "Culinary"]);
+    await brain.learnTag("uuid-4", "Pasta", ["Pasta", "Spaghetti"]);
+    await brain.learnTag("uuid-5", "Java", ["Java", "JDK"]); // Control tag, shouldn't appear
 
     console.log("🔎 Asking for suggestions...");
-    const result = await brain.suggestTags(text, 0.4, 10);
+    const globalTags = await brain.getRawTagsByEmbedding(text, 0.4, 10);
+    const regions = await brain.getRegionTags(text, 0.4, 10);
+
+    const result = { overallTags: globalTags, regions: regions };
 
     console.log("\n--- REGIONS ---");
     result.regions.forEach((r: any, i: number) => {
@@ -41,8 +44,8 @@ async function verifyOverallTags() {
     });
 
     // Simple assertions
-    const hasSpace = result.overallTags.some(t => t.name === "Space");
-    const hasCooking = result.overallTags.some(t => t.name === "Cooking");
+    const hasSpace = result.overallTags.some((t: any) => t.name === "Space");
+    const hasCooking = result.overallTags.some((t: any) => t.name === "Cooking");
 
     if (hasSpace && hasCooking) {
         console.log("\n✅ SUCCESS: Both topics detected in overall tags.");

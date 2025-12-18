@@ -6,17 +6,17 @@ const BrainLogic_1 = require("../services/brain-logic/BrainLogic");
 exports.BrainController = {
     /**
      * POST /learn
-     * Body: { tag_name: string }
+     * Body: { id: string, alias: string, synonyms: string[] }
      */
     Learn: async (req, res) => {
-        const tagName = req.body.tag_name;
-        if (!tagName) {
-            return res.status(400).json({ error: "tag_name is required" });
+        const { id, alias, synonyms } = req.body;
+        if (!id || !alias || !Array.isArray(synonyms)) {
+            return res.status(400).json({ error: "id, alias, and synonyms (array) are required" });
         }
         try {
             // Call the Logic
             const brain = BrainLogic_1.BrainLogic.getInstance();
-            await brain.learnTag(tagName);
+            await brain.learnTag(id, alias, synonyms);
             // Respond success
             return res.json({});
         }
@@ -90,4 +90,38 @@ exports.BrainController = {
             return res.status(500).json({ error: errorMessage });
         }
     },
+    /**
+     * GET /tags?limit=20&offset=x
+     */
+    GetAllTags: async (req, res) => {
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = req.query.offset;
+        try {
+            const brain = BrainLogic_1.BrainLogic.getInstance();
+            const result = await brain.getAllTags(limit, offset);
+            return res.json(result);
+        }
+        catch (error) {
+            console.error("❌ Error in GetAllTags:", error);
+            return res.status(500).json({ error: "Failed to fetch tags" });
+        }
+    },
+    /**
+     * DELETE /tags/:name
+     */
+    DeleteTag: async (req, res) => {
+        const tagName = req.params.name;
+        if (!tagName) {
+            return res.status(400).json({ error: "Tag name required" });
+        }
+        try {
+            const brain = BrainLogic_1.BrainLogic.getInstance();
+            await brain.deleteTag(tagName);
+            return res.json({ success: true });
+        }
+        catch (error) {
+            console.error("❌ Error in DeleteTag:", error);
+            return res.status(500).json({ error: "Failed to delete tag" });
+        }
+    }
 };
