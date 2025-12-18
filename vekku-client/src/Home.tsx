@@ -3,7 +3,6 @@ import { useAuth } from './components/auth/AuthProvider';
 import { Layout } from './components/ui/Layout';
 import { Button } from './components/ui/Button';
 import { Card } from './components/ui/Card';
-
 export default function Home() {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -60,6 +59,14 @@ export default function Home() {
                             style={{ width: '100%' }}
                         >
                             View All Documents
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            size="lg"
+                            onClick={() => navigate('/tags')}
+                            style={{ width: '100%' }}
+                        >
+                            🏷️ Manage Tags
                         </Button>
                     </div>
                 </Card>
