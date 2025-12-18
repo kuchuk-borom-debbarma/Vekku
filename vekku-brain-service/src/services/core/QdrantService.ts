@@ -44,4 +44,20 @@ export class QdrantService {
             filter: filter
         });
     }
+
+    public async scroll(limit: number, offset?: string | number, filter?: any) {
+        return await this.client.scroll(config.qdrant.collectionName, {
+            limit: limit,
+            offset: offset,
+            filter: filter,
+            with_payload: true,
+            with_vector: false
+        });
+    }
+
+    public async delete(points: string[]) {
+        return await this.client.delete(config.qdrant.collectionName, {
+            points: points
+        });
+    }
 }

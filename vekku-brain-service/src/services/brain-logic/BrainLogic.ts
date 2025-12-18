@@ -191,4 +191,35 @@ export class BrainLogic {
 
         return results;
     }
+
+    /**
+     * 📜 GET ALL TAGS: Paginated list
+     */
+    public async getAllTags(limit: number = 20, offset?: string | number): Promise<{ tags: any[], nextOffset?: string | number }> {
+        const result = await this.qdrantService.scroll(limit, offset, {
+            must: [{ key: "type", match: { value: "TAG" } }]
+        });
+
+        const tags = result.points.map(point => ({
+            id: point.id,
+            name: point.payload?.original_name
+        }));
+
+        return {
+            tags: tags,
+            nextOffset: (result.next_page_offset as any) || undefined
+        };
+    }
+
+    /**
+     * 🗑️ DELETE TAG
+     */
+    public async deleteTag(tagName: string): Promise<void> {
+        const normalizedName = tagName.toLowerCase().trim();
+        const deterministicId = uuidv5(normalizedName, TAG_NAMESPACE);
+
+        console.log(`🗑️ Deleting tag: ${normalizedName} (ID: ${deterministicId})`);
+
+        await this.qdrantService.delete([deterministicId]);
+    }
 }

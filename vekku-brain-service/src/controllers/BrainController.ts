@@ -101,4 +101,42 @@ export const BrainController = {
         }
     },
 
+
+    /**
+     * GET /tags?limit=20&offset=x
+     */
+    GetAllTags: async (req: Request, res: Response) => {
+        const limit = parseInt(req.query.limit as string) || 20;
+        const offset = req.query.offset as string | undefined;
+
+        try {
+            const brain = BrainLogic.getInstance();
+            const result = await brain.getAllTags(limit, offset);
+            return res.json(result);
+        } catch (error: unknown) {
+            console.error("❌ Error in GetAllTags:", error);
+            return res.status(500).json({ error: "Failed to fetch tags" });
+        }
+    },
+
+    /**
+     * DELETE /tags/:name
+     */
+    DeleteTag: async (req: Request, res: Response) => {
+        const tagName = req.params.name;
+
+        if (!tagName) {
+            return res.status(400).json({ error: "Tag name required" });
+        }
+
+        try {
+            const brain = BrainLogic.getInstance();
+            await brain.deleteTag(tagName);
+            return res.json({ success: true });
+        } catch (error: unknown) {
+            console.error("❌ Error in DeleteTag:", error);
+            return res.status(500).json({ error: "Failed to delete tag" });
+        }
+    }
+
 };

@@ -21,6 +21,9 @@ app.post('/raw-tags', BrainController.GetRawTags);
 app.post('/region-tags', BrainController.GetRegionTags);
 app.post('/score-tags', BrainController.ScoreTags);
 
+app.get('/tags', BrainController.GetAllTags);
+app.delete('/tags/:name', BrainController.DeleteTag);
+
 
 // Initialize AI/DB *before* accepting requests
 const brain = BrainLogic.getInstance();
