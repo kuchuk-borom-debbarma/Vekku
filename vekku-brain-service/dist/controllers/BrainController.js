@@ -89,5 +89,5 @@ exports.BrainController = {
             const errorMessage = error instanceof Error ? error.message : "Unknown error";
             return res.status(500).json({ error: errorMessage });
         }
-    }
+    },
 };

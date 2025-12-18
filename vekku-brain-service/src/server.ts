@@ -20,7 +20,7 @@ app.post('/learn', BrainController.Learn);
 app.post('/raw-tags', BrainController.GetRawTags);
 app.post('/region-tags', BrainController.GetRegionTags);
 app.post('/score-tags', BrainController.ScoreTags);
-app.post('/suggest-combined', BrainController.SuggestCombinedTags);
+
 
 // Initialize AI/DB *before* accepting requests
 const brain = BrainLogic.getInstance();

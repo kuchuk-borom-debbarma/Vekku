@@ -100,27 +100,5 @@ export const BrainController = {
             return res.status(500).json({ error: errorMessage });
         }
     },
-    /**
-     * POST /suggest-combined
-     * Body: { content: string, threshold?: number, topK?: number }
-     * Returns: { tags: [{ name: string, score: number }] }
-     */
-    SuggestCombinedTags: async (req: Request, res: Response) => {
-        const { content, threshold, topK } = req.body;
 
-        if (!content) {
-            return res.status(400).json({ error: "content is required" });
-        }
-
-        try {
-            const brain = BrainLogic.getInstance();
-            const result = await brain.suggestOverallRegionCombinedTags(content, threshold, topK);
-            // Return wrapped in 'tags' for consistency with GetRawTags
-            return res.json({ tags: result });
-        } catch (error: unknown) {
-            console.error("❌ Error in SuggestCombinedTags:", error);
-            const errorMessage = error instanceof Error ? error.message : "Unknown error";
-            return res.status(500).json({ error: errorMessage });
-        }
-    }
 };
