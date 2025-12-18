@@ -20,5 +20,8 @@
 			"path": "vekku-dev-client",
 			"name": "Dev Client"
 		}
-	]
+	],
+	"settings": {
+		"java.compile.nullAnalysis.mode": "automatic"
+	}
 }
