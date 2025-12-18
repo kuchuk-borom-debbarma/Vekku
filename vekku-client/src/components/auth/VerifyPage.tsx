@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../AuthProvider';
-import { Layout } from '../../ui/Layout';
-import { Card } from '../../ui/Card';
-import { Button } from '../../ui/Button';
+import { useAuth } from './AuthProvider';
+
+import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
 
 export default function VerifyPage() {
     const [email, setEmail] = useState('');

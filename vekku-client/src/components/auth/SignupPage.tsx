@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../AuthProvider';
-import { Card } from '../../ui/Card';
-import { Button } from '../../ui/Button';
+import { useAuth } from './AuthProvider';
+import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
 
 export default function SignupPage() {
     const [firstName, setFirstName] = useState('');
@@ -16,7 +16,7 @@ export default function SignupPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await signup(firstName, lastName, email, password);
+            await signup({ firstName, lastName, email, password });
             navigate('/verify');
         } catch (err) {
             setError('Signup failed. Email might be in use.');

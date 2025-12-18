@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { AppShell, Group, Button, Text, Container } from '@mantine/core';
 
 interface LayoutProps {
     children: ReactNode;
@@ -11,72 +12,55 @@ export function Layout({ children }: LayoutProps) {
     const location = useLocation();
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            {/* Navbar */}
-            <header style={{
-                height: '64px',
-                borderBottom: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-bg-surface)',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0 2rem',
-                justifyContent: 'space-between',
-                position: 'sticky',
-                top: 0,
-                zIndex: 10
-            }}>
-                <Link to="/" style={{
-                    fontSize: '1.25rem',
-                    fontWeight: 700,
-                    background: 'linear-gradient(135deg, #fff 0%, #aaa 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    letterSpacing: '-0.5px'
-                }}>
-                    🌌 Vekku
-                </Link>
-
-                <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                    {user && (
-                        <>
-                            <Link to="/docs" style={{
-                                color: location.pathname.startsWith('/docs') ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                                fontSize: '0.95rem',
-                                fontWeight: 500
-                            }}>Documents</Link>
-
-                            <div style={{ width: '1px', height: '20px', background: 'var(--color-border)' }} />
-
-                            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-tertiary)' }}>
-                                {user.email}
-                            </span>
-                            <button
-                                onClick={logout}
-                                style={{
-                                    fontSize: '0.85rem',
-                                    padding: '0.4rem 0.8rem',
-                                    borderRadius: 'var(--radius-sm)',
-                                    color: 'var(--color-text-secondary)',
-                                    backgroundColor: 'var(--color-brand-secondary)'
-                                }}
+        <AppShell
+            header={{ height: 60 }}
+            padding="md"
+        >
+            <AppShell.Header>
+                <Container size="lg" h="100%">
+                    <Group h="100%" px="md" justify="space-between">
+                        <Link to="/" style={{ textDecoration: 'none' }}>
+                            <Text
+                                size="xl"
+                                fw={900}
+                                variant="gradient"
+                                gradient={{ from: 'violet', to: 'cyan', deg: 45 }}
                             >
-                                Logout
-                            </button>
-                        </>
-                    )}
-                </nav>
-            </header>
+                                🌌 Vekku
+                            </Text>
+                        </Link>
 
-            {/* Main Content */}
-            <main style={{
-                flex: 1,
-                width: '100%',
-                maxWidth: '1200px',
-                margin: '0 auto',
-                padding: '2rem'
-            }}>
-                {children}
-            </main>
-        </div>
+                        <Group gap="md" visibleFrom="xs">
+                            {user && (
+                                <>
+                                    <Button
+                                        component={Link}
+                                        to="/docs"
+                                        variant={location.pathname.startsWith('/docs') ? 'light' : 'subtle'}
+                                    >
+                                        Documents
+                                    </Button>
+
+                                    <Text size="sm" c="dimmed">
+                                        {user.email}
+                                    </Text>
+                                    <Button onClick={logout} variant="default" size="xs">
+                                        Logout
+                                    </Button>
+                                </>
+                            )}
+                        </Group>
+
+                        {/* Mobile menu could go here */}
+                    </Group>
+                </Container>
+            </AppShell.Header>
+
+            <AppShell.Main>
+                <Container size="lg">
+                    {children}
+                </Container>
+            </AppShell.Main>
+        </AppShell>
     );
 }

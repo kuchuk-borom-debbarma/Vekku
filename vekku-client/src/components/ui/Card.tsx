@@ -1,23 +1,15 @@
-import { HTMLAttributes, ReactNode } from 'react';
+import { Paper } from '@mantine/core';
+import type { PaperProps } from '@mantine/core';
+import { ReactNode } from 'react';
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
+interface CardProps extends PaperProps {
     children: ReactNode;
 }
 
-export function Card({ children, style, ...props }: CardProps) {
+export function Card({ children, ...props }: CardProps) {
     return (
-        <div
-            style={{
-                backgroundColor: 'var(--color-bg-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-md)',
-                padding: '1.5rem',
-                boxShadow: 'var(--shadow-sm)',
-                ...style
-            }}
-            {...props}
-        >
+        <Paper withBorder p="xl" radius="md" shadow="sm" {...props}>
             {children}
-        </div>
+        </Paper>
     );
 }

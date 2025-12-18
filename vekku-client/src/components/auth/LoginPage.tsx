@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../AuthProvider';
-import { Card } from '../../ui/Card';
-import { Button } from '../../ui/Button';
+import { useAuth } from './AuthProvider';
+import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -14,7 +14,7 @@ export default function LoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await login(email, password);
+            await login({ email, password });
             navigate('/');
         } catch (err) {
             setError('Invalid credentials');
