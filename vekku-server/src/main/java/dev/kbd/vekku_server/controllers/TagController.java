@@ -46,8 +46,10 @@ public class TagController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Tag>> getAllTags() {
-        return ResponseEntity.ok(tagService.getAllTags());
+    public ResponseEntity<dev.kbd.vekku_server.services.core.tag.dto.TagPageDto> getAllTags(
+            @RequestParam(required = false, defaultValue = "20") Integer limit,
+            @RequestParam(required = false) String cursor) {
+        return ResponseEntity.ok(tagService.getTags(limit, cursor));
     }
 
     public record CreateTagRequest(String alias, List<String> synonyms) {

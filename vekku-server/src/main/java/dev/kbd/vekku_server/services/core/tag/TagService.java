@@ -81,4 +81,26 @@ public class TagService {
     public List<Tag> getAllTags() {
         return tagRepository.findAll();
     }
+
+    public dev.kbd.vekku_server.services.core.tag.dto.TagPageDto getTags(Integer limit, String cursor) {
+        log.info("Fetching tags with limit: {}, cursor: {}", limit, cursor);
+        int fetchLimit = limit + 1; // Fetch one extra to check if there's a next page
+
+        List<Tag> tags;
+        if (cursor != null && !cursor.isEmpty()) {
+            tags = tagRepository.findByNameGreaterThanOrderByNameAsc(cursor,
+                    org.springframework.data.domain.PageRequest.of(0, fetchLimit));
+        } else {
+            tags = tagRepository.findAllByOrderByNameAsc(org.springframework.data.domain.PageRequest.of(0, fetchLimit));
+        }
+
+        String nextCursor = null;
+        if (tags.size() > limit) {
+            // We have a next page
+            tags = tags.subList(0, limit);
+            nextCursor = tags.get(tags.size() - 1).getName();
+        }
+
+        return new dev.kbd.vekku_server.services.core.tag.dto.TagPageDto(tags, nextCursor);
+    }
 }
