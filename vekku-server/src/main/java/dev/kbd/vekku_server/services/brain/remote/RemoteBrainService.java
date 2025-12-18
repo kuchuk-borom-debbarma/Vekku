@@ -29,6 +29,9 @@ public class RemoteBrainService implements BrainService {
 
         /**
          * Sends a "Learn" request to the Brain Service.
+         * <p>
+         * Endpoint: POST /learn
+         * Payload: { id, alias, synonyms }
          */
         @Override
         public void learnTag(java.util.UUID id, String alias, List<String> synonyms) {
@@ -40,6 +43,11 @@ public class RemoteBrainService implements BrainService {
                                 .toBodilessEntity();
         }
 
+        /**
+         * Retrieves raw semantic tags for a given content string.
+         * <p>
+         * Endpoint: POST /raw-tags
+         */
         @Override
         public List<TagScore> getRawTagsByEmbedding(String content, Double threshold, Integer topK) {
                 RawTagsResponse response = restClient.post()
@@ -52,6 +60,13 @@ public class RemoteBrainService implements BrainService {
                 return response != null ? response.tags() : List.of();
         }
 
+        /**
+         * Analyzes content and returns tags mapped to specific regions (chunks) of
+         * text.
+         * Useful for long-form content.
+         * <p>
+         * Endpoint: POST /region-tags
+         */
         @Override
         public List<ContentRegionTags> getRegionTags(String content, Double threshold, Integer topK) {
                 RegionTagsResponse response = restClient.post()

@@ -11,6 +11,17 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 🏷️ Tag Service
+ * <p>
+ * Orchestrates the lifecycle of Tags within the Vekku system.
+ * Acts as the bridge between the persistent SQL storage (PostgreSQL) and the
+ * Semantic AI Brain (Qdrant).
+ * <p>
+ * Responsibilities:
+ * 1. CRUD operations for Tag Entities.
+ * 2. Synchronization with Brain Service (Learning/Unlearning concepts).
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -19,6 +30,16 @@ public class TagService {
     private final TagRepository tagRepository;
     private final BrainService brainService;
 
+    /**
+     * Creates a new Semantic Tag and indexes it in the Brain.
+     * 
+     * @param alias    The human-readable display name (e.g., "Frontend").
+     * @param synonyms A list of alternative terms (e.g., ["React", "Vue", "CSS"]).
+     *                 If null or empty, defaults to a list containing just the
+     *                 alias.
+     * @param userId   The owner of the tag.
+     * @return The persisted Tag entity.
+     */
     @Transactional
     public Tag createTag(String alias, List<String> synonyms, String userId) {
         if (synonyms == null || synonyms.isEmpty()) {
@@ -40,6 +61,18 @@ public class TagService {
         return tag;
     }
 
+    /**
+     * Updates an existing Tag's alias or synonyms.
+     * <p>
+     * ⚡️ Side Effect: Triggers a "Re-Learn" in the Brain Service.
+     * The Brain will delete all old vectors associated with this Tag ID and
+     * re-index the new list of synonyms.
+     * 
+     * @param id       The UUID of the tag to update.
+     * @param alias    New display name.
+     * @param synonyms New list of synonyms.
+     * @return The updated Tag entity.
+     */
     @Transactional
     public Tag updateTag(UUID id, String alias, List<String> synonyms) {
         log.info("Updating tag: {}", id);
@@ -96,6 +129,11 @@ public class TagService {
         return tag;
     }
 
+    /**
+     * Deletes a Tag from both Postgres and the Brain.
+     * 
+     * @param id The UUID of the tag to delete.
+     */
     @Transactional
     public void deleteTag(UUID id) {
         Tag tag = tagRepository.findById(id).orElseThrow();

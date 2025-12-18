@@ -10,6 +10,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 🎮 Tag Controller
+ * <p>
+ * REST API for managing Semantic Tags.
+ * Endpoints consumed by the Frontend (ManageTags.tsx).
+ */
 @RestController
 @RequestMapping("/api/tags")
 @RequiredArgsConstructor
