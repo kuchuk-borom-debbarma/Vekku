@@ -1,27 +1,5 @@
 services:
   # --- 1. The Knowledge Graph ---
-  neo4j:
-    image: neo4j:community
-    container_name: vekku-neo4j
-    hostname: vekku-neo4j
-    ports:
-      - "7474:7474" # HTTP Browser
-      - "7687:7687" # Bolt Protocol
-    environment:
-      - NEO4J_AUTH=neo4j/vekku_secret
-      # UPDATED FOR NEO4J 5.x (Replaced 'dbms' with 'server')
-      - NEO4J_server_memory_pagecache_size=512M
-      - NEO4J_server_memory_heap_initial__size=512M
-      - NEO4J_server_memory_heap_max__size=1G
-      # Allow upgrades if data format changes
-      - NEO4J_dbms_allow__upgrade=true
-    volumes:
-      - ./vekku_data/neo4j/data:/data
-      - ./vekku_data/neo4j/logs:/logs
-      - ./vekku_data/neo4j/conf:/conf
-    networks:
-      - vekku-net
-    restart: unless-stopped
 
   # --- 2. The Vector Brain ---
   qdrant:

@@ -9,11 +9,6 @@ public record ContentRegionTags(
                 String regionContent,
                 int regionStartIndex,
                 int regionEndIndex,
-                List<TagScore> tagScores,
-                List<TagPath> taxonomyPaths) {
+                List<TagScore> tagScores) {
 
-        public ContentRegionTags(String regionContent, int regionStartIndex, int regionEndIndex,
-                        List<TagScore> tagScores) {
-                this(regionContent, regionStartIndex, regionEndIndex, tagScores, java.util.Collections.emptyList());
-        }
 }
