@@ -167,11 +167,7 @@ export class BrainLogic {
     /**
      * 🧠 SUGGEST TAGS: Combined overall and region tags
      */
-    public async suggestTags(content: string, threshold: number = 0.3, topK: number = 10) {
-        const overallTags = await this.getRawTagsByEmbedding(content, threshold, topK);
-        const regions = await this.getRegionTags(content, threshold, topK);
-        return { overallTags, regions };
-    }
+
 
 
 
