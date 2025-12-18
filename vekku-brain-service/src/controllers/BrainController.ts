@@ -2,6 +2,12 @@ import { Request, Response } from 'express';
 import { BrainLogic } from '../services/brain-logic/BrainLogic';
 
 // Express Controller
+/**
+ * 🎮 Brain Controller
+ * 
+ * Exposes BrainLogic functions via HTTP REST endpoints.
+ * Called by the Spring Boot Server (`vekku-server`).
+ */
 export const BrainController = {
 
     /**

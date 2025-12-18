@@ -1,6 +1,13 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { config } from '../../config';
 
+/**
+ * 📦 Qdrant Service
+ * 
+ * Wrapper around the Qdrant REST Client.
+ * Handles low-level Vector Database operations (search, upsert, delete).
+ * - Singleton Pattern
+ */
 export class QdrantService {
     private static instance: QdrantService;
     private client: QdrantClient;
