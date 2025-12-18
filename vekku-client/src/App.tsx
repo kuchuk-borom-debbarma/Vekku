@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './Home';
 import { AuthProvider } from './components/auth/AuthProvider';
 import SignupPage from './components/auth/SignupPage';
@@ -8,6 +8,7 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import CreateContent from './pages/CreateContent';
 import ViewDoc from './pages/ViewDoc';
 import DocsList from './pages/DocsList';
+import ManageTags from './pages/ManageTags';
 import './App.css';
 
 import { MantineProvider, createTheme } from '@mantine/core';
@@ -42,6 +43,11 @@ function App() {
             <Route path="/docs/:id" element={
               <ProtectedRoute>
                 <ViewDoc />
+              </ProtectedRoute>
+            } />
+            <Route path="/tags" element={
+              <ProtectedRoute>
+                <ManageTags />
               </ProtectedRoute>
             } />
             <Route path="/signup" element={<SignupPage />} />
