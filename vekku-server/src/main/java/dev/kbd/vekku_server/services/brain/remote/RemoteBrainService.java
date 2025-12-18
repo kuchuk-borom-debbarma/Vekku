@@ -103,24 +103,4 @@ public class RemoteBrainService implements BrainService {
 
                 return response != null ? response.scores() : List.of();
         }
-
-        @Override
-        public List<dev.kbd.vekku_server.services.brain.model.TagScore> suggestCombinedTags(String content,
-                        Double threshold, Integer topK) {
-                record SuggestCombinedRequest(String content, Double threshold, Integer topK) {
-                }
-                // Reusing RawTagsResponse structure as it is { tags: [...] }
-                record SuggestCombinedResponse(
-                                List<dev.kbd.vekku_server.services.brain.model.TagScore> tags) {
-                }
-
-                SuggestCombinedResponse response = restClient.post()
-                                .uri("/suggest-combined")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .body(new SuggestCombinedRequest(content, threshold, topK))
-                                .retrieve()
-                                .body(SuggestCombinedResponse.class);
-
-                return response != null ? response.tags() : List.of();
-        }
 }

@@ -62,16 +62,4 @@ public class BrainController {
         return brainService.getRegionTags(content, threshold, topK);
     }
 
-    /**
-     * Get Combined Tags (Overall + Regions)
-     */
-    @PostMapping("/suggest-combined")
-    public List<TagScore> suggestCombinedTags(@RequestBody TagRequest request) {
-        String content = request.content();
-        Double threshold = request.threshold() != null ? request.threshold() : 0.3;
-        Integer topK = request.topK() != null ? request.topK() : 10;
-
-        log.info("Requesting Combined Tags (Len: {}, Thresh: {}, TopK: {})", content.length(), threshold, topK);
-        return brainService.suggestCombinedTags(content, threshold, topK);
-    }
 }
