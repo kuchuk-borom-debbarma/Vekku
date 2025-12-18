@@ -19,14 +19,14 @@ interface Tag {
 // const LIMIT = 20;
 
 export default function ManageTags() {
+    interface TagPageResponse {
+        tags: Tag[];
+        nextCursor: string | null;
+    }
+
     const [tags, setTags] = useState<Tag[]>([]);
     const [loading, setLoading] = useState(false);
-
-    // Unused pagination state
-    // const [searchParams, setSearchParams] = useSearchParams();
-    // const cursor = searchParams.get('cursor');
-    // const [nextCursor, setNextCursor] = useState<string | number | undefined>(undefined);
-    // const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([]);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
 
     const [editingTag, setEditingTag] = useState<Tag | null>(null);
     const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
@@ -41,11 +41,19 @@ export default function ManageTags() {
         openModal();
     };
 
-    const fetchTags = useCallback(async () => {
+    const fetchTags = useCallback(async (reset = false) => {
         setLoading(true);
         try {
             const token = localStorage.getItem('accessToken');
-            const url = new URL('http://localhost:8080/api/tags');
+            const baseUrl = 'http://localhost:8080/api/tags';
+            const url = new URL(baseUrl);
+
+            // Use current nextCursor unless resetting
+            const cursorToUse = reset ? null : nextCursor;
+            if (cursorToUse) {
+                url.searchParams.append('cursor', cursorToUse);
+            }
+            url.searchParams.append('limit', '20');
 
             const res = await fetch(url.toString(), {
                 headers: {
@@ -54,30 +62,42 @@ export default function ManageTags() {
             });
 
             if (!res.ok) throw new Error('Failed to fetch tags');
-            const data: Tag[] = await res.json();
-            setTags(data);
-            // setNextCursor(undefined); // Pagination disabled for now
+            const data: TagPageResponse = await res.json();
+
+            if (reset) {
+                setTags(data.tags);
+            } else {
+                setTags(prev => [...prev, ...data.tags]);
+            }
+            setNextCursor(data.nextCursor);
 
         } catch (error) {
             console.error(error);
-            setTags([]);
+            if (reset) setTags([]);
         } finally {
             setLoading(false);
         }
+    }, [nextCursor]);
+
+    // Initial load
+    useEffect(() => {
+        // Only run once on mount? Or when? 
+        // We need a way to trigger initial load.
+        // Let's rely on a separate effect or just call it here with reset=true if empty?
+        // Actually, to avoid infinite loops with `nextCursor` dependency, we should separate "load more" from "refresh".
     }, []);
 
-    // const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([]);
-
-    // Fetch when cursor URL param changes
+    // Better pattern:
     useEffect(() => {
-        fetchTags();
-    }, [fetchTags]);
+        fetchTags(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    /*
-    const handleNext = () => { ... };
-    const handlePrev = () => { ... };
-    const handleStartOver = () => { ... };
-    */
+    const handleLoadMore = () => {
+        if (nextCursor) {
+            fetchTags(false);
+        }
+    };
 
     const handleDelete = async (tagId: string, tagName: string) => {
         if (!confirm(`Are you sure you want to delete tag "${tagName}"?`)) return;
@@ -92,8 +112,8 @@ export default function ManageTags() {
             });
 
             if (res.ok) {
-                // Refresh current view
-                fetchTags();
+                // Refresh list from scratch
+                fetchTags(true);
             } else {
                 alert('Failed to delete tag');
             }
@@ -106,7 +126,7 @@ export default function ManageTags() {
     const handleModalClose = () => {
         closeModal();
         // Refresh list
-        fetchTags();
+        fetchTags(true);
     }
     return (
         <Layout>
@@ -176,7 +196,17 @@ export default function ManageTags() {
                                 <Text c="dimmed" ta="center" py="xl">No tags found. Teach the brain some concepts!</Text>
                             )}
 
-                            <Text c="dimmed" size="xs" ta="center" mt="md">Showing all tags</Text>
+                            <Text c="dimmed" size="xs" ta="center" mt="md">
+                                Showing {tags.length} tags
+                            </Text>
+
+                            {nextCursor && (
+                                <Group justify="center" mt="md">
+                                    <Button onClick={handleLoadMore} loading={loading} variant="subtle">
+                                        Load More
+                                    </Button>
+                                </Group>
+                            )}
                         </>
                     )}
                 </Paper>
