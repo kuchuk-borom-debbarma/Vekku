@@ -1,68 +1,118 @@
 import { useState } from 'react';
-import { useAuth } from './AuthProvider';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../AuthProvider';
+import { Card } from '../../ui/Card';
+import { Button } from '../../ui/Button';
 
 export default function SignupPage() {
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
     const { signup } = useAuth();
     const navigate = useNavigate();
-    const [formData, setFormData] = useState({ email: '', password: '', firstName: '', lastName: '' });
-    const [error, setError] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
-        setIsSubmitting(true);
         try {
-            await signup(formData);
-            navigate(`/verify?email=${formData.email}`);
+            await signup(firstName, lastName, email, password);
+            navigate('/verify');
         } catch (err) {
-            setError('Signup failed. Please try again.');
-            setIsSubmitting(false);
+            setError('Signup failed. Email might be in use.');
         }
     };
 
     return (
-        <div className="auth-page">
-            <div className="auth-card">
-                <div className="auth-header">
-                    <h2>Create Account</h2>
-                    <p>Join the Vekku platform</p>
-                </div>
+        <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh',
+            padding: '2rem'
+        }}>
+            <Card style={{ width: '100%', maxWidth: '400px' }}>
+                <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Create Account</h2>
+                {error && <div style={{ color: 'hsl(0, 70%, 60%)', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
 
-                {error && <div className="auth-error">{error}</div>}
-
-                <form onSubmit={handleSubmit} className="auth-form">
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>First Name</label>
-                            <input type="text" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} required placeholder="Jane" />
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div style={{ flex: 1 }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>First Name</label>
+                            <input
+                                type="text"
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                                required
+                                style={{
+                                    width: '100%',
+                                    padding: '0.8rem',
+                                    borderRadius: 'var(--radius-sm)',
+                                    border: '1px solid var(--color-border)',
+                                    backgroundColor: 'var(--color-bg-app)',
+                                    color: 'var(--color-text-primary)'
+                                }}
+                            />
                         </div>
-                        <div className="form-group">
-                            <label>Last Name</label>
-                            <input type="text" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} required placeholder="Doe" />
+                        <div style={{ flex: 1 }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Last Name</label>
+                            <input
+                                type="text"
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                                required
+                                style={{
+                                    width: '100%',
+                                    padding: '0.8rem',
+                                    borderRadius: 'var(--radius-sm)',
+                                    border: '1px solid var(--color-border)',
+                                    backgroundColor: 'var(--color-bg-app)',
+                                    color: 'var(--color-text-primary)'
+                                }}
+                            />
                         </div>
                     </div>
-
-                    <div className="form-group">
-                        <label>Email Address</label>
-                        <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} required placeholder="name@example.com" />
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Email</label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            style={{
+                                width: '100%',
+                                padding: '0.8rem',
+                                borderRadius: 'var(--radius-sm)',
+                                border: '1px solid var(--color-border)',
+                                backgroundColor: 'var(--color-bg-app)',
+                                color: 'var(--color-text-primary)'
+                            }}
+                        />
                     </div>
-
-                    <div className="form-group">
-                        <label>Password</label>
-                        <input type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required placeholder="Create a strong password" />
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Password</label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            style={{
+                                width: '100%',
+                                padding: '0.8rem',
+                                borderRadius: 'var(--radius-sm)',
+                                border: '1px solid var(--color-border)',
+                                backgroundColor: 'var(--color-bg-app)',
+                                color: 'var(--color-text-primary)'
+                            }}
+                        />
                     </div>
-
-                    <button type="submit" disabled={isSubmitting} className="auth-button">
-                        {isSubmitting ? 'Signing up...' : 'Create Account'}
-                    </button>
+                    <Button type="submit" style={{ marginTop: '1rem' }}>Sign Up</Button>
                 </form>
 
-                <div className="auth-footer">
-                    <p>Already have an account? <Link to="/login">Log in</Link></p>
+                <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+                    Already have an account? <Link to="/login" style={{ color: 'var(--color-brand-primary)' }}>Login</Link>
                 </div>
-            </div>
+            </Card>
         </div>
     );
 }

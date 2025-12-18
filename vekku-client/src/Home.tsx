@@ -1,62 +1,69 @@
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './components/auth/AuthProvider';
+import { Layout } from './components/ui/Layout';
+import { Button } from './components/ui/Button';
+import { Card } from './components/ui/Card';
 
 export default function Home() {
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
+    const navigate = useNavigate();
 
     return (
-        <div className="app-container">
-            <header className="app-header">
-                <h1>🌌 Vekku</h1>
-                {user && (
-                    <div className="user-controls">
-                        <span>Welcome, <strong>{user.firstName || user.email}</strong></span>
-                        <button onClick={logout} className="logout-button">Logout</button>
-                    </div>
-                )}
-            </header>
-
+        <Layout>
             <div style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: '60vh'
+                minHeight: '60vh',
+                textAlign: 'center'
             }}>
-                <p style={{ color: 'var(--color-text-dim)', marginBottom: '3rem', fontSize: '1.2rem' }}>
-                    The Knowledge Graph Taxonomy Engine
-                </p>
-
-                <div style={{ padding: '2rem', background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-                    <h3>Protected Content</h3>
-                    <p>You are successfully logged in as: {user?.email}</p>
-                    <div style={{ marginTop: '1rem' }}>
-                        <a href="/create" style={{
-                            padding: '0.8rem 1.5rem',
-                            backgroundColor: 'var(--color-primary)',
-                            color: 'white',
-                            textDecoration: 'none',
-                            borderRadius: '6px',
-                            fontWeight: 'bold'
-                        }}>
-                            + Create New Content
-                        </a>
-                    </div>
-                    <div style={{ marginTop: '0.5rem' }}>
-                        <a href="/docs" style={{
-                            padding: '0.8rem 1.5rem',
-                            backgroundColor: 'white',
-                            color: 'black',
-                            textDecoration: 'none',
-                            borderRadius: '6px',
-                            fontWeight: 'bold',
-                            border: '1px solid #ccc',
-                            display: 'inline-block'
-                        }}>
-                            View All Docs
-                        </a>
-                    </div>
+                <div style={{ marginBottom: '2rem' }}>
+                    <h1 style={{
+                        fontSize: '3.5rem',
+                        marginBottom: '1rem',
+                        background: 'linear-gradient(135deg, var(--color-brand-primary) 0%, #fff 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                    }}>
+                        Organize your <br /> Knowledge
+                    </h1>
+                    <p style={{
+                        color: 'var(--color-text-secondary)',
+                        fontSize: '1.2rem',
+                        maxWidth: '600px',
+                        margin: '0 auto'
+                    }}>
+                        AI-powered taxonomy engine that automatically tags and categorizes your content.
+                    </p>
                 </div>
+
+                <Card style={{ width: '100%', maxWidth: '400px' }}>
+                    <h3 style={{ marginBottom: '1rem', color: 'var(--color-text-primary)' }}>Quick Actions</h3>
+                    <p style={{ marginBottom: '2rem', color: 'var(--color-text-tertiary)', fontSize: '0.9rem' }}>
+                        Logged in as {user?.email}
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <Button
+                            variant="primary"
+                            size="lg"
+                            onClick={() => navigate('/create')}
+                            style={{ width: '100%' }}
+                        >
+                            + Create New Content
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            size="lg"
+                            onClick={() => navigate('/docs')}
+                            style={{ width: '100%' }}
+                        >
+                            View All Documents
+                        </Button>
+                    </div>
+                </Card>
             </div>
-        </div>
+        </Layout>
     );
 }
