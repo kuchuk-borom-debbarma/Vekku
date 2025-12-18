@@ -3,10 +3,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 interface User {
     email: string;
     accessToken: string;
+    firstName?: string;
+    lastName?: string;
 }
 
 interface AuthContextType {
     user: User | null;
+    isLoading: boolean;
     signup: (data: any) => Promise<void>;
     verify: (email: string, otp: string) => Promise<void>;
     login: (data: any) => Promise<void>;
@@ -17,12 +20,34 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchUser = async (token: string) => {
+        try {
+            const response = await fetch('http://localhost:8080/api/auth/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const userInfo = await response.json();
+                setUser(prev => prev ? { ...prev, ...userInfo } : { email: userInfo.email, accessToken: token, ...userInfo });
+            } else {
+                logout();
+            }
+        } catch (error) {
+            logout();
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
         const email = localStorage.getItem('userEmail');
         if (token && email) {
             setUser({ email, accessToken: token });
+            fetchUser(token);
+        } else {
+            setIsLoading(false);
         }
     }, []);
 
@@ -56,7 +81,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.setItem('accessToken', result.accessToken);
         localStorage.setItem('refreshToken', result.refreshToken);
         localStorage.setItem('userEmail', data.email);
-        setUser({ email: data.email, accessToken: result.accessToken });
+
+        const basicUser = { email: data.email, accessToken: result.accessToken };
+        setUser(basicUser);
+
+        // Fetch full profile immediately
+        await fetchUser(result.accessToken);
     };
 
     const logout = () => {
@@ -67,7 +97,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, signup, verify, login, logout }}>
+        <AuthContext.Provider value={{ user, isLoading, signup, verify, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

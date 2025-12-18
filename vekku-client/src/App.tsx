@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './Home';
-import TagSuggestion from './components/TagSuggestion';
 import { AuthProvider } from './components/auth/AuthProvider';
 import SignupPage from './components/auth/SignupPage';
 import VerifyPage from './components/auth/VerifyPage';
 import LoginPage from './components/auth/LoginPage';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import './App.css';
 
 function App() {
@@ -12,8 +12,11 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/tag-suggestion" element={<TagSuggestion />} />
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          } />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/verify" element={<VerifyPage />} />
           <Route path="/login" element={<LoginPage />} />

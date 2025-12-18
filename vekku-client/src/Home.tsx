@@ -1,64 +1,35 @@
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from './components/auth/AuthProvider';
 
 export default function Home() {
-    const navigate = useNavigate();
+    const { user, logout } = useAuth();
 
     return (
-        <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '80vh'
-        }}>
-            <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌌 Vekku</h1>
-            <p style={{ color: 'var(--color-text-dim)', marginBottom: '3rem' }}>
-                The Knowledge Graph Taxonomy Engine
-            </p>
+        <div className="app-container">
+            <header className="app-header">
+                <h1>🌌 Vekku</h1>
+                {user && (
+                    <div className="user-controls">
+                        <span>Welcome, <strong>{user.firstName || user.email}</strong></span>
+                        <button onClick={logout} className="logout-button">Logout</button>
+                    </div>
+                )}
+            </header>
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
-                <button
-                    onClick={() => navigate('/tag-suggestion')}
-                    style={{
-                        fontSize: '1.2rem',
-                        padding: '1rem 2rem',
-                        cursor: 'pointer',
-                        background: 'var(--color-primary, #646cff)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px'
-                    }}
-                >
-                    Playground: Tag Suggestion
-                </button>
-                <button
-                    onClick={() => navigate('/login')}
-                    style={{
-                        fontSize: '1.2rem',
-                        padding: '1rem 2rem',
-                        cursor: 'pointer',
-                        background: '#10b981',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px'
-                    }}
-                >
-                    Login
-                </button>
-                <button
-                    onClick={() => navigate('/signup')}
-                    style={{
-                        fontSize: '1.2rem',
-                        padding: '1rem 2rem',
-                        cursor: 'pointer',
-                        background: 'transparent',
-                        color: '#646cff',
-                        border: '2px solid #646cff',
-                        borderRadius: '4px'
-                    }}
-                >
-                    Sign Up
-                </button>
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '60vh'
+            }}>
+                <p style={{ color: 'var(--color-text-dim)', marginBottom: '3rem', fontSize: '1.2rem' }}>
+                    The Knowledge Graph Taxonomy Engine
+                </p>
+
+                <div style={{ padding: '2rem', background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+                    <h3>Protected Content</h3>
+                    <p>You are successfully logged in as: {user?.email}</p>
+                </div>
             </div>
         </div>
     );
