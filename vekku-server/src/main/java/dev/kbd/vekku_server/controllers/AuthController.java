@@ -28,4 +28,10 @@ public class AuthController {
         authService.verifyOtp(request);
         return ResponseEntity.ok("User verified and registered successfully");
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<dev.kbd.vekku_server.dto.auth.LoginResponse> login(
+            @RequestBody dev.kbd.vekku_server.dto.auth.LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request));
+    }
 }

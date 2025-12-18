@@ -17,6 +17,14 @@
             ]
         }
     ],
+    "roles": {
+        "realm": [
+            {
+                "name": "USER",
+                "description": "Standard user role"
+            }
+        ]
+    },
     "users": [
         {
             "username": "user",
