@@ -22,10 +22,7 @@ public class BrainController {
     private final BrainService brainService;
 
     /**
-     * Suggests tags for the given content.
-     * This orchestrates the Brain Service for semantic analysis and the Taxonomy
-     * Service
-     * for hierarchical context, returning a refined list of suggestions.
+     * Suggests tags for the given content using the Brain Service.
      *
      * @param content The text content to analyze.
      * @return List of ContentRegionTags suggestions.
