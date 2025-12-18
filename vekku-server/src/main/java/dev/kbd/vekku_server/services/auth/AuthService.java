@@ -11,6 +11,4 @@ public interface AuthService {
     void verifyOtp(VerifyOtpRequest request);
 
     LoginResponse login(LoginRequest request);
-
-    dev.kbd.vekku_server.dto.auth.UserInfo getUserInfo(String token);
 }

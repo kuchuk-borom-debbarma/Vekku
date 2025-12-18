@@ -37,15 +37,14 @@ public class AuthController {
 
     @org.springframework.web.bind.annotation.GetMapping("/me")
     public ResponseEntity<dev.kbd.vekku_server.dto.auth.UserInfo> getCurrentUser(
-            @org.springframework.web.bind.annotation.RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
+        if (jwt == null) {
             return ResponseEntity.status(401).build();
         }
-        String token = authHeader.substring(7);
-        try {
-            return ResponseEntity.ok(authService.getUserInfo(token));
-        } catch (Exception e) {
-            return ResponseEntity.status(401).build();
-        }
+        return ResponseEntity.ok(new dev.kbd.vekku_server.dto.auth.UserInfo(
+                jwt.getSubject(),
+                jwt.getClaimAsString("email"),
+                jwt.getClaimAsString("given_name"),
+                jwt.getClaimAsString("family_name")));
     }
 }

@@ -134,45 +134,6 @@ public class KeycloakAuthService implements AuthService {
         }
     }
 
-    @Override
-    public dev.kbd.vekku_server.dto.auth.UserInfo getUserInfo(String token) {
-        // We need to call the OIDC UserInfo endpoint.
-        // We can use KeycloakBuilder (acting as client) or Resteasy directly. By
-        // default java admin client
-        // doesn't have a direct "validate token" or "user info" method easily
-        // accessible without full configuration.
-        // A simple way is to use the Admin Client's Realm resource if we had the ID,
-        // but we only have the token.
-        // So we will use the OpenID Connect UserInfo endpoint.
-
-        // URL: http://localhost:8180/realms/vekku/protocol/openid-connect/userinfo
-        // Header: Authorization: Bearer <token>
-
-        String userInfoUrl = serverUrl + "/realms/" + realm + "/protocol/openid-connect/userinfo";
-
-        try (var client = jakarta.ws.rs.client.ClientBuilder.newClient()) {
-            var response = client.target(userInfoUrl)
-                    .request(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
-                    .header("Authorization", "Bearer " + token)
-                    .get();
-
-            if (response.getStatus() != 200) {
-                throw new RuntimeException("Invalid token");
-            }
-
-            Map<String, Object> userInfo = response.readEntity(Map.class);
-
-            return new dev.kbd.vekku_server.dto.auth.UserInfo(
-                    (String) userInfo.get("sub"),
-                    (String) userInfo.get("email"),
-                    (String) userInfo.get("given_name"),
-                    (String) userInfo.get("family_name"));
-        } catch (Exception e) {
-            log.error("Failed to fetch user info", e);
-            throw new RuntimeException("Failed to fetch user info");
-        }
-    }
-
     private void createUserInKeycloak(SignupRequest request) {
         UserRepresentation user = new UserRepresentation();
         user.setUsername(request.email());

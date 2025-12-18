@@ -17,14 +17,9 @@ public class ContentController {
     private final ContentService contentService;
 
     @PostMapping
-    public ResponseEntity<DocDto.DocResponse> createDoc(@RequestBody DocDto.CreateDocRequest request) {
-        // Hardcoded userId for now as Auth handling might need SecurityContext
-        // or we can pass it if secured. Assuming 'test-user' or extraction if Auth is
-        // implemented.
-        // The prompt says "userId" in DB, but didn't specify how we get it.
-        // I will assume a default or extracted from context if possible.
-        // For MVP, I'll use a placeholder string or "anonymous" if not auth.
-        String userId = "user-1";
+    public ResponseEntity<DocDto.DocResponse> createDoc(@RequestBody DocDto.CreateDocRequest request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
+        String userId = jwt.getSubject();
         return ResponseEntity.ok(contentService.createDoc(request, userId));
     }
 
@@ -34,7 +29,8 @@ public class ContentController {
     }
 
     @GetMapping
-    public ResponseEntity<List<DocDto.DocResponse>> getAllDocs() {
-        return ResponseEntity.ok(contentService.getAllDocs("user-1"));
+    public ResponseEntity<List<DocDto.DocResponse>> getAllDocs(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
+        return ResponseEntity.ok(contentService.getAllDocs(jwt.getSubject()));
     }
 }
