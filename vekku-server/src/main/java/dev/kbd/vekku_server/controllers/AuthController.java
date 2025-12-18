@@ -36,4 +36,18 @@ public class AuthController {
             @RequestBody dev.kbd.vekku_server.dto.auth.LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/me")
+    public ResponseEntity<dev.kbd.vekku_server.dto.auth.UserInfo> getCurrentUser(
+            @org.springframework.web.bind.annotation.RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).build();
+        }
+        String token = authHeader.substring(7);
+        try {
+            return ResponseEntity.ok(authService.getUserInfo(token));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).build();
+        }
+    }
 }
