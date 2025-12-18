@@ -31,6 +31,34 @@ export default function Home() {
                 >
                     Playground: Tag Suggestion
                 </button>
+                <button
+                    onClick={() => navigate('/login')}
+                    style={{
+                        fontSize: '1.2rem',
+                        padding: '1rem 2rem',
+                        cursor: 'pointer',
+                        background: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px'
+                    }}
+                >
+                    Login
+                </button>
+                <button
+                    onClick={() => navigate('/signup')}
+                    style={{
+                        fontSize: '1.2rem',
+                        padding: '1rem 2rem',
+                        cursor: 'pointer',
+                        background: 'transparent',
+                        color: '#646cff',
+                        border: '2px solid #646cff',
+                        borderRadius: '4px'
+                    }}
+                >
+                    Sign Up
+                </button>
             </div>
         </div>
     );
