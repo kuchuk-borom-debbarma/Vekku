@@ -6,7 +6,7 @@ import dev.kbd.vekku_server.model.DocsTag;
 import dev.kbd.vekku_server.repository.DocsRepository;
 import dev.kbd.vekku_server.repository.DocsTagRepository;
 import dev.kbd.vekku_server.services.brain.BrainService;
-import dev.kbd.vekku_server.services.brain.model.TagScore;
+// import dev.kbd.vekku_server.services.brain.model.TagScore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,44 +24,6 @@ public class ContentService {
     private final DocsRepository docsRepository;
     private final DocsTagRepository docsTagRepository;
     private final BrainService brainService;
-
-    @Transactional
-    public DocDto.DocResponse createDoc(DocDto.CreateDocRequest request, String userId) {
-        log.info("Creating doc for user: {}", userId);
-
-        // 1. Save original content
-        Docs doc = Docs.builder()
-                .content(request.getContent())
-                .type(request.getType())
-                .userId(userId)
-                .build();
-        doc = docsRepository.save(doc);
-
-        // 2. Prepare cleaned content for Brain Service
-        // Removing extra whitespace and potentially other noise if needed
-        String cleanedContent = request.getContent() != null ? request.getContent().trim() : "";
-        if (cleanedContent.isEmpty()) {
-            return buildResponse(doc, List.of());
-        }
-
-        // 3. Call Brain Service
-        log.info("Requesting tags for docId: {}", doc.getId());
-        List<TagScore> tagScores = brainService.getRawTagsByEmbedding(cleanedContent, 0.4, 5);
-
-        // 4. Save Tags
-        final UUID docId = doc.getId();
-        List<DocsTag> savedTags = tagScores.stream()
-                .map(ts -> DocsTag.builder()
-                        .docId(docId)
-                        .tagId(ts.name()) // Assuming name corresponds to ID/Tag Name
-                        .score(ts.score())
-                        .userId(userId)
-                        .build())
-                .map(docsTagRepository::save)
-                .collect(Collectors.toList());
-
-        return buildResponse(doc, savedTags);
-    }
 
     public DocDto.DocResponse getDoc(UUID id) {
         Docs doc = docsRepository.findById(id)

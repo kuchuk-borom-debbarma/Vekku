@@ -11,7 +11,14 @@ public interface BrainService {
      * Converts a Tag string into a semantic Vector (embedding) using the AI Model.
      * This allows retrieval by semantic similarity later.
      */
-    void learnTag(String tagName);
+    /**
+     * 🧠 LEARN: The Process of Embedding
+     *
+     * Converts a Tag alias and its synonyms into semantic Vectors (embeddings)
+     * using the AI Model.
+     * This allows retrieval by semantic similarity later.
+     */
+    void learnTag(java.util.UUID id, String alias, List<String> synonyms);
 
     /**
      * 🔎 GET RAW TAGS: Purely embedding-based tag retrieval

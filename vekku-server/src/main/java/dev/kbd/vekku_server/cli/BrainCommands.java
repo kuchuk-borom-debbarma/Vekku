@@ -15,8 +15,10 @@ public class BrainCommands {
     private final BrainService brainService;
 
     @ShellMethod(key = "brain learn", value = "Teach the AI a concept (Tag)")
-    public void brainLearn(@ShellOption String tag) {
-        brainService.learnTag(tag);
+    public void brainLearn(@ShellOption String tag, @ShellOption(defaultValue = "") String synonyms) {
+        var synonymList = synonyms.isEmpty() ? java.util.List.of(tag)
+                : java.util.List.of(synonyms.split(","));
+        brainService.learnTag(java.util.UUID.randomUUID(), tag, synonymList);
     }
 
     @ShellMethod(key = "brain suggest", value = "Get tag suggestions (Raw & Regions)")

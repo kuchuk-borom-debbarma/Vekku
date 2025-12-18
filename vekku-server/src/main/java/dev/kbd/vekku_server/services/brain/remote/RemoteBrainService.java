@@ -31,11 +31,11 @@ public class RemoteBrainService implements BrainService {
          * Sends a "Learn" request to the Brain Service.
          */
         @Override
-        public void learnTag(String tagName) {
+        public void learnTag(java.util.UUID id, String alias, List<String> synonyms) {
                 restClient.post()
                                 .uri("/learn")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .body(new LearnRequest(tagName))
+                                .body(new LearnTagRequest(id.toString(), alias, synonyms))
                                 .retrieve()
                                 .toBodilessEntity();
         }

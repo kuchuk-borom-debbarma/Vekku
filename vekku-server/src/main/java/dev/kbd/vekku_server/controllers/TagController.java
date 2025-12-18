@@ -1,10 +1,14 @@
 package dev.kbd.vekku_server.controllers;
 
-import dev.kbd.vekku_server.services.brain.BrainService;
+import dev.kbd.vekku_server.model.Tag;
+import dev.kbd.vekku_server.services.TagService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/tags")
@@ -12,28 +16,31 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class TagController {
 
-    private final BrainService brainService;
+    private final TagService tagService;
 
-    @PostMapping("/learn")
-    public ResponseEntity<Void> learnTag(@RequestBody LearnTagRequest request) {
-        log.info("Learning new tag: {}", request.tagName());
-        brainService.learnTag(request.tagName());
+    @PostMapping
+    public ResponseEntity<Tag> createTag(@RequestBody CreateTagRequest request) {
+        Tag tag = tagService.createTag(request.alias(), request.synonyms(), "user-default"); // simple user id for now
+        return ResponseEntity.ok(tag);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Tag> updateTag(@PathVariable UUID id, @RequestBody CreateTagRequest request) {
+        Tag tag = tagService.updateTag(id, request.alias(), request.synonyms());
+        return ResponseEntity.ok(tag);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTag(@PathVariable UUID id) {
+        tagService.deleteTag(id);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping
-    public ResponseEntity<BrainService.TagListDto> getAllTags(
-            @RequestParam(defaultValue = "20") Integer limit,
-            @RequestParam(required = false) String offset) {
-        return ResponseEntity.ok(brainService.getAllTags(limit, offset));
+    public ResponseEntity<List<Tag>> getAllTags() {
+        return ResponseEntity.ok(tagService.getAllTags());
     }
 
-    @DeleteMapping("/{tagName}")
-    public ResponseEntity<Void> deleteTag(@PathVariable String tagName) {
-        brainService.deleteTag(tagName);
-        return ResponseEntity.ok().build();
-    }
-
-    public record LearnTagRequest(String tagName) {
+    public record CreateTagRequest(String alias, List<String> synonyms) {
     }
 }
