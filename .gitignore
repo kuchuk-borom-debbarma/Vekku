@@ -7,3 +7,4 @@ vekku-server/spring-shell.log
 # Dashboard Scripts
 logs/
 pids/
+vekku-server/otp.txt
