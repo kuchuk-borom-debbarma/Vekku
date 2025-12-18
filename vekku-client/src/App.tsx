@@ -5,7 +5,7 @@ import SignupPage from './components/auth/SignupPage';
 import VerifyPage from './components/auth/VerifyPage';
 import LoginPage from './components/auth/LoginPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import CreateContent from './pages/CreateContent';
+// import CreateContent from './pages/CreateContent';
 import ViewDoc from './pages/ViewDoc';
 import DocsList from './pages/DocsList';
 import ManageTags from './pages/ManageTags';
@@ -30,11 +30,7 @@ function App() {
                 <Home />
               </ProtectedRoute>
             } />
-            <Route path="/create" element={
-              <ProtectedRoute>
-                <CreateContent />
-              </ProtectedRoute>
-            } />
+            {/* Route /create removed as per user request */}
             <Route path="/docs" element={
               <ProtectedRoute>
                 <DocsList />

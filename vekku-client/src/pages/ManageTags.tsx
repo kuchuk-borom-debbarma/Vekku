@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+// import { useSearchParams } from 'react-router-dom';
 import { Layout } from '../components/ui/Layout';
 import { Table, Button, Group, Title, Text, Loader, Badge, Paper } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
@@ -12,34 +12,40 @@ import { TeachTagModal } from '../components/TeachTagModal';
 interface Tag {
     id: string;
     name: string;
+    synonyms: string[];
 }
 
-interface TagListResponse {
-    tags: Tag[];
-    nextOffset?: string | number;
-}
-
-const LIMIT = 20;
+// Pagination temporarily disabled
+// const LIMIT = 20;
 
 export default function ManageTags() {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const cursor = searchParams.get('cursor');
-
     const [tags, setTags] = useState<Tag[]>([]);
     const [loading, setLoading] = useState(false);
-    const [nextCursor, setNextCursor] = useState<string | number | undefined>(undefined);
 
+    // Unused pagination state
+    // const [searchParams, setSearchParams] = useSearchParams();
+    // const cursor = searchParams.get('cursor');
+    // const [nextCursor, setNextCursor] = useState<string | number | undefined>(undefined);
+    // const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([]);
+
+    const [editingTag, setEditingTag] = useState<Tag | null>(null);
     const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
 
-    const fetchTags = useCallback(async (currentCursor?: string | null) => {
+    const openCreateModal = () => {
+        setEditingTag(null);
+        openModal();
+    };
+
+    const openEditModal = (tag: Tag) => {
+        setEditingTag(tag);
+        openModal();
+    };
+
+    const fetchTags = useCallback(async () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('accessToken');
             const url = new URL('http://localhost:8080/api/tags');
-            url.searchParams.append('limit', LIMIT.toString());
-            if (currentCursor) {
-                url.searchParams.append('offset', currentCursor);
-            }
 
             const res = await fetch(url.toString(), {
                 headers: {
@@ -48,9 +54,9 @@ export default function ManageTags() {
             });
 
             if (!res.ok) throw new Error('Failed to fetch tags');
-            const data: TagListResponse = await res.json();
-            setTags(data.tags);
-            setNextCursor(data.nextOffset);
+            const data: Tag[] = await res.json();
+            setTags(data);
+            // setNextCursor(undefined); // Pagination disabled for now
 
         } catch (error) {
             console.error(error);
@@ -60,46 +66,25 @@ export default function ManageTags() {
         }
     }, []);
 
-    const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([]);
+    // const [cursorHistory, setCursorHistory] = useState<(string | null)[]>([]);
 
     // Fetch when cursor URL param changes
     useEffect(() => {
-        fetchTags(cursor);
-    }, [cursor, fetchTags]);
+        fetchTags();
+    }, [fetchTags]);
 
-    const handleNext = () => {
-        if (nextCursor) {
-            // Push current cursor (or null if currently on first page) to history
-            setCursorHistory(prev => [...prev, cursor]);
-            setSearchParams({ cursor: nextCursor.toString() });
-        }
-    };
+    /*
+    const handleNext = () => { ... };
+    const handlePrev = () => { ... };
+    const handleStartOver = () => { ... };
+    */
 
-    const handlePrev = () => {
-        if (cursorHistory.length > 0) {
-            const prevCursor = cursorHistory[cursorHistory.length - 1];
-            const newHistory = cursorHistory.slice(0, -1);
-            setCursorHistory(newHistory);
-
-            if (prevCursor) {
-                setSearchParams({ cursor: prevCursor });
-            } else {
-                setSearchParams({});
-            }
-        }
-    };
-
-    const handleStartOver = () => {
-        setSearchParams({});
-        setCursorHistory([]);
-    };
-
-    const handleDelete = async (tagName: string) => {
+    const handleDelete = async (tagId: string, tagName: string) => {
         if (!confirm(`Are you sure you want to delete tag "${tagName}"?`)) return;
 
         try {
             const token = localStorage.getItem('accessToken');
-            const res = await fetch(`http://localhost:8080/api/tags/${tagName}`, {
+            const res = await fetch(`http://localhost:8080/api/tags/${tagId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -108,7 +93,7 @@ export default function ManageTags() {
 
             if (res.ok) {
                 // Refresh current view
-                fetchTags(cursor);
+                fetchTags();
             } else {
                 alert('Failed to delete tag');
             }
@@ -121,14 +106,14 @@ export default function ManageTags() {
     const handleModalClose = () => {
         closeModal();
         // Refresh list
-        fetchTags(cursor);
+        fetchTags();
     }
     return (
         <Layout>
             <div style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
                 <Group justify="space-between" mb="xl">
                     <Title order={2} style={{ color: '#fff' }}>🏷️ Manage Logic Tags</Title>
-                    <Button onClick={openModal} color="blue" size="md">
+                    <Button onClick={openCreateModal} color="blue" size="md">
                         + Add New Tag
                     </Button>
                 </Group>
@@ -143,7 +128,8 @@ export default function ManageTags() {
                             <Table verticalSpacing="sm">
                                 <Table.Thead>
                                     <Table.Tr>
-                                        <Table.Th style={{ color: '#aaa' }}>Tag Name</Table.Th>
+                                        <Table.Th style={{ color: '#aaa' }}>Tag Name (Alias)</Table.Th>
+                                        <Table.Th style={{ color: '#aaa' }}>Synonyms</Table.Th>
                                         <Table.Th style={{ color: '#aaa' }}>ID</Table.Th>
                                         <Table.Th style={{ textAlign: 'right', color: '#aaa' }}>Actions</Table.Th>
                                     </Table.Tr>
@@ -156,18 +142,30 @@ export default function ManageTags() {
                                                     {tag.name}
                                                 </Badge>
                                             </Table.Td>
+                                            <Table.Td>
+                                                <Group gap="xs">
+                                                    {tag.synonyms?.map(s => (
+                                                        <Badge key={s} size="sm" variant="outline" color="gray">{s}</Badge>
+                                                    ))}
+                                                </Group>
+                                            </Table.Td>
                                             <Table.Td style={{ color: '#666', fontFamily: 'monospace', fontSize: '0.85rem' }}>
                                                 {tag.id}
                                             </Table.Td>
                                             <Table.Td style={{ textAlign: 'right' }}>
-                                                <Button
-                                                    variant="subtle"
-                                                    color="red"
-                                                    size="xs"
-                                                    onClick={() => handleDelete(tag.name)}
-                                                >
-                                                    Delete
-                                                </Button>
+                                                <Group gap="xs" justify="flex-end">
+                                                    <Button variant="light" size="xs" onClick={() => openEditModal(tag)}>
+                                                        Edit
+                                                    </Button>
+                                                    <Button
+                                                        variant="subtle"
+                                                        color="red"
+                                                        size="xs"
+                                                        onClick={() => handleDelete(tag.id, tag.name)}
+                                                    >
+                                                        Delete
+                                                    </Button>
+                                                </Group>
                                             </Table.Td>
                                         </Table.Tr>
                                     ))}
@@ -178,23 +176,17 @@ export default function ManageTags() {
                                 <Text c="dimmed" ta="center" py="xl">No tags found. Teach the brain some concepts!</Text>
                             )}
 
-                            <Group justify="center" mt="xl" gap="md">
-                                <Button variant="default" onClick={handleStartOver} disabled={!cursor || loading}>
-                                    First Page
-                                </Button>
-                                <Button variant="default" onClick={handlePrev} disabled={cursorHistory.length === 0 || loading}>
-                                    Previous Page
-                                </Button>
-                                <Button variant="default" onClick={handleNext} disabled={!nextCursor || loading}>
-                                    Next Page
-                                </Button>
-                            </Group>
+                            <Text c="dimmed" size="xs" ta="center" mt="md">Showing all tags</Text>
                         </>
                     )}
                 </Paper>
             </div>
 
-            <TeachTagModal opened={modalOpened} onClose={handleModalClose} />
+            <TeachTagModal
+                opened={modalOpened}
+                onClose={handleModalClose}
+                initialData={editingTag}
+            />
         </Layout>
     );
 }
