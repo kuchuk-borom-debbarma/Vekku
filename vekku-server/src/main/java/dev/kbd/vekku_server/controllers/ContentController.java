@@ -1,5 +1,6 @@
 package dev.kbd.vekku_server.controllers;
 
+import dev.kbd.vekku_server.dto.content.ContentPageDto;
 import dev.kbd.vekku_server.dto.content.CreateContentRequest;
 import dev.kbd.vekku_server.model.content.Content;
 import dev.kbd.vekku_server.service.ContentService;
@@ -25,7 +26,7 @@ public class ContentController {
     }
 
     @GetMapping
-    public ResponseEntity<dev.kbd.vekku_server.dto.content.ContentPageDto> getAllContent(
+    public ResponseEntity<ContentPageDto> getAllContent(
             @RequestParam(required = false, defaultValue = "20") Integer limit,
             @RequestParam(required = false) String cursor,
             @AuthenticationPrincipal Jwt jwt) {
