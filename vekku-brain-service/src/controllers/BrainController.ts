@@ -126,18 +126,18 @@ export const BrainController = {
     },
 
     /**
-     * DELETE /tags/:name
+     * DELETE /tags/:id
      */
     DeleteTag: async (req: Request, res: Response) => {
-        const tagName = req.params.name;
+        const tagId = req.params.id;
 
-        if (!tagName) {
-            return res.status(400).json({ error: "Tag name required" });
+        if (!tagId) {
+            return res.status(400).json({ error: "Tag ID required" });
         }
 
         try {
             const brain = BrainLogic.getInstance();
-            await brain.deleteTag(tagName);
+            await brain.deleteTag(tagId);
             return res.json({ success: true });
         } catch (error: unknown) {
             console.error("❌ Error in DeleteTag:", error);

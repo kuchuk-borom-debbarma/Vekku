@@ -22,7 +22,7 @@ app.post('/region-tags', BrainController.GetRegionTags);
 app.post('/score-tags', BrainController.ScoreTags);
 
 app.get('/tags', BrainController.GetAllTags);
-app.delete('/tags/:name', BrainController.DeleteTag);
+app.delete('/tags/:id', BrainController.DeleteTag);
 
 
 // Initialize AI/DB *before* accepting requests

@@ -282,11 +282,10 @@ export class BrainLogic {
     /**
      * 🗑️ DELETE TAG
      */
-    public async deleteTag(tagName: string): Promise<void> {
-        console.log(`🗑️ Deleting tag by alias: ${tagName}`);
-        // We delete by ALIAS filter because we might not have the UUID here in this legacy endpoint
+    public async deleteTag(tagId: string): Promise<void> {
+        console.log(`🗑️ Deleting tag by ID: ${tagId}`);
         await this.qdrantService.deleteByFilter({
-            must: [{ key: "alias", match: { value: tagName } }]
+            must: [{ key: "tag_id", match: { value: tagId } }]
         });
     }
 }
