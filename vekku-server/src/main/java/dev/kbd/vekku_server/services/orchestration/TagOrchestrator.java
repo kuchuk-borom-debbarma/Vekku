@@ -52,11 +52,11 @@ public class TagOrchestrator {
      * 2. Re-learn in AI Brain.
      */
     @Transactional
-    public Tag updateTag(UUID id, String alias, List<String> synonyms) {
+    public Tag updateTag(UUID id, String alias, List<String> synonyms, String userId) {
         log.info("Orchestrating update of tag: {}", id);
 
         // 1. DB Operation
-        Tag tag = tagService.updateTag(id, alias, synonyms);
+        Tag tag = tagService.updateTag(id, alias, synonyms, userId);
 
         // 2. AI Operation
         embeddingService.learnTag(tag.getId(), tag.getName(), tag.getSynonyms());
@@ -71,7 +71,7 @@ public class TagOrchestrator {
      * 3. Delete from AI Brain.
      */
     @Transactional
-    public void deleteTag(UUID id) {
+    public void deleteTag(UUID id, String userId) {
         log.info("Orchestrating deletion of tag: {}", id);
 
         // Need to fetch name before deletion for the legacy Brain API (which deletes by
@@ -82,7 +82,7 @@ public class TagOrchestrator {
         String tagName = tag.getName();
 
         // 1. DB Operation
-        tagService.deleteTag(id);
+        tagService.deleteTag(id, userId);
 
         // 2. AI Operation
         embeddingService.deleteTag(tagName);

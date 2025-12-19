@@ -27,29 +27,36 @@ public class TagController {
     private final TagOrchestrator tagOrchestrator;
 
     @PostMapping
-    public ResponseEntity<Tag> createTag(@RequestBody CreateTagRequest request) {
-        Tag tag = tagOrchestrator.createTag(request.alias(), request.synonyms(), "user-default"); // simple user id for
-                                                                                                  // now
+    public ResponseEntity<Tag> createTag(@RequestBody CreateTagRequest request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
+        String userId = jwt.getSubject();
+        Tag tag = tagOrchestrator.createTag(request.alias(), request.synonyms(), userId);
         return ResponseEntity.ok(tag);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Tag> updateTag(@PathVariable UUID id, @RequestBody CreateTagRequest request) {
-        Tag tag = tagOrchestrator.updateTag(id, request.alias(), request.synonyms());
+    public ResponseEntity<Tag> updateTag(@PathVariable UUID id, @RequestBody CreateTagRequest request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
+        String userId = jwt.getSubject();
+        Tag tag = tagOrchestrator.updateTag(id, request.alias(), request.synonyms(), userId);
         return ResponseEntity.ok(tag);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTag(@PathVariable UUID id) {
-        tagOrchestrator.deleteTag(id);
+    public ResponseEntity<Void> deleteTag(@PathVariable UUID id,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
+        String userId = jwt.getSubject();
+        tagOrchestrator.deleteTag(id, userId);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping
     public ResponseEntity<dev.kbd.vekku_server.services.core.tag.dto.TagPageDto> getAllTags(
             @RequestParam(required = false, defaultValue = "20") Integer limit,
-            @RequestParam(required = false) String cursor) {
-        return ResponseEntity.ok(tagService.getTags(limit, cursor));
+            @RequestParam(required = false) String cursor,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
+        String userId = jwt.getSubject();
+        return ResponseEntity.ok(tagService.getTags(userId, limit, cursor));
     }
 
     public record CreateTagRequest(String alias, List<String> synonyms) {

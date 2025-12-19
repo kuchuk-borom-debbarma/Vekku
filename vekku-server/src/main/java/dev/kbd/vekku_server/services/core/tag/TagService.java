@@ -46,7 +46,7 @@ public class TagService {
      * Updates an existing Tag entity.
      */
     @Transactional
-    public Tag updateTag(UUID id, String alias, List<String> synonyms) {
+    public Tag updateTag(UUID id, String alias, List<String> synonyms, String userId) {
         log.info("Updating tag in DB: {}", id);
 
         if (synonyms == null || synonyms.isEmpty()) {
@@ -56,22 +56,26 @@ public class TagService {
         Tag tag = tagRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tag not found"));
 
+        if (!tag.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("You do not have permission to update this tag");
+        }
+
         tag.setName(alias);
         tag.setSynonyms(synonyms);
         return tagRepository.save(tag);
     }
 
     @Transactional
-    public void deleteTag(UUID id) {
+    public void deleteTag(UUID id, String userId) {
         log.info("Deleting tag from DB: {}", id);
-        // We need to return the tag details or name before delete if Orchestrator needs
-        // it,
-        // but here we just delete. Orchestrator handles fetching if needed.
-        // Actually, Orchestrator might need the name to delete from Brain.
-        // So this method might need to return the deleted tag or Orchestrator fetches
-        // it first.
-        // Let's keep it void for now, Orchestrator fetches first.
-        tagRepository.deleteById(id);
+        Tag tag = tagRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Tag not found"));
+
+        if (!tag.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("You do not have permission to delete this tag");
+        }
+
+        tagRepository.delete(tag);
     }
 
     public Tag getTag(UUID id) {
@@ -82,16 +86,17 @@ public class TagService {
         return tagRepository.findAll();
     }
 
-    public dev.kbd.vekku_server.services.core.tag.dto.TagPageDto getTags(Integer limit, String cursor) {
-        log.info("Fetching tags with limit: {}, cursor: {}", limit, cursor);
+    public dev.kbd.vekku_server.services.core.tag.dto.TagPageDto getTags(String userId, Integer limit, String cursor) {
+        log.info("Fetching tags for user: {}, limit: {}, cursor: {}", userId, limit, cursor);
         int fetchLimit = limit + 1; // Fetch one extra to check if there's a next page
 
         List<Tag> tags;
         if (cursor != null && !cursor.isEmpty()) {
-            tags = tagRepository.findByNameGreaterThanOrderByNameAsc(cursor,
+            tags = tagRepository.findByNameGreaterThanAndUserIdOrderByNameAsc(cursor, userId,
                     org.springframework.data.domain.PageRequest.of(0, fetchLimit));
         } else {
-            tags = tagRepository.findAllByOrderByNameAsc(org.springframework.data.domain.PageRequest.of(0, fetchLimit));
+            tags = tagRepository.findAllByUserIdOrderByNameAsc(userId,
+                    org.springframework.data.domain.PageRequest.of(0, fetchLimit));
         }
 
         String nextCursor = null;

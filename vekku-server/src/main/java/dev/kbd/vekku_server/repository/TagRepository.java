@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Repository
 public interface TagRepository extends JpaRepository<Tag, UUID> {
-    List<Tag> findByNameGreaterThanOrderByNameAsc(String name, Pageable pageable);
+    List<Tag> findByNameGreaterThanAndUserIdOrderByNameAsc(String name, String userId, Pageable pageable);
 
-    List<Tag> findAllByOrderByNameAsc(Pageable pageable);
+    List<Tag> findAllByUserIdOrderByNameAsc(String userId, Pageable pageable);
 }
