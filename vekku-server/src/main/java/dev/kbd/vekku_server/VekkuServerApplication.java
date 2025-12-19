@@ -10,4 +10,9 @@ public class VekkuServerApplication {
 		SpringApplication.run(VekkuServerApplication.class, args);
 	}
 
+	@org.springframework.context.annotation.Bean
+	public org.springframework.web.client.RestClient.Builder restClientBuilder() {
+		return org.springframework.web.client.RestClient.builder();
+	}
+
 }
