@@ -1,0 +1,49 @@
+{
+    "properties": [
+        {
+            "name": "keycloak.auth-server-url",
+            "type": "java.lang.String",
+            "description": "URL of the Keycloak authentication server."
+        },
+        {
+            "name": "keycloak.realm",
+            "type": "java.lang.String",
+            "description": "Keycloak realm name."
+        },
+        {
+            "name": "keycloak.admin-username",
+            "type": "java.lang.String",
+            "description": "Username for Keycloak admin client."
+        },
+        {
+            "name": "keycloak.admin-password",
+            "type": "java.lang.String",
+            "description": "Password for Keycloak admin client."
+        },
+        {
+            "name": "brain-service.url",
+            "type": "java.lang.String",
+            "description": "URL of the Brain Service."
+        },
+        {
+            "name": "app.cors.allowed-origins",
+            "type": "java.lang.String",
+            "description": "Comma-separated list of allowed CORS origins."
+        },
+        {
+            "name": "vekku.rabbitmq.queue",
+            "type": "java.lang.String",
+            "description": "Name of the RabbitMQ queue."
+        },
+        {
+            "name": "vekku.rabbitmq.exchange",
+            "type": "java.lang.String",
+            "description": "Name of the RabbitMQ exchange."
+        },
+        {
+            "name": "vekku.rabbitmq.routingkey",
+            "type": "java.lang.String",
+            "description": "RabbitMQ routing key."
+        }
+    ]
+}

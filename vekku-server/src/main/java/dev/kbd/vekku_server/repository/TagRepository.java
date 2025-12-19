@@ -13,4 +13,6 @@ public interface TagRepository extends JpaRepository<Tag, UUID> {
     List<Tag> findByNameGreaterThanAndUserIdOrderByNameAsc(String name, String userId, Pageable pageable);
 
     List<Tag> findAllByUserIdOrderByNameAsc(String userId, Pageable pageable);
+
+    java.util.Optional<Tag> findByNameAndUserId(String name, String userId);
 }
