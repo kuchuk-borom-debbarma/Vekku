@@ -24,7 +24,7 @@ public interface EmbeddingService {
     /**
      * Deletes a concept from the embedding space.
      */
-    void deleteTag(String tagName);
+    void deleteTag(UUID id);
 
     // Retrieval Methods
 

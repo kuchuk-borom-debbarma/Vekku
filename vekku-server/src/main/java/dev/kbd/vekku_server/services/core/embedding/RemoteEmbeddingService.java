@@ -9,6 +9,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.http.MediaType;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 🌐 REMOTE EMBEDDING SERVICE
@@ -24,6 +25,9 @@ public class RemoteEmbeddingService implements EmbeddingService {
 
     public RemoteEmbeddingService(@Value("${brain-service.url}") String brainServiceUrl,
             RestClient.Builder restClientBuilder) {
+        if (brainServiceUrl == null || brainServiceUrl.isEmpty()) {
+            throw new IllegalArgumentException("Brain Service URL is required");
+        }
         this.restClient = restClientBuilder.baseUrl(brainServiceUrl).build();
     }
 
@@ -42,9 +46,9 @@ public class RemoteEmbeddingService implements EmbeddingService {
     }
 
     @Override
-    public void deleteTag(String tagName) {
+    public void deleteTag(UUID id) {
         restClient.delete()
-                .uri("/tags/" + tagName)
+                .uri("/tags/" + id)
                 .retrieve()
                 .toBodilessEntity();
     }

@@ -76,15 +76,12 @@ public class TagOrchestrator {
 
         // Need to fetch name before deletion for the legacy Brain API (which deletes by
         // name)
-        // Ideally Brain should delete by ID too, but keeping consistent with existing
-        // API.
         Tag tag = tagService.getTag(id);
-        String tagName = tag.getName();
 
         // 1. DB Operation
         tagService.deleteTag(id, userId);
 
         // 2. AI Operation
-        embeddingService.deleteTag(tagName);
+        embeddingService.deleteTag(tag.getId());
     }
 }

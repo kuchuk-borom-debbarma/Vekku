@@ -1,10 +1,15 @@
 package dev.kbd.vekku_server.controllers;
 
+import dev.kbd.vekku_server.dto.auth.LoginRequest;
+import dev.kbd.vekku_server.dto.auth.LoginResponse;
 import dev.kbd.vekku_server.dto.auth.SignupRequest;
+import dev.kbd.vekku_server.dto.auth.UserInfo;
 import dev.kbd.vekku_server.dto.auth.VerifyOtpRequest;
 import dev.kbd.vekku_server.services.auth.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,18 +35,18 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<dev.kbd.vekku_server.dto.auth.LoginResponse> login(
-            @RequestBody dev.kbd.vekku_server.dto.auth.LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(
+            @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/me")
-    public ResponseEntity<dev.kbd.vekku_server.dto.auth.UserInfo> getCurrentUser(
-            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
+    public ResponseEntity<UserInfo> getCurrentUser(
+            @AuthenticationPrincipal Jwt jwt) {
         if (jwt == null) {
             return ResponseEntity.status(401).build();
         }
-        return ResponseEntity.ok(new dev.kbd.vekku_server.dto.auth.UserInfo(
+        return ResponseEntity.ok(new UserInfo(
                 jwt.getSubject(),
                 jwt.getClaimAsString("email"),
                 jwt.getClaimAsString("given_name"),
