@@ -80,7 +80,7 @@ function startService(name) {
     } else if (name === 'docker') {
         cmd = 'docker-compose';
         args = ['up'];
-        cwd = path.join(PROJECT_ROOT, 'vekku-server'); // Contains docker-compose.yaml
+        cwd = PROJECT_ROOT; // Contains docker-compose.yaml
     } else {
         return;
     }
@@ -155,7 +155,7 @@ app.post('/api/reset/docker', (req, res) => {
 
     // Wait a moment for stop to register if it was running
     setTimeout(() => {
-        const cwd = path.join(PROJECT_ROOT, 'vekku-server');
+        const cwd = PROJECT_ROOT;
         const resetProc = spawn('docker-compose', ['down', '-v'], { cwd, shell: true });
 
         resetProc.stdout.on('data', d => streamLog('docker', d));
