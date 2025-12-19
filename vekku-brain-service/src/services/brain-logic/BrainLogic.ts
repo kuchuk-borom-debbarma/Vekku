@@ -102,7 +102,7 @@ export class BrainLogic {
      * Uses Vector Similarity to find concepts related to the input content.
      * 
      * Logic:
-     * 1. **Embed**: Vectors the first 2000 chars of content (summary).
+     * 1. **Embed**: Vectors the first 2000 chars of content (summary) (Skipped).
      * 2. **Search**: Finds nearest neighbor points (synonyms) in Qdrant.
      * 3. **Aggregation (Max-Score)**:
      *    - If multiple synonyms for the SAME tag appear (e.g., "JS" and "JavaScript"),
@@ -116,11 +116,9 @@ export class BrainLogic {
     public async getRawTagsByEmbedding(content: string, threshold: number = 0.3, topK: number = 50): Promise<{ name: string, score: number }[]> {
         console.log(`🤔 Getting raw tags...`);
 
-        // 1. Summary: First 2000 chars
-        const summaryText = content.slice(0, 2000);
 
         // 2. Embed
-        const globalVector = await this.embeddingService.getVector(summaryText);
+        const globalVector = await this.embeddingService.getVector(content);
 
         // 3. Search
         const globalSearchResult = await this.qdrantService.search(
@@ -130,16 +128,14 @@ export class BrainLogic {
             { must: [{ key: "type", match: { value: "TAG" } }] }
         );
 
-        // Deduplicate by ALIAS, keeping highest score
+        // Group by ALIAS, keeping highest score
         const uniqueTags = new Map<string, number>();
         for (const hit of globalSearchResult) {
             const alias = hit.payload?.alias as string;
-            // Fallback to original_name if alias missing (backward compat or legacy data)
-            const name = alias || (hit.payload?.original_name as string);
 
-            if (name) {
-                if (!uniqueTags.has(name) || hit.score > uniqueTags.get(name)!) {
-                    uniqueTags.set(name, hit.score);
+            if (alias) {
+                if (!uniqueTags.has(alias) || hit.score > uniqueTags.get(alias)!) {
+                    uniqueTags.set(alias, hit.score);
                 }
             }
         }
