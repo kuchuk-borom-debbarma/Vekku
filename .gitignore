@@ -8,3 +8,7 @@ vekku-server/spring-shell.log
 logs/
 pids/
 vekku-server/otp.txt
+
+# Docker Data
+vekku_docker_data
+

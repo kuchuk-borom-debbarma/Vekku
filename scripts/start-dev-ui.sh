@@ -9,7 +9,7 @@ echo "🚀 Starting Vekku Dev Client..."
 
 # 1. Start Docker (Prerequisite)
 echo "🐳 Checking Docker..."
-docker compose -f "$PROJECT_ROOT/vekku-server/docker-compose.yaml" up -d
+docker compose -f "$PROJECT_ROOT/docker-compose.yaml" up -d
 
 # 2. Start Dev Tool
 echo "💻 Launching Dev Dashboard..."
