@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "content")
@@ -18,32 +18,39 @@ public class Content {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+    private java.util.UUID id;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String text;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "content_type")
     private ContentType type;
 
     @Column(nullable = false)
     private String userId;
 
-    @Column(nullable = false)
-    private Long created;
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private ContentStatus status = ContentStatus.PENDING;
 
-    @Column(nullable = false)
-    private Long updated;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime created;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updated;
 
     @PrePersist
     public void onCreate() {
-        this.created = System.currentTimeMillis();
-        this.updated = System.currentTimeMillis();
+        this.created = java.time.LocalDateTime.now();
+        this.updated = java.time.LocalDateTime.now();
+        if (this.status == null) {
+            this.status = ContentStatus.PENDING;
+        }
     }
 
     @PreUpdate
     public void onUpdate() {
-        this.updated = System.currentTimeMillis();
+        this.updated = java.time.LocalDateTime.now();
     }
 }

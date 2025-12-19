@@ -44,4 +44,33 @@ public class ContentService {
 
         return savedContent;
     }
+
+    public dev.kbd.vekku_server.dto.content.ContentPageDto getAllContent(String userId, Integer limit, String cursor) {
+        log.info("Fetching content for user: {}, limit: {}, cursor: {}", userId, limit, cursor);
+        int fetchLimit = limit + 1;
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0,
+                fetchLimit);
+
+        java.util.List<Content> contents;
+        if (cursor != null && !cursor.isEmpty()) {
+            try {
+                java.time.LocalDateTime createdCursor = java.time.LocalDateTime.parse(cursor);
+                contents = contentRepository.findByUserIdAndCreatedLessThanOrderByCreatedDesc(userId, createdCursor,
+                        pageable);
+            } catch (java.time.format.DateTimeParseException e) {
+                log.error("Invalid cursor format: {}", cursor);
+                contents = java.util.Collections.emptyList();
+            }
+        } else {
+            contents = contentRepository.findAllByUserIdOrderByCreatedDesc(userId, pageable);
+        }
+
+        String nextCursor = null;
+        if (contents.size() > limit) {
+            contents = contents.subList(0, limit);
+            nextCursor = contents.get(contents.size() - 1).getCreated().toString();
+        }
+
+        return new dev.kbd.vekku_server.dto.content.ContentPageDto(contents, nextCursor);
+    }
 }

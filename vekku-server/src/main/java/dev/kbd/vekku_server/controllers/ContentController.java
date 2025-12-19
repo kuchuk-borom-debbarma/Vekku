@@ -17,9 +17,19 @@ public class ContentController {
     private final ContentService contentService;
 
     @PostMapping
-    public ResponseEntity<Content> createContent(@RequestBody CreateContentRequest request, @AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<Content> createContent(@RequestBody CreateContentRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         Content content = contentService.createContent(request, userId);
         return ResponseEntity.ok(content);
+    }
+
+    @GetMapping
+    public ResponseEntity<dev.kbd.vekku_server.dto.content.ContentPageDto> getAllContent(
+            @RequestParam(required = false, defaultValue = "20") Integer limit,
+            @RequestParam(required = false) String cursor,
+            @AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+        return ResponseEntity.ok(contentService.getAllContent(userId, limit, cursor));
     }
 }
