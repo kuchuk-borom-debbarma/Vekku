@@ -76,7 +76,7 @@ services:
     ports:
       - "8180:8080"
     volumes:
-      - ./vekku_docker_data/keycloak/realms:/opt/keycloak/data/import
+      - ./keycloak/realms:/opt/keycloak/data/import
     depends_on:
       - postgres-keycloak
     networks:
