@@ -12,12 +12,19 @@ export default function CreateContentPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
 
+
+    // We need a way to force re-render when editor content changes
+    const [hasContent, setHasContent] = useState(false);
+
     const editor = useEditor({
         extensions: [
             StarterKit,
             Placeholder.configure({ placeholder: 'Start typing your document here...' }),
         ],
         content: '',
+        onUpdate: ({ editor }) => {
+            setHasContent(editor.getText().trim().length > 0);
+        },
     });
 
     const handleSave = async () => {
@@ -68,7 +75,7 @@ export default function CreateContentPage() {
             }}>
                 <Group justify="space-between" mb="lg">
                     <Title order={2} style={{ color: '#fff' }}>Create New Document</Title>
-                    <Button onClick={handleSave} loading={loading} color="violet" disabled={!editor || editor.isEmpty}>
+                    <Button onClick={handleSave} loading={loading} color="violet" disabled={!editor || !hasContent}>
                         Save Content
                     </Button>
                 </Group>
@@ -148,8 +155,9 @@ export default function CreateContentPage() {
                             onClick={() => editor?.commands.focus()}
                         />
                     </RichTextEditor>
+
                 </Paper>
             </div>
-        </Layout>
+        </Layout >
     );
 }

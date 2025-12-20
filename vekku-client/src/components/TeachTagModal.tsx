@@ -34,10 +34,10 @@ export function TeachTagModal({ opened, onClose, initialData }: TeachTagModalPro
 
         try {
             const token = localStorage.getItem('accessToken');
-            const isEdit = !!initialData;
+            const isEdit = !!initialData?.id;
 
             const url = isEdit
-                ? `http://localhost:8080/api/tags/${initialData.id}`
+                ? `http://localhost:8080/api/tags/${initialData!.id}`
                 : 'http://localhost:8080/api/tags';
 
             const method = isEdit ? 'PUT' : 'POST';

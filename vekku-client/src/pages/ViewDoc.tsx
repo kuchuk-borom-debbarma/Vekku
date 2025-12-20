@@ -5,7 +5,11 @@ import { Layout } from '../components/ui/Layout';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Select, Loader, Badge, ActionIcon, Tooltip } from '@mantine/core';
-import { IconRefresh, IconPlus, IconX } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
+import { IconRefresh, IconPlus, IconX, IconSparkles } from '@tabler/icons-react';
+import { api } from '../api/api';
+import { useDisclosure } from '@mantine/hooks';
+import { TeachTagModal } from '../components/TeachTagModal';
 
 interface Tag {
     id: string;
@@ -41,6 +45,13 @@ export default function ViewDoc() {
     const [refreshing, setRefreshing] = useState(false);
     const [availableTags, setAvailableTags] = useState<Tag[]>([]);
     const [selectedTagToAdd, setSelectedTagToAdd] = useState<string | null>(null);
+
+    // Keywords state
+    const [keywords, setKeywords] = useState<{ keyword: string, score: number }[]>([]);
+    const [keywordsLoading, setKeywordsLoading] = useState(false);
+    const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
+    const [keywordToTeach, setKeywordToTeach] = useState<string>('');
+
     const navigate = useNavigate();
 
     const fetchContent = useCallback(async () => {
@@ -74,24 +85,61 @@ export default function ViewDoc() {
         }
     }, []);
 
+    const fetchKeywords = useCallback(async () => {
+        if (!id) return;
+        setKeywordsLoading(true);
+        try {
+            const results = await api.getContentKeywords(id);
+            // Transform to simple structure for display
+            setKeywords(results.map(k => ({ keyword: k.keyword, score: k.score })));
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setKeywordsLoading(false);
+        }
+    }, [id]);
+
     useEffect(() => {
         fetchContent();
         fetchTags();
-    }, [fetchContent, fetchTags]);
+        fetchKeywords();
+    }, [fetchContent, fetchTags, fetchKeywords]);
 
     const handleRefreshSuggestions = async () => {
         if (!id) return;
         setRefreshing(true);
         try {
             const token = localStorage.getItem('accessToken');
-            await fetch(`http://localhost:8080/api/content/${id}/suggestions/refresh`, {
+            await fetch(`http://localhost:8080/api/content/${id}/suggestions/tags/refresh`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            // Suggestions update async, so we might not see changes immediately.
-            // Maybe poll or just wait a bit?
+
+            // Show notification/feedback
+            // Using a simple alert for now, effectively "Toasting"
+            // Ideally use Mantine notifications system
+
             setTimeout(() => {
                 fetchContent();
+                setRefreshing(false);
+            }, 2000);
+        } catch (err) {
+            console.error(err);
+            setRefreshing(false);
+        }
+    };
+
+    const handleRefreshKeywords = async () => {
+        if (!id) return;
+        setRefreshing(true);
+        try {
+            const token = localStorage.getItem('accessToken');
+            await fetch(`http://localhost:8080/api/content/${id}/suggestions/keywords/refresh`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setTimeout(() => {
+                fetchKeywords();
                 setRefreshing(false);
             }, 2000);
         } catch (err) {
@@ -272,7 +320,60 @@ export default function ViewDoc() {
                             {data.suggestedTags.length === 0 && <div style={{ color: 'var(--color-text-tertiary)', fontSize: '0.9rem' }}>No suggestions available</div>}
                         </div>
                     </Card>
+
+                    {/* Suggested Keywords (KeyBERT) */}
+                    <Card>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <IconSparkles size={16} color="var(--mantine-primary-color-filled)" />
+                                <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Suggested Keywords</h3>
+                            </div>
+                            <Tooltip label="Refresh Keywords">
+                                <ActionIcon onClick={handleRefreshKeywords} loading={refreshing || keywordsLoading} variant="subtle" color="gray">
+                                    <IconRefresh size={18} />
+                                </ActionIcon>
+                            </Tooltip>
+                        </div>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            {keywords.map(k => (
+                                <Badge
+                                    key={k.keyword}
+                                    variant="outline"
+                                    color="grape"
+                                    style={{ cursor: 'pointer', paddingRight: 0 }}
+                                    rightSection={
+                                        <span style={{
+                                            fontSize: '0.7em',
+                                            opacity: 0.7,
+                                            padding: '0 6px',
+                                            borderLeft: '1px solid var(--color-border)'
+                                        }}>
+                                            {(k.score * 100).toFixed(0)}%
+                                        </span>
+                                    }
+                                    onClick={() => {
+                                        setKeywordToTeach(k.keyword);
+                                        openModal();
+                                    }}
+                                >
+                                    {k.keyword}
+                                </Badge>
+                            ))}
+                            {keywords.length === 0 && <div style={{ color: 'var(--color-text-tertiary)', fontSize: '0.9rem' }}>No keywords extracted</div>}
+                        </div>
+                    </Card>
                 </div>
+
+                <TeachTagModal
+                    opened={modalOpened}
+                    onClose={() => {
+                        closeModal();
+                        // Refresh tags list after teaching new tag
+                        fetchTags();
+                    }}
+                    initialData={{ id: '', name: keywordToTeach, synonyms: [] }}
+                />
             </div>
         </Layout>
     );

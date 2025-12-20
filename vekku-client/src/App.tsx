@@ -12,8 +12,10 @@ import ManageTags from './pages/ManageTags';
 import './App.css';
 
 import { MantineProvider, createTheme, Loader, Center } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
 import '@mantine/tiptap/styles.css';
+import '@mantine/notifications/styles.css';
 
 const CreateContentPage = lazy(() => import('./pages/CreateContentPage'));
 
@@ -25,6 +27,7 @@ const theme = createTheme({
 function App() {
   return (
     <MantineProvider theme={theme} defaultColorScheme="dark">
+      <Notifications />
       <AuthProvider>
         <BrowserRouter>
           <Routes>
