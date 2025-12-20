@@ -6,7 +6,7 @@ import dev.kbd.vekku_server.controllers.auth.models.SignupRequest;
 import dev.kbd.vekku_server.controllers.auth.models.UserInfo;
 import dev.kbd.vekku_server.controllers.auth.models.VerifyOtpRequest;
 import dev.kbd.vekku_server.controllers.mapper.AuthMapper;
-import dev.kbd.vekku_server.infra.ratelimit.RateLimit;
+import dev.kbd.vekku_server.infrastructure.ratelimiter.RateLimit;
 import dev.kbd.vekku_server.services.auth.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

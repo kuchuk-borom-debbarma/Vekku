@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.infra.ratelimit;
+package dev.kbd.vekku_server.infrastructure.ratelimiter;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;

@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.config;
+package dev.kbd.vekku_server.infrastructure.config;
 
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;

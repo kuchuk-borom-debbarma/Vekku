@@ -5,7 +5,7 @@ import dev.kbd.vekku_server.services.content.interfaces.IContentService;
 import dev.kbd.vekku_server.controllers.content.models.ContentPageDto;
 import dev.kbd.vekku_server.controllers.content.models.CreateContentRequest;
 import dev.kbd.vekku_server.controllers.content.models.SaveTagsForContentRequest;
-import dev.kbd.vekku_server.infra.ratelimit.RateLimit;
+import dev.kbd.vekku_server.infrastructure.ratelimiter.RateLimit;
 import dev.kbd.vekku_server.services.brain.interfaces.IBrainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

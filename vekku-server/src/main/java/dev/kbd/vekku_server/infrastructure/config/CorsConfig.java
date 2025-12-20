@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.config;
+package dev.kbd.vekku_server.infrastructure.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

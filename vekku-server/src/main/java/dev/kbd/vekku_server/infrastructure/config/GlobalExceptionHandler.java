@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.config;
+package dev.kbd.vekku_server.infrastructure.config;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

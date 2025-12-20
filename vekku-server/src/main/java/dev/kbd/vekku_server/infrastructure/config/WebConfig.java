@@ -1,10 +1,11 @@
-package dev.kbd.vekku_server.config;
+package dev.kbd.vekku_server.infrastructure.config;
 
-import dev.kbd.vekku_server.infra.ratelimit.RateLimitInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import dev.kbd.vekku_server.infrastructure.ratelimiter.RateLimitInterceptor;
 
 @Configuration
 @RequiredArgsConstructor

@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.infra.ratelimit;
+package dev.kbd.vekku_server.infrastructure.ratelimiter;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
