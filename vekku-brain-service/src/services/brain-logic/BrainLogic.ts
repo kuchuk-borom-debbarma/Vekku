@@ -284,4 +284,127 @@ export class BrainLogic {
             must: [{ key: "tag_id", match: { value: tagId } }]
         });
     }
+
+    /**
+     * 🔑 EXTRACT KEYWORDS (KeyBERT-like)
+     * 
+     * Extracts keyword candidates using N-grams, embeds them, and uses Cosine Similarity + MMR
+     * to find the best representatives.
+     * 
+     * Filtering:
+     * - We first check for EXISTING tags in the content (Entity Linking).
+     * - If found, we EXCLUDE them from the suggestions (User wants *new* suggestions).
+     * 
+     * @param content - Text content
+     * @param topK - Number of keywords to return (default 5)
+     * @param diversity - MMR Diversity parameter (0.0 to 1.0) (default 0.5)
+     */
+    public async extractKeywords(content: string, topK: number = 5, diversity: number = 0.5): Promise<{ name: string, score: number }[]> {
+        console.log(`🔑 Extracting keywords...`);
+
+        if (!content || content.trim().length === 0) return [];
+
+        // 1. Get Existing Tags (to filter them out)
+        // We reuse the getRawTagsByEmbedding logic but just get the names
+        const existingTagsWithScore = await this.getRawTagsByEmbedding(content, 0.6, 20); // High threshold to be sure
+        const existingTags = new Set(existingTagsWithScore.map(t => t.name.toLowerCase()));
+        console.log(`❌ Excluding ${existingTags.size} existing tags:`, Array.from(existingTags));
+
+
+        // 2. Generate N-Gram Candidates (1-gram and 2-gram)
+        const candidates = this.generateCandidates(content);
+        if (candidates.length === 0) return [];
+
+        // Filter candidates: remove stopwords, short words, and ALREADY EXISTING tags
+        const uniqueCandidates = Array.from(new Set(candidates))
+            .filter(c => c.length > 2) // Min length
+            .filter(c => !existingTags.has(c.toLowerCase())); // Filter existing tags
+
+        if (uniqueCandidates.length === 0) return [];
+
+        console.log(`🧐 Scoring ${uniqueCandidates.length} unique candidates...`);
+
+        // 3. Embed EVERYTHING (Content + Candidates)
+        // Note: Ideally batch this if list is huge.
+        const contentVector = await this.embeddingService.getVector(content);
+        const candidateVectors: number[][] = [];
+
+        // Current EmbeddingService handles caching, so loop is okay-ish but batching would be better in future.
+        for (const candidate of uniqueCandidates) {
+            candidateVectors.push(await this.embeddingService.getVector(candidate));
+        }
+
+        // 4. Calculate Cosine Similarities (Content vs Candidates)
+        const similarities = candidateVectors.map(vec => cosineSimilarity(contentVector, vec));
+
+        // 5. Select Top N Candidates based on Similarity (pre-filter for MMR)
+        // Sort indices by score desc
+        const sortedIndices = similarities
+            .map((score, index) => ({ score, index }))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 50); // Take top 50 mostly relevant to reduce MMR compute
+
+        // 6. MMR (Maximal Marginal Relevance)
+        // Select keywords that are similar to doc but dissimilar to each other
+        const selectedIndices: number[] = [];
+        const top50Indices = sortedIndices.map(s => s.index);
+
+        while (selectedIndices.length < topK && top50Indices.length > 0) {
+            let bestNextIndex = -1;
+            let bestMMRScore = -Infinity;
+
+            for (const candidateIdx of top50Indices) {
+                const simToDoc = similarities[candidateIdx];
+                let maxSimToSelected = 0;
+
+                for (const selectedIdx of selectedIndices) {
+                    const sim = cosineSimilarity(candidateVectors[candidateIdx], candidateVectors[selectedIdx]);
+                    if (sim > maxSimToSelected) maxSimToSelected = sim;
+                }
+
+                // MMR Formula: (1-diversity) * Sim(Doc) - diversity * MaxSim(Selected)
+                const mmrScore = (1 - diversity) * simToDoc - (diversity * maxSimToSelected);
+
+                if (mmrScore > bestMMRScore) {
+                    bestMMRScore = mmrScore;
+                    bestNextIndex = candidateIdx;
+                }
+            }
+
+            if (bestNextIndex !== -1) {
+                selectedIndices.push(bestNextIndex);
+                // Remove from pool
+                const poolIdx = top50Indices.indexOf(bestNextIndex);
+                if (poolIdx > -1) top50Indices.splice(poolIdx, 1);
+            } else {
+                break;
+            }
+        }
+
+        return selectedIndices.map(idx => ({
+            name: uniqueCandidates[idx],
+            score: similarities[idx]
+        }));
+    }
+
+    private generateCandidates(content: string): string[] {
+        // Basic stopword list (can be improved or moved to config)
+        const stopWords = new Set(["the", "is", "at", "which", "on", "and", "a", "an", "in", "to", "of", "for", "it", "with", "as", "this", "that", "are", "from", "be", "or", "by", "not", "but", "what", "all", "were", "we", "when", "your", "can", "said", "there", "use", "do", "how", "if", "will", "up", "other", "about", "out", "many", "then", "them", "these", "so", "some", "her", "would", "make", "like", "him", "into", "time", "has", "look", "two", "more", "write", "go", "see", "number", "no", "way", "could", "people", "my", "than", "first", "water", "been", "call", "who", "oil", "its", "now", "find", "long", "down", "day", "did", "get", "come", "made", "may", "part"]);
+
+        // Normalize
+        const cleanText = content.toLowerCase().replace(/[^a-z0-9\s]/g, " ");
+        const words = cleanText.split(/\s+/).filter(w => w.length > 0 && !stopWords.has(w));
+
+        const candidates: string[] = [];
+
+        // 1-grams
+        candidates.push(...words);
+
+        // 2-grams
+        for (let i = 0; i < words.length - 1; i++) {
+            candidates.push(`${words[i]} ${words[i + 1]}`);
+        }
+
+        return candidates;
+    }
 }

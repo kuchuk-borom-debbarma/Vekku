@@ -143,6 +143,27 @@ export const BrainController = {
             console.error("❌ Error in DeleteTag:", error);
             return res.status(500).json({ error: "Failed to delete tag" });
         }
-    }
+    },
 
+    /**
+     * POST /keywords
+     * Body: { content: string, topK?: number, diversity?: number }
+     */
+    ExtractKeywords: async (req: Request, res: Response) => {
+        const { content, topK, diversity } = req.body;
+
+        if (!content) {
+            return res.status(400).json({ error: "content is required" });
+        }
+
+        try {
+            const brain = BrainLogic.getInstance();
+            const result = await brain.extractKeywords(content, topK, diversity);
+            return res.json({ keywords: result });
+        } catch (error: unknown) {
+            console.error("❌ Error in ExtractKeywords:", error);
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            return res.status(500).json({ error: errorMessage });
+        }
+    }
 };

@@ -20,6 +20,8 @@ app.post('/learn', BrainController.Learn);
 app.post('/raw-tags', BrainController.GetRawTags);
 app.post('/region-tags', BrainController.GetRegionTags);
 app.post('/score-tags', BrainController.ScoreTags);
+app.post('/keywords', BrainController.ExtractKeywords);
+
 
 app.get('/tags', BrainController.GetAllTags);
 app.delete('/tags/:id', BrainController.DeleteTag);
