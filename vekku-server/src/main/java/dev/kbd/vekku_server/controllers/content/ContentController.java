@@ -1,13 +1,23 @@
 package dev.kbd.vekku_server.controllers.content;
 
 import dev.kbd.vekku_server.services.content.model.Content;
+import dev.kbd.vekku_server.services.content.model.ContentKeywordSuggestion;
+import dev.kbd.vekku_server.shared.events.ContentProcessingAction;
 import dev.kbd.vekku_server.services.content.interfaces.IContentService;
+import dev.kbd.vekku_server.controllers.content.models.ContentDetailDto;
 import dev.kbd.vekku_server.controllers.content.models.ContentPageDto;
 import dev.kbd.vekku_server.controllers.content.models.CreateContentRequest;
 import dev.kbd.vekku_server.controllers.content.models.SaveTagsForContentRequest;
 import dev.kbd.vekku_server.infrastructure.ratelimiter.RateLimit;
+import dev.kbd.vekku_server.services.brain.dto.ExtractKeywordsRequest;
 import dev.kbd.vekku_server.services.brain.interfaces.IBrainService;
+import dev.kbd.vekku_server.services.brain.model.TagScore;
 import lombok.RequiredArgsConstructor;
+
+import java.util.EnumSet;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -16,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/content")
 @RequiredArgsConstructor
-@RateLimit(limit = 100, duration = 60) // Default for Content Controller
+@RateLimit(limit = 100, duration = 60)
 public class ContentController {
 
     private final IContentService contentService;
@@ -38,33 +48,33 @@ public class ContentController {
     }
 
     @PostMapping("/{id}/suggestions/refresh")
-    public void refreshSuggestions(@PathVariable java.util.UUID id,
+    public void refreshSuggestions(@PathVariable UUID id,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         // Refresh everything by default
         contentService.refreshSuggestions(id, userId,
-                java.util.EnumSet.allOf(dev.kbd.vekku_server.shared.events.ContentProcessingAction.class));
+                EnumSet.allOf(ContentProcessingAction.class));
     }
 
     @PostMapping("/{id}/suggestions/tags/refresh")
-    public void refreshTagSuggestions(@PathVariable java.util.UUID id,
+    public void refreshTagSuggestions(@PathVariable UUID id,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         contentService.refreshSuggestions(id, userId,
-                java.util.EnumSet.of(dev.kbd.vekku_server.shared.events.ContentProcessingAction.SUGGEST_TAGS));
+                EnumSet.of(ContentProcessingAction.SUGGEST_TAGS));
     }
 
     @PostMapping("/{id}/suggestions/keywords/refresh")
-    public void refreshKeywordSuggestions(@PathVariable java.util.UUID id,
+    public void refreshKeywordSuggestions(@PathVariable UUID id,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         contentService.refreshSuggestions(id, userId,
-                java.util.EnumSet.of(dev.kbd.vekku_server.shared.events.ContentProcessingAction.SUGGEST_KEYWORDS));
+                EnumSet.of(ContentProcessingAction.SUGGEST_KEYWORDS));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<dev.kbd.vekku_server.controllers.content.models.ContentDetailDto> getContent(
-            @PathVariable java.util.UUID id,
+    public ResponseEntity<ContentDetailDto> getContent(
+            @PathVariable UUID id,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         return ResponseEntity.ok(contentService.getContent(id, userId));
@@ -80,8 +90,8 @@ public class ContentController {
     }
 
     @PostMapping("/keywords")
-    public ResponseEntity<java.util.List<dev.kbd.vekku_server.services.brain.model.TagScore>> getKeywordsOnDemand(
-            @RequestBody dev.kbd.vekku_server.services.brain.dto.ExtractKeywordsRequest request,
+    public ResponseEntity<List<TagScore>> getKeywordsOnDemand(
+            @RequestBody ExtractKeywordsRequest request,
             @AuthenticationPrincipal Jwt jwt) {
         // Authenticated users can request keyword extraction on raw text
         // Use BrainService directly
@@ -89,8 +99,8 @@ public class ContentController {
     }
 
     @GetMapping("/{id}/keywords")
-    public ResponseEntity<java.util.List<dev.kbd.vekku_server.services.content.model.ContentKeywordSuggestion>> getKeywordsForContent(
-            @PathVariable java.util.UUID id,
+    public ResponseEntity<List<ContentKeywordSuggestion>> getKeywordsForContent(
+            @PathVariable UUID id,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         return ResponseEntity.ok(contentService.getContentKeywords(id, userId));
