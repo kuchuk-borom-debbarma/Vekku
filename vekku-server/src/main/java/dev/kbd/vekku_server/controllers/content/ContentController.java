@@ -9,6 +9,7 @@ import dev.kbd.vekku_server.services.content.dtos.CreateContentParam;
 import dev.kbd.vekku_server.services.content.dtos.SaveTagsForContentParam;
 import dev.kbd.vekku_server.shared.events.ContentProcessingAction;
 import dev.kbd.vekku_server.infrastructure.ratelimiter.RateLimit;
+import dev.kbd.vekku_server.orchestrators.content.ContentOrchestrator;
 import dev.kbd.vekku_server.services.brain.IBrainService;
 import dev.kbd.vekku_server.services.brain.dto.ExtractKeywordsParam;
 import dev.kbd.vekku_server.services.common.dtos.TagScore;
@@ -31,12 +32,13 @@ public class ContentController {
 
     private final IContentService contentService;
     private final IBrainService brainService;
+    private final ContentOrchestrator contentOrchestrator;
 
     @PostMapping
     public ResponseEntity<Content> createContent(@RequestBody CreateContentParam request,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
-        Content content = contentService.createContent(request, userId);
+        Content content = contentOrchestrator.createContent(request, userId);
         return ResponseEntity.ok(content);
     }
 
@@ -52,7 +54,7 @@ public class ContentController {
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         // Refresh everything by default
-        contentService.refreshSuggestions(id, userId,
+        contentOrchestrator.refreshSuggestions(id, userId,
                 EnumSet.allOf(ContentProcessingAction.class));
     }
 
@@ -60,7 +62,7 @@ public class ContentController {
     public void refreshTagSuggestions(@PathVariable UUID id,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
-        contentService.refreshSuggestions(id, userId,
+        contentOrchestrator.refreshSuggestions(id, userId,
                 EnumSet.of(ContentProcessingAction.SUGGEST_TAGS));
     }
 
@@ -68,7 +70,7 @@ public class ContentController {
     public void refreshKeywordSuggestions(@PathVariable UUID id,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
-        contentService.refreshSuggestions(id, userId,
+        contentOrchestrator.refreshSuggestions(id, userId,
                 EnumSet.of(ContentProcessingAction.SUGGEST_KEYWORDS));
     }
 

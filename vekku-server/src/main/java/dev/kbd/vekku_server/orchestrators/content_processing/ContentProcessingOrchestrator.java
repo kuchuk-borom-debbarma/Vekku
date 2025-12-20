@@ -18,6 +18,8 @@ public class ContentProcessingOrchestrator {
     private final IBrainService brainService;
     private final IContentService contentService;
 
+    private final dev.kbd.vekku_server.services.tags.ITagService tagService;
+
     @RabbitListener(queues = "${vekku.rabbitmq.queue}")
     public void processContent(dev.kbd.vekku_server.shared.events.ContentProcessingEvent event) {
         log.info("Processing event for content: {} with actions: {}", event.getContentId(), event.getActions());
@@ -46,9 +48,17 @@ public class ContentProcessingOrchestrator {
 
         List<TagScore> tagScores = brainService.getRawTagsByEmbedding(content.content(), 0.45, 10);
 
-        contentService.saveTagSuggestions(contentId, tagScores, content.userId());
+        List<dev.kbd.vekku_server.services.content.dtos.SuggestedTagDto> suggestedTags = new java.util.ArrayList<>();
+        for (TagScore tagScore : tagScores) {
+            tagService.getTagByName(tagScore.name(), content.userId()).ifPresent(tag -> {
+                suggestedTags.add(
+                        new dev.kbd.vekku_server.services.content.dtos.SuggestedTagDto(tag.id(), tagScore.score()));
+            });
+        }
 
-        log.info("Successfully generated {} tag suggestions for content: {}", tagScores.size(), contentId);
+        contentService.saveTagSuggestions(contentId, suggestedTags, content.userId());
+
+        log.info("Successfully generated {} tag suggestions for content: {}", suggestedTags.size(), contentId);
     }
 
     private void processKeywords(java.util.UUID contentId) {

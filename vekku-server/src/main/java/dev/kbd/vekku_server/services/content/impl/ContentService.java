@@ -1,6 +1,5 @@
 package dev.kbd.vekku_server.services.content.impl;
 
-import dev.kbd.vekku_server.services.common.dtos.TagScore;
 import dev.kbd.vekku_server.services.content.IContentService;
 import dev.kbd.vekku_server.services.content.dtos.Content;
 import dev.kbd.vekku_server.services.content.dtos.ContentDetail;
@@ -17,20 +16,17 @@ import dev.kbd.vekku_server.services.content.impl.repo.ContentKeywordSuggestionR
 import dev.kbd.vekku_server.services.content.impl.repo.ContentRepository;
 import dev.kbd.vekku_server.services.content.impl.repo.ContentTagRepository;
 import dev.kbd.vekku_server.services.content.impl.repo.ContentTagSuggestionRepository;
-import dev.kbd.vekku_server.services.tags.ITagService;
-import dev.kbd.vekku_server.services.tags.dtos.Tag;
+// ITagService import removed
+// Tag import removed
 import dev.kbd.vekku_server.services.tags.impl.entities.TagEntity;
-import dev.kbd.vekku_server.shared.events.ContentProcessingAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -38,22 +34,13 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ContentService implements IContentService {
 
-    // TODO remove ITagService dependency. It should be done using orchestrators
-
     private final ContentRepository contentRepository;
-    private final RabbitTemplate rabbitTemplate;
-    private final ITagService tagService;
     private final ContentMapper contentMapper;
 
+    // TODO let tag handle tag related stuff.
     private final ContentTagRepository contentTagRepository;
     private final ContentTagSuggestionRepository contentTagSuggestionRepository;
     private final ContentKeywordSuggestionRepository contentKeywordSuggestionRepository;
-
-    @Value("${vekku.rabbitmq.exchange}")
-    private String exchange;
-
-    @Value("${vekku.rabbitmq.routingkey}")
-    private String routingKey;
 
     @Override
     public Content createContent(CreateContentParam request, String userId) {
@@ -72,16 +59,7 @@ public class ContentService implements IContentService {
 
         ContentEntity savedContent = contentRepository.save(content);
 
-        // Publish to RabbitMQ
-        log.info("Publishing content creation event for contentId: {}", savedContent.getId());
-        dev.kbd.vekku_server.shared.events.ContentProcessingEvent event = dev.kbd.vekku_server.shared.events.ContentProcessingEvent
-                .builder()
-                .contentId(savedContent.getId())
-                .actions(java.util.EnumSet.allOf(dev.kbd.vekku_server.shared.events.ContentProcessingAction.class))
-                .build();
-        rabbitTemplate.convertAndSend(exchange, routingKey, event);
-
-        return contentMapper.toContent(content);
+        return contentMapper.toContent(savedContent);
     }
 
     @Override
@@ -99,7 +77,7 @@ public class ContentService implements IContentService {
                         pageable);
             } catch (java.time.format.DateTimeParseException e) {
                 log.error("Invalid cursor format: {}", cursor);
-                contents = java.util.Collections.emptyList();
+                contents = Collections.emptyList();
             }
         } else {
             contents = contentRepository.findAllByUserIdOrderByCreatedDesc(userId, pageable);
@@ -156,26 +134,6 @@ public class ContentService implements IContentService {
     }
 
     @Override
-    public void refreshSuggestions(UUID contentId, String userId,
-            Set<ContentProcessingAction> actions) {
-        ContentEntity content = contentRepository.findById(contentId)
-                .orElseThrow(() -> new RuntimeException("Content not found"));
-
-        if (!content.getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized");
-        }
-
-        log.info("Refreshing suggestions for content: {} with actions: {}", contentId, actions);
-        dev.kbd.vekku_server.shared.events.ContentProcessingEvent event = dev.kbd.vekku_server.shared.events.ContentProcessingEvent
-                .builder()
-                .contentId(content.getId())
-                .actions(actions)
-                .build();
-
-        rabbitTemplate.convertAndSend(exchange, routingKey, event);
-    }
-
-    @Override
     public ContentDetail getContent(UUID contentId, String userId) {
         ContentEntity content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Content not found"));
@@ -212,7 +170,7 @@ public class ContentService implements IContentService {
 
     @Override
     public void saveTagSuggestions(UUID contentId,
-            List<TagScore> scores, String userId) {
+            List<dev.kbd.vekku_server.services.content.dtos.SuggestedTagDto> tagScores, String userId) {
         // Find content to ensure ownership and existence
         ContentEntity content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Content not found"));
@@ -222,18 +180,14 @@ public class ContentService implements IContentService {
 
         contentTagSuggestionRepository.deleteByContentId(contentId);
 
-        for (dev.kbd.vekku_server.services.common.dtos.TagScore tagScore : scores) {
-            String tagName = tagScore.name();
+        for (dev.kbd.vekku_server.services.content.dtos.SuggestedTagDto tagScore : tagScores) {
+            java.util.UUID tagId = tagScore.tagId();
             Double score = tagScore.score();
-
-            // Get the id of the tag via TagService
-            Tag tag = tagService.getTagByName(tagName, userId)
-                    .orElseThrow(() -> new RuntimeException("Tag not found for name: " + tagName));
 
             // Save ContentTagSuggestion
             ContentTagSuggestionEntity contentTag = ContentTagSuggestionEntity.builder()
                     .content(content)
-                    .tag(TagEntity.builder().id(tag.id()).build())
+                    .tag(TagEntity.builder().id(tagId).build())
                     .score(score)
                     .userId(userId)
                     .build();

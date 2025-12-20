@@ -7,10 +7,8 @@ import dev.kbd.vekku_server.services.content.dtos.ContentKeywordSuggestion;
 import dev.kbd.vekku_server.services.content.dtos.ContentPage;
 import dev.kbd.vekku_server.services.content.dtos.CreateContentParam;
 import dev.kbd.vekku_server.services.content.dtos.SaveTagsForContentParam;
-import dev.kbd.vekku_server.shared.events.ContentProcessingAction;
 import java.util.List;
 import java.util.UUID;
-import java.util.Set;
 
 public interface IContentService {
         Content createContent(CreateContentParam request, String userId);
@@ -21,13 +19,11 @@ public interface IContentService {
 
         void updateTagsOfContent(SaveTagsForContentParam request, String userId);
 
-        void refreshSuggestions(UUID contentId, String userId, Set<ContentProcessingAction> actions);
-
         // TODO move to tags
         List<ContentKeywordSuggestion> getContentKeywords(UUID contentId, String userId);
 
         // TODO move to tags
-        void saveTagSuggestions(UUID contentId, List<TagScore> scores,
+        void saveTagSuggestions(UUID contentId, List<dev.kbd.vekku_server.services.content.dtos.SuggestedTagDto> scores,
                         String userId);
 
         // TODO move to tags
