@@ -3,7 +3,7 @@ package dev.kbd.vekku_server.service;
 import dev.kbd.vekku_server.model.Tag;
 import dev.kbd.vekku_server.model.content.Content;
 import dev.kbd.vekku_server.model.content.ContentTagSuggestion;
-import dev.kbd.vekku_server.repository.ContentTagRepository;
+import dev.kbd.vekku_server.repository.ContentTagSuggestionRepository;
 import dev.kbd.vekku_server.repository.TagRepository;
 import dev.kbd.vekku_server.services.brain.model.TagScore;
 import dev.kbd.vekku_server.services.core.embedding.EmbeddingService;
@@ -22,12 +22,13 @@ public class ContentProcessor {
 
     private final EmbeddingService embeddingService;
     private final TagRepository tagRepository;
-    private final ContentTagRepository contentTagRepository;
+    private final ContentTagSuggestionRepository contentTagSuggestionRepository;
 
     @RabbitListener(queues = "${vekku.rabbitmq.queue}")
     @Transactional
     public void processContent(Content content) {
         log.info("Processing content: {}", content.getId());
+        contentTagSuggestionRepository.deleteByContentId(content.getId());
 
         try {
             // 1. Brain needs to return the tags
@@ -53,7 +54,7 @@ public class ContentProcessor {
                     throw new RuntimeException("ContentTag cannot be null");
                 }
 
-                contentTagRepository.save(contentTag);
+                contentTagSuggestionRepository.save(contentTag);
             }
             log.info("Successfully processed content: {} with {} tags", content.getId(), tagScores.size());
 

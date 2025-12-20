@@ -32,10 +32,22 @@ public class ContentController {
     public void saveTagsForContent(@RequestBody SaveTagsForContentRequest request,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
-        // TODO create function to update tags of content, create entity for it
+        contentService.saveTagsForContent(request, userId);
     }
 
-    // TODO endpoint to update suggestions of content
+    @PostMapping("/{id}/suggestions/refresh")
+    public void refreshSuggestions(@PathVariable java.util.UUID id,
+            @AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+        contentService.refreshSuggestions(id, userId);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<dev.kbd.vekku_server.dto.content.ContentDetailDto> getContent(@PathVariable java.util.UUID id,
+            @AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+        return ResponseEntity.ok(contentService.getContent(id, userId));
+    }
 
     @GetMapping
     public ResponseEntity<ContentPageDto> getAllContent(
