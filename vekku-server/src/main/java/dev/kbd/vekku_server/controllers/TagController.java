@@ -4,6 +4,7 @@ import dev.kbd.vekku_server.services.tags.dto.CreateTagRequest;
 import dev.kbd.vekku_server.services.tags.model.Tag;
 import dev.kbd.vekku_server.services.tags.dto.TagPageDto;
 import dev.kbd.vekku_server.services.tags.interfaces.ITagService;
+import dev.kbd.vekku_server.infra.ratelimit.RateLimit;
 import dev.kbd.vekku_server.services.orchestration.TagOrchestrator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ import java.util.UUID;
 @RequestMapping("/api/tags")
 @RequiredArgsConstructor
 @Slf4j
+@RateLimit(limit = 100, duration = 60)
 public class TagController {
 
     private final ITagService tagService;

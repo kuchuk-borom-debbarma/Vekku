@@ -5,6 +5,7 @@ import dev.kbd.vekku_server.dto.auth.LoginResponse;
 import dev.kbd.vekku_server.dto.auth.SignupRequest;
 import dev.kbd.vekku_server.dto.auth.UserInfo;
 import dev.kbd.vekku_server.dto.auth.VerifyOtpRequest;
+import dev.kbd.vekku_server.infra.ratelimit.RateLimit;
 import dev.kbd.vekku_server.services.auth.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,24 +25,28 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
+    @RateLimit(limit = 5, duration = 60)
     public ResponseEntity<String> signup(@RequestBody SignupRequest request) {
         authService.signup(request);
         return ResponseEntity.ok("OTP sent to email");
     }
 
     @PostMapping("/verify")
+    @RateLimit(limit = 10, duration = 60)
     public ResponseEntity<String> verifyOtp(@RequestBody VerifyOtpRequest request) {
         authService.verifyOtp(request);
         return ResponseEntity.ok("User verified and registered successfully");
     }
 
     @PostMapping("/login")
+    @RateLimit(limit = 5, duration = 60)
     public ResponseEntity<LoginResponse> login(
             @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
     @GetMapping("/me")
+    @RateLimit(limit = 5, duration = 60)
     public ResponseEntity<UserInfo> getCurrentUser(
             @AuthenticationPrincipal Jwt jwt) {
         if (jwt == null) {

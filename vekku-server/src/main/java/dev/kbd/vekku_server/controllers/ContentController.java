@@ -5,18 +5,18 @@ import dev.kbd.vekku_server.services.content.dto.CreateContentRequest;
 import dev.kbd.vekku_server.services.content.dto.SaveTagsForContentRequest;
 import dev.kbd.vekku_server.services.content.model.Content;
 import dev.kbd.vekku_server.services.content.interfaces.IContentService;
+import dev.kbd.vekku_server.infra.ratelimit.RateLimit;
 import dev.kbd.vekku_server.services.brain.interfaces.IBrainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/api/content")
 @RequiredArgsConstructor
+@RateLimit(limit = 100, duration = 60) // Default for Content Controller
 public class ContentController {
 
     private final IContentService contentService;
