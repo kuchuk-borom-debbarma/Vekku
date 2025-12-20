@@ -101,4 +101,16 @@ public class RemoteEmbeddingService implements EmbeddingService {
                 .retrieve()
                 .body(TagListDto.class);
     }
+
+    @Override
+    public List<TagScore> extractKeywords(String content, Integer topK, Double diversity) {
+        ExtractKeywordsResponse response = restClient.post()
+                .uri("/keywords")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ExtractKeywordsRequest(content, topK, diversity))
+                .retrieve()
+                .body(ExtractKeywordsResponse.class);
+
+        return response != null ? response.keywords() : List.of();
+    }
 }

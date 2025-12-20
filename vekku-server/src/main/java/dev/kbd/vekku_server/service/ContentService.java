@@ -17,8 +17,10 @@ public class ContentService {
     private final ContentRepository contentRepository;
     private final RabbitTemplate rabbitTemplate;
     private final dev.kbd.vekku_server.repository.TagRepository tagRepository;
+    private final dev.kbd.vekku_server.services.core.embedding.EmbeddingService embeddingService;
     private final dev.kbd.vekku_server.repository.ContentTagRepository contentTagRepository;
     private final dev.kbd.vekku_server.repository.ContentTagSuggestionRepository contentTagSuggestionRepository;
+    private final dev.kbd.vekku_server.repository.ContentKeywordSuggestionRepository contentKeywordSuggestionRepository;
 
     @Value("${vekku.rabbitmq.exchange}")
     private String exchange;
@@ -43,8 +45,14 @@ public class ContentService {
         Content savedContent = contentRepository.save(content);
 
         // Publish to RabbitMQ
+        // Publish to RabbitMQ
         log.info("Publishing content creation event for contentId: {}", savedContent.getId());
-        rabbitTemplate.convertAndSend(exchange, routingKey, savedContent);
+        dev.kbd.vekku_server.event.ContentProcessingEvent event = dev.kbd.vekku_server.event.ContentProcessingEvent
+                .builder()
+                .contentId(savedContent.getId())
+                .actions(java.util.EnumSet.allOf(dev.kbd.vekku_server.event.ContentProcessingAction.class))
+                .build();
+        rabbitTemplate.convertAndSend(exchange, routingKey, event);
 
         return savedContent;
     }
@@ -120,7 +128,8 @@ public class ContentService {
         }
     }
 
-    public void refreshSuggestions(java.util.UUID contentId, String userId) {
+    public void refreshSuggestions(java.util.UUID contentId, String userId,
+            java.util.Set<dev.kbd.vekku_server.event.ContentProcessingAction> actions) {
         Content content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Content not found"));
 
@@ -128,8 +137,14 @@ public class ContentService {
             throw new RuntimeException("Unauthorized");
         }
 
-        log.info("Refreshing suggestions for content: {}", contentId);
-        rabbitTemplate.convertAndSend(exchange, routingKey, content);
+        log.info("Refreshing suggestions for content: {} with actions: {}", contentId, actions);
+        dev.kbd.vekku_server.event.ContentProcessingEvent event = dev.kbd.vekku_server.event.ContentProcessingEvent
+                .builder()
+                .contentId(content.getId())
+                .actions(actions)
+                .build();
+
+        rabbitTemplate.convertAndSend(exchange, routingKey, event);
     }
 
     public dev.kbd.vekku_server.dto.content.ContentDetailDto getContent(java.util.UUID contentId, String userId) {
@@ -150,5 +165,21 @@ public class ContentService {
                 .manualTags(manualTags)
                 .suggestedTags(suggestedTags)
                 .build();
+    }
+
+    public java.util.List<dev.kbd.vekku_server.services.brain.model.TagScore> extractKeywordsOnDemand(String content) {
+        return embeddingService.extractKeywords(content, 5, 0.5);
+    }
+
+    public java.util.List<dev.kbd.vekku_server.model.content.ContentKeywordSuggestion> getContentKeywords(
+            java.util.UUID contentId, String userId) {
+        Content content = contentRepository.findById(contentId)
+                .orElseThrow(() -> new RuntimeException("Content not found"));
+
+        if (!content.getUserId().equals(userId)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        return contentKeywordSuggestionRepository.findByContentId(contentId);
     }
 }

@@ -34,6 +34,8 @@ public interface EmbeddingService {
 
     List<TagScore> scoreTags(List<String> tags, String content);
 
+    List<TagScore> extractKeywords(String content, Integer topK, Double diversity);
+
     // Using primitive/DTO return types to avoid coupling with SQL Entities
     TagListDto getAllTags(Integer limit, String offset);
 }

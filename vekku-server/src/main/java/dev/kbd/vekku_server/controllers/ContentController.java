@@ -39,7 +39,25 @@ public class ContentController {
     public void refreshSuggestions(@PathVariable java.util.UUID id,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
-        contentService.refreshSuggestions(id, userId);
+        // Refresh everything by default
+        contentService.refreshSuggestions(id, userId,
+                java.util.EnumSet.allOf(dev.kbd.vekku_server.event.ContentProcessingAction.class));
+    }
+
+    @PostMapping("/{id}/suggestions/tags/refresh")
+    public void refreshTagSuggestions(@PathVariable java.util.UUID id,
+            @AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+        contentService.refreshSuggestions(id, userId,
+                java.util.EnumSet.of(dev.kbd.vekku_server.event.ContentProcessingAction.SUGGEST_TAGS));
+    }
+
+    @PostMapping("/{id}/suggestions/keywords/refresh")
+    public void refreshKeywordSuggestions(@PathVariable java.util.UUID id,
+            @AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+        contentService.refreshSuggestions(id, userId,
+                java.util.EnumSet.of(dev.kbd.vekku_server.event.ContentProcessingAction.SUGGEST_KEYWORDS));
     }
 
     @GetMapping("/{id}")
@@ -56,5 +74,21 @@ public class ContentController {
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         return ResponseEntity.ok(contentService.getAllContent(userId, limit, cursor));
+    }
+
+    @PostMapping("/keywords")
+    public ResponseEntity<java.util.List<dev.kbd.vekku_server.services.brain.model.TagScore>> getKeywordsOnDemand(
+            @RequestBody dev.kbd.vekku_server.services.brain.dto.ExtractKeywordsRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
+        // Authenticated users can request keyword extraction on raw text
+        return ResponseEntity.ok(contentService.extractKeywordsOnDemand(request.content()));
+    }
+
+    @GetMapping("/{id}/keywords")
+    public ResponseEntity<java.util.List<dev.kbd.vekku_server.model.content.ContentKeywordSuggestion>> getKeywordsForContent(
+            @PathVariable java.util.UUID id,
+            @AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+        return ResponseEntity.ok(contentService.getContentKeywords(id, userId));
     }
 }
