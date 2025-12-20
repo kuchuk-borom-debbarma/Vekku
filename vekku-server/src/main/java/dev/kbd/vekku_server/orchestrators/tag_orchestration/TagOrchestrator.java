@@ -1,8 +1,8 @@
 package dev.kbd.vekku_server.orchestrators.tag_orchestration;
 
-import dev.kbd.vekku_server.services.tags.model.Tag;
+import dev.kbd.vekku_server.services.tags.ITagService;
+import dev.kbd.vekku_server.services.tags.dtos.Tag;
 import dev.kbd.vekku_server.services.brain.IBrainService;
-import dev.kbd.vekku_server.services.tags.interfaces.ITagService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,7 +41,7 @@ public class TagOrchestrator {
 
         // 2. AI Operation
         // We use the ID from the persisted tag
-        brainService.learnTag(tag.getId(), tag.getName(), tag.getSynonyms());
+        brainService.learnTag(tag.id(), tag.name(), tag.synonyms());
 
         return tag;
     }
@@ -59,7 +59,7 @@ public class TagOrchestrator {
         Tag tag = tagService.updateTag(id, alias, synonyms, userId);
 
         // 2. AI Operation
-        brainService.learnTag(tag.getId(), tag.getName(), tag.getSynonyms());
+        brainService.learnTag(tag.id(), tag.name(), tag.synonyms());
 
         return tag;
     }
@@ -82,6 +82,6 @@ public class TagOrchestrator {
         tagService.deleteTag(id, userId);
 
         // 2. AI Operation
-        brainService.deleteTag(tag.getId());
+        brainService.deleteTag(tag.id());
     }
 }

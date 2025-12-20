@@ -1,9 +1,9 @@
 package dev.kbd.vekku_server.controllers.tag;
 
-import dev.kbd.vekku_server.services.tags.model.Tag;
-import dev.kbd.vekku_server.services.tags.interfaces.ITagService;
+import dev.kbd.vekku_server.services.tags.ITagService;
+import dev.kbd.vekku_server.services.tags.dtos.Tag;
+import dev.kbd.vekku_server.services.tags.dtos.TagPage;
 import dev.kbd.vekku_server.controllers.tag.models.CreateTagRequest;
-import dev.kbd.vekku_server.controllers.tag.models.TagPageDto;
 import dev.kbd.vekku_server.infrastructure.ratelimiter.RateLimit;
 import dev.kbd.vekku_server.orchestrators.tag_orchestration.TagOrchestrator;
 import lombok.RequiredArgsConstructor;
@@ -56,7 +56,7 @@ public class TagController {
     }
 
     @GetMapping
-    public ResponseEntity<TagPageDto> getAllTags(
+    public ResponseEntity<TagPage> getAllTags(
             @RequestParam(required = false, defaultValue = "20") Integer limit,
             @RequestParam(required = false) String cursor,
             @AuthenticationPrincipal Jwt jwt) {

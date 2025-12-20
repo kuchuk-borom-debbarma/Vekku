@@ -17,8 +17,9 @@ import dev.kbd.vekku_server.services.content.impl.repo.ContentKeywordSuggestionR
 import dev.kbd.vekku_server.services.content.impl.repo.ContentRepository;
 import dev.kbd.vekku_server.services.content.impl.repo.ContentTagRepository;
 import dev.kbd.vekku_server.services.content.impl.repo.ContentTagSuggestionRepository;
-import dev.kbd.vekku_server.services.tags.interfaces.ITagService;
-import dev.kbd.vekku_server.services.tags.model.Tag;
+import dev.kbd.vekku_server.services.tags.ITagService;
+import dev.kbd.vekku_server.services.tags.dtos.Tag;
+import dev.kbd.vekku_server.services.tags.impl.entities.TagEntity;
 import dev.kbd.vekku_server.shared.events.ContentProcessingAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -126,8 +127,6 @@ public class ContentService implements IContentService {
         if (request.toAddTags() != null) {
             for (String tagIdStr : request.toAddTags()) {
                 java.util.UUID tagId = java.util.UUID.fromString(tagIdStr);
-                // Use tagService instead of direct repository access
-                Tag tag = tagService.getTag(tagId); // Throws if not found
 
                 // Check if already exists
                 boolean exists = contentTagRepository.findByContentId(content.getId()).stream()
@@ -136,7 +135,7 @@ public class ContentService implements IContentService {
                 if (!exists) {
                     ContentTagEntity contentTag = ContentTagEntity.builder()
                             .content(content)
-                            .tag(tag)
+                            .tag(TagEntity.builder().id(tagId).build())
                             .userId(userId)
                             .build();
                     contentTagRepository.save(contentTag);
@@ -234,7 +233,7 @@ public class ContentService implements IContentService {
             // Save ContentTagSuggestion
             ContentTagSuggestionEntity contentTag = ContentTagSuggestionEntity.builder()
                     .content(content)
-                    .tag(tag)
+                    .tag(TagEntity.builder().id(tag.id()).build())
                     .score(score)
                     .userId(userId)
                     .build();

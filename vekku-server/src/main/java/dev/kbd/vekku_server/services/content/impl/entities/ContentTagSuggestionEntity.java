@@ -1,6 +1,5 @@
 package dev.kbd.vekku_server.services.content.impl.entities;
 
-import dev.kbd.vekku_server.services.tags.model.Tag;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
+
+import dev.kbd.vekku_server.services.tags.impl.entities.TagEntity;
 
 @Entity
 @Table(name = "content_tag_suggestions")
@@ -27,7 +28,7 @@ public class ContentTagSuggestionEntity {
 
     @ManyToOne
     @JoinColumn(name = "tag_id", nullable = false)
-    private Tag tag;
+    private TagEntity tag;
 
     private Double score;
 

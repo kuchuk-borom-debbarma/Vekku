@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.services.tags.model;
+package dev.kbd.vekku_server.services.tags.impl.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Tag {
+public class TagEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
