@@ -1,9 +1,9 @@
 package dev.kbd.vekku_server.controllers;
 
-import dev.kbd.vekku_server.dto.tag.CreateTagRequest;
-import dev.kbd.vekku_server.model.Tag;
-import dev.kbd.vekku_server.services.core.tag.TagService;
-import dev.kbd.vekku_server.services.core.tag.dto.TagPageDto;
+import dev.kbd.vekku_server.services.tags.dto.CreateTagRequest;
+import dev.kbd.vekku_server.services.tags.model.Tag;
+import dev.kbd.vekku_server.services.tags.dto.TagPageDto;
+import dev.kbd.vekku_server.services.tags.interfaces.ITagService;
 import dev.kbd.vekku_server.services.orchestration.TagOrchestrator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ import java.util.UUID;
 @Slf4j
 public class TagController {
 
-    private final TagService tagService;
+    private final ITagService tagService;
     private final TagOrchestrator tagOrchestrator;
 
     @PostMapping

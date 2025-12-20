@@ -1,6 +1,6 @@
 package dev.kbd.vekku_server.events;
 
-import dev.kbd.vekku_server.model.content.Content;
+import dev.kbd.vekku_server.services.content.model.Content;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

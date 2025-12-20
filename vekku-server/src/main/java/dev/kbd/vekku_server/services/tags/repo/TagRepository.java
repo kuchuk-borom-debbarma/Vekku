@@ -1,0 +1,18 @@
+package dev.kbd.vekku_server.services.tags.repo;
+
+import dev.kbd.vekku_server.services.tags.model.Tag;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.UUID;
+
+@Repository
+public interface TagRepository extends JpaRepository<Tag, UUID> {
+    List<Tag> findByNameGreaterThanAndUserIdOrderByNameAsc(String name, String userId, Pageable pageable);
+
+    List<Tag> findAllByUserIdOrderByNameAsc(String userId, Pageable pageable);
+
+    java.util.Optional<Tag> findByNameAndUserId(String name, String userId);
+}

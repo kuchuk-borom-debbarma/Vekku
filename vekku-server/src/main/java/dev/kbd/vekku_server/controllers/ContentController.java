@@ -1,10 +1,11 @@
 package dev.kbd.vekku_server.controllers;
 
-import dev.kbd.vekku_server.dto.content.ContentPageDto;
-import dev.kbd.vekku_server.dto.content.CreateContentRequest;
-import dev.kbd.vekku_server.dto.content.SaveTagsForContentRequest;
-import dev.kbd.vekku_server.model.content.Content;
-import dev.kbd.vekku_server.services.core.content.ContentService;
+import dev.kbd.vekku_server.services.content.dto.ContentPageDto;
+import dev.kbd.vekku_server.services.content.dto.CreateContentRequest;
+import dev.kbd.vekku_server.services.content.dto.SaveTagsForContentRequest;
+import dev.kbd.vekku_server.services.content.model.Content;
+import dev.kbd.vekku_server.services.content.interfaces.IContentService;
+import dev.kbd.vekku_server.services.brain.interfaces.IBrainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,7 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RequiredArgsConstructor
 public class ContentController {
 
-    private final ContentService contentService;
+    private final IContentService contentService;
+    private final IBrainService brainService;
 
     @PostMapping
     public ResponseEntity<Content> createContent(@RequestBody CreateContentRequest request,
@@ -61,7 +63,8 @@ public class ContentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<dev.kbd.vekku_server.dto.content.ContentDetailDto> getContent(@PathVariable java.util.UUID id,
+    public ResponseEntity<dev.kbd.vekku_server.services.content.dto.ContentDetailDto> getContent(
+            @PathVariable java.util.UUID id,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         return ResponseEntity.ok(contentService.getContent(id, userId));
@@ -81,11 +84,12 @@ public class ContentController {
             @RequestBody dev.kbd.vekku_server.services.brain.dto.ExtractKeywordsRequest request,
             @AuthenticationPrincipal Jwt jwt) {
         // Authenticated users can request keyword extraction on raw text
-        return ResponseEntity.ok(contentService.extractKeywordsOnDemand(request.content()));
+        // Use BrainService directly
+        return ResponseEntity.ok(brainService.extractKeywords(request.content(), request.topK(), request.diversity()));
     }
 
     @GetMapping("/{id}/keywords")
-    public ResponseEntity<java.util.List<dev.kbd.vekku_server.model.content.ContentKeywordSuggestion>> getKeywordsForContent(
+    public ResponseEntity<java.util.List<dev.kbd.vekku_server.services.content.model.ContentKeywordSuggestion>> getKeywordsForContent(
             @PathVariable java.util.UUID id,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();

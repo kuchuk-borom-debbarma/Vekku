@@ -1,8 +1,8 @@
 package dev.kbd.vekku_server.services.orchestration;
 
-import dev.kbd.vekku_server.model.Tag;
-import dev.kbd.vekku_server.services.core.embedding.EmbeddingService;
-import dev.kbd.vekku_server.services.core.tag.TagService;
+import dev.kbd.vekku_server.services.tags.model.Tag;
+import dev.kbd.vekku_server.services.brain.interfaces.IBrainService;
+import dev.kbd.vekku_server.services.tags.interfaces.ITagService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,15 +17,15 @@ import java.util.UUID;
  * Coordinates workflows that span across multiple independent core services.
  * Specifically handles the synchronization between the Database (TagService)
  * and
- * the AI Brain (EmbeddingService).
+ * the AI Brain (BrainService).
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class TagOrchestrator {
 
-    private final TagService tagService;
-    private final EmbeddingService embeddingService;
+    private final ITagService tagService;
+    private final IBrainService brainService;
 
     /**
      * Orchestrates the creation of a tag.
@@ -41,7 +41,7 @@ public class TagOrchestrator {
 
         // 2. AI Operation
         // We use the ID from the persisted tag
-        embeddingService.learnTag(tag.getId(), tag.getName(), tag.getSynonyms());
+        brainService.learnTag(tag.getId(), tag.getName(), tag.getSynonyms());
 
         return tag;
     }
@@ -59,7 +59,7 @@ public class TagOrchestrator {
         Tag tag = tagService.updateTag(id, alias, synonyms, userId);
 
         // 2. AI Operation
-        embeddingService.learnTag(tag.getId(), tag.getName(), tag.getSynonyms());
+        brainService.learnTag(tag.getId(), tag.getName(), tag.getSynonyms());
 
         return tag;
     }
@@ -82,6 +82,6 @@ public class TagOrchestrator {
         tagService.deleteTag(id, userId);
 
         // 2. AI Operation
-        embeddingService.deleteTag(tag.getId());
+        brainService.deleteTag(tag.getId());
     }
 }
