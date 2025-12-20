@@ -1,8 +1,8 @@
-package dev.kbd.vekku_server.services.brain.interfaces;
+package dev.kbd.vekku_server.services.brain;
 
+import dev.kbd.vekku_server.services.brain.dto.ContentRegionTags;
 import dev.kbd.vekku_server.services.brain.dto.TagListDto;
-import dev.kbd.vekku_server.services.brain.model.ContentRegionTags;
-import dev.kbd.vekku_server.services.brain.model.TagScore;
+import dev.kbd.vekku_server.services.brain.dto.TagScore;
 
 import java.util.List;
 import java.util.UUID;

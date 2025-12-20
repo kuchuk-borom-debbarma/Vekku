@@ -1,4 +1,4 @@
 package dev.kbd.vekku_server.services.brain.dto;
 
-public record LearnRequest(String tag_name) {
+public record BrainTag(String id, String name) {
 }

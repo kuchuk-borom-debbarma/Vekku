@@ -1,7 +1,7 @@
 package dev.kbd.vekku_server.orchestrators.tag_orchestration;
 
 import dev.kbd.vekku_server.services.tags.model.Tag;
-import dev.kbd.vekku_server.services.brain.interfaces.IBrainService;
+import dev.kbd.vekku_server.services.brain.IBrainService;
 import dev.kbd.vekku_server.services.tags.interfaces.ITagService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,7 +1,7 @@
 package dev.kbd.vekku_server.orchestrators.content_processing;
 
-import dev.kbd.vekku_server.services.brain.model.TagScore;
-import dev.kbd.vekku_server.services.brain.interfaces.IBrainService;
+import dev.kbd.vekku_server.services.brain.IBrainService;
+import dev.kbd.vekku_server.services.brain.dto.TagScore;
 import dev.kbd.vekku_server.services.content.interfaces.IContentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

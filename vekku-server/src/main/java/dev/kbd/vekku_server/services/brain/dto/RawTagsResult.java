@@ -2,5 +2,5 @@ package dev.kbd.vekku_server.services.brain.dto;
 
 import java.util.List;
 
-public record ScoreTagsResponse(List<TagScore> scores) {
+public record RawTagsResult(List<TagScore> tags) {
 }

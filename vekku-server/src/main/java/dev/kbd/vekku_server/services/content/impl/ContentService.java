@@ -242,7 +242,7 @@ public class ContentService implements IContentService {
 
     @Override
     public void saveTagSuggestions(java.util.UUID contentId,
-            java.util.List<dev.kbd.vekku_server.services.brain.model.TagScore> scores, String userId) {
+            java.util.List<dev.kbd.vekku_server.services.brain.dto.TagScore> scores, String userId) {
         // Find content to ensure ownership and existence
         Content content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Content not found"));
@@ -257,7 +257,7 @@ public class ContentService implements IContentService {
 
         contentTagSuggestionRepository.deleteByContentId(contentId);
 
-        for (dev.kbd.vekku_server.services.brain.model.TagScore tagScore : scores) {
+        for (dev.kbd.vekku_server.services.brain.dto.TagScore tagScore : scores) {
             String tagName = tagScore.name();
             Double score = tagScore.score();
 
@@ -279,7 +279,7 @@ public class ContentService implements IContentService {
 
     @Override
     public void saveKeywordSuggestions(java.util.UUID contentId,
-            java.util.List<dev.kbd.vekku_server.services.brain.model.TagScore> keywords, String userId) {
+            java.util.List<dev.kbd.vekku_server.services.brain.dto.TagScore> keywords, String userId) {
         Content content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Content not found"));
         if (!content.getUserId().equals(userId)) {
@@ -288,7 +288,7 @@ public class ContentService implements IContentService {
 
         contentKeywordSuggestionRepository.deleteByContentId(contentId);
 
-        for (dev.kbd.vekku_server.services.brain.model.TagScore keyword : keywords) {
+        for (dev.kbd.vekku_server.services.brain.dto.TagScore keyword : keywords) {
             ContentKeywordSuggestion suggestion = ContentKeywordSuggestion.builder()
                     .content(content)
                     .keyword(keyword.name())

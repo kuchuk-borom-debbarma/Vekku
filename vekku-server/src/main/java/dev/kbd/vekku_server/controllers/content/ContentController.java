@@ -9,9 +9,9 @@ import dev.kbd.vekku_server.controllers.content.models.ContentPageDto;
 import dev.kbd.vekku_server.controllers.content.models.CreateContentRequest;
 import dev.kbd.vekku_server.controllers.content.models.SaveTagsForContentRequest;
 import dev.kbd.vekku_server.infrastructure.ratelimiter.RateLimit;
-import dev.kbd.vekku_server.services.brain.dto.ExtractKeywordsRequest;
-import dev.kbd.vekku_server.services.brain.interfaces.IBrainService;
-import dev.kbd.vekku_server.services.brain.model.TagScore;
+import dev.kbd.vekku_server.services.brain.IBrainService;
+import dev.kbd.vekku_server.services.brain.dto.ExtractKeywordsParam;
+import dev.kbd.vekku_server.services.brain.dto.TagScore;
 import lombok.RequiredArgsConstructor;
 
 import java.util.EnumSet;
@@ -91,7 +91,7 @@ public class ContentController {
 
     @PostMapping("/keywords")
     public ResponseEntity<List<TagScore>> getKeywordsOnDemand(
-            @RequestBody ExtractKeywordsRequest request,
+            @RequestBody ExtractKeywordsParam request,
             @AuthenticationPrincipal Jwt jwt) {
         // Authenticated users can request keyword extraction on raw text
         // Use BrainService directly

@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.services.brain.model;
+package dev.kbd.vekku_server.services.brain.dto;
 
 /**
  * Represents a single tag and its relevance score.

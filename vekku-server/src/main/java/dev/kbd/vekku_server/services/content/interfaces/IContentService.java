@@ -59,10 +59,10 @@ public interface IContentService {
         // So I won't add it here.
 
         // Suggestion management
-        void saveTagSuggestions(UUID contentId, List<dev.kbd.vekku_server.services.brain.model.TagScore> scores,
+        void saveTagSuggestions(UUID contentId, List<dev.kbd.vekku_server.services.brain.dto.TagScore> scores,
                         String userId);
 
-        void saveKeywordSuggestions(UUID contentId, List<dev.kbd.vekku_server.services.brain.model.TagScore> keywords,
+        void saveKeywordSuggestions(UUID contentId, List<dev.kbd.vekku_server.services.brain.dto.TagScore> keywords,
                         String userId);
 
         // Internal usage for Orchestrators
