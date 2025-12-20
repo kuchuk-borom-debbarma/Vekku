@@ -6,6 +6,7 @@ import { EmbeddingService } from '../core/EmbeddingService';
 import { QdrantService } from '../core/QdrantService';
 import { TextSplitter } from '../core/TextSplitter';
 import { cosineSimilarity } from '../../utils/mathUtils';
+import { calculateMMR } from '../../utils/rankingUtils';
 
 // Namespace for Tag UUID generation (Randomly generated constant to ensure uniqueness of our namespace)
 const TAG_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
@@ -308,7 +309,7 @@ export class BrainLogic {
         // We reuse the getRawTagsByEmbedding logic but just get the names
         const existingTagsWithScore = await this.getRawTagsByEmbedding(content, 0.6, 20); // High threshold to be sure
         const existingTags = new Set(existingTagsWithScore.map(t => t.name.toLowerCase()));
-        console.log(`❌ Excluding ${existingTags.size} existing tags:`, Array.from(existingTags));
+        console.log(`❌ Excluding ${existingTags.size} existing tags.`);
 
 
         // 2. Generate N-Gram Candidates (1-gram and 2-gram)
@@ -325,65 +326,19 @@ export class BrainLogic {
         console.log(`🧐 Scoring ${uniqueCandidates.length} unique candidates...`);
 
         // 3. Embed EVERYTHING (Content + Candidates)
-        // Note: Ideally batch this if list is huge.
         const contentVector = await this.embeddingService.getVector(content);
         const candidateVectors: number[][] = [];
 
-        // Current EmbeddingService handles caching, so loop is okay-ish but batching would be better in future.
         for (const candidate of uniqueCandidates) {
             candidateVectors.push(await this.embeddingService.getVector(candidate));
         }
 
-        // 4. Calculate Cosine Similarities (Content vs Candidates)
-        const similarities = candidateVectors.map(vec => cosineSimilarity(contentVector, vec));
+        // 5. Calculate Cosine Similarities & MMR Ranking
+        const rankedResults = calculateMMR(candidateVectors, contentVector, topK, diversity);
 
-        // 5. Select Top N Candidates based on Similarity (pre-filter for MMR)
-        // Sort indices by score desc
-        const sortedIndices = similarities
-            .map((score, index) => ({ score, index }))
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 50); // Take top 50 mostly relevant to reduce MMR compute
-
-        // 6. MMR (Maximal Marginal Relevance)
-        // Select keywords that are similar to doc but dissimilar to each other
-        const selectedIndices: number[] = [];
-        const top50Indices = sortedIndices.map(s => s.index);
-
-        while (selectedIndices.length < topK && top50Indices.length > 0) {
-            let bestNextIndex = -1;
-            let bestMMRScore = -Infinity;
-
-            for (const candidateIdx of top50Indices) {
-                const simToDoc = similarities[candidateIdx];
-                let maxSimToSelected = 0;
-
-                for (const selectedIdx of selectedIndices) {
-                    const sim = cosineSimilarity(candidateVectors[candidateIdx], candidateVectors[selectedIdx]);
-                    if (sim > maxSimToSelected) maxSimToSelected = sim;
-                }
-
-                // MMR Formula: (1-diversity) * Sim(Doc) - diversity * MaxSim(Selected)
-                const mmrScore = (1 - diversity) * simToDoc - (diversity * maxSimToSelected);
-
-                if (mmrScore > bestMMRScore) {
-                    bestMMRScore = mmrScore;
-                    bestNextIndex = candidateIdx;
-                }
-            }
-
-            if (bestNextIndex !== -1) {
-                selectedIndices.push(bestNextIndex);
-                // Remove from pool
-                const poolIdx = top50Indices.indexOf(bestNextIndex);
-                if (poolIdx > -1) top50Indices.splice(poolIdx, 1);
-            } else {
-                break;
-            }
-        }
-
-        return selectedIndices.map(idx => ({
-            name: uniqueCandidates[idx],
-            score: similarities[idx]
+        return rankedResults.map(item => ({
+            name: uniqueCandidates[item.index],
+            score: item.score
         }));
     }
 
