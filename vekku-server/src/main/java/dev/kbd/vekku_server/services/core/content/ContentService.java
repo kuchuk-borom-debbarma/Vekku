@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.service;
+package dev.kbd.vekku_server.services.core.content;
 
 import dev.kbd.vekku_server.dto.content.CreateContentRequest;
 import dev.kbd.vekku_server.model.content.Content;

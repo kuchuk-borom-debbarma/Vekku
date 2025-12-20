@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.service;
+package dev.kbd.vekku_server.services.orchestration;
 
 import dev.kbd.vekku_server.model.Tag;
 import dev.kbd.vekku_server.model.content.Content;
@@ -13,14 +13,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ContentProcessor {
+public class ContentProcessingOrchestrator {
 
     private final EmbeddingService embeddingService;
     private final TagRepository tagRepository;

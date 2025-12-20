@@ -4,7 +4,7 @@ import dev.kbd.vekku_server.dto.content.ContentPageDto;
 import dev.kbd.vekku_server.dto.content.CreateContentRequest;
 import dev.kbd.vekku_server.dto.content.SaveTagsForContentRequest;
 import dev.kbd.vekku_server.model.content.Content;
-import dev.kbd.vekku_server.service.ContentService;
+import dev.kbd.vekku_server.services.core.content.ContentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
