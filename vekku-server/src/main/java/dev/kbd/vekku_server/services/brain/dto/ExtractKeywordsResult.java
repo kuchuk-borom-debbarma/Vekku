@@ -4,5 +4,5 @@ import java.util.List;
 
 import dev.kbd.vekku_server.services.common.dtos.TagScore;
 
-public record ScoreTagsResponse(List<TagScore> scores) {
+public record ExtractKeywordsResult(List<TagScore> keywords) {
 }

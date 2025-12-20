@@ -1,16 +1,19 @@
 package dev.kbd.vekku_server.services.tags.impl;
 
-import dev.kbd.vekku_server.services.tags.dto.TagPageDto;
-import dev.kbd.vekku_server.services.tags.interfaces.ITagService;
-import dev.kbd.vekku_server.services.tags.model.Tag;
-import dev.kbd.vekku_server.services.tags.repo.TagRepository;
+import dev.kbd.vekku_server.services.tags.ITagService;
+import dev.kbd.vekku_server.services.tags.dtos.Tag;
+import dev.kbd.vekku_server.services.tags.dtos.TagPage;
+import dev.kbd.vekku_server.services.tags.impl.entities.TagEntity;
+import dev.kbd.vekku_server.services.tags.impl.repo.TagRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * 🏷️ Tag Service (Core)
@@ -24,6 +27,7 @@ import java.util.UUID;
 public class TagService implements ITagService {
 
     private final TagRepository tagRepository;
+    private final TagMapper tagMapper;
 
     /**
      * Persists a new Tag entity.
@@ -36,13 +40,13 @@ public class TagService implements ITagService {
         }
         log.info("Creating tag in DB: {}", alias);
 
-        Tag tag = Tag.builder()
+        TagEntity tag = TagEntity.builder()
                 .name(alias)
                 .synonyms(synonyms)
                 .userId(userId)
                 .build();
 
-        return tagRepository.save(tag);
+        return tagMapper.tagEntityToTag(tagRepository.save(tag));
     }
 
     /**
@@ -57,7 +61,7 @@ public class TagService implements ITagService {
             synonyms = List.of(alias);
         }
 
-        Tag tag = tagRepository.findById(id)
+        TagEntity tag = tagRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tag not found"));
 
         if (!tag.getUserId().equals(userId)) {
@@ -66,14 +70,14 @@ public class TagService implements ITagService {
 
         tag.setName(alias);
         tag.setSynonyms(synonyms);
-        return tagRepository.save(tag);
+        return tagMapper.tagEntityToTag(tagRepository.save(tag));
     }
 
     @Override
     @Transactional
     public void deleteTag(UUID id, String userId) {
         log.info("Deleting tag from DB: {}", id);
-        Tag tag = tagRepository.findById(id)
+        TagEntity tag = tagRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tag not found"));
 
         if (!tag.getUserId().equals(userId)) {
@@ -85,20 +89,16 @@ public class TagService implements ITagService {
 
     @Override
     public Tag getTag(UUID id) {
-        return tagRepository.findById(id).orElseThrow(() -> new RuntimeException("Tag not found"));
+        return tagMapper
+                .tagEntityToTag(tagRepository.findById(id).orElseThrow(() -> new RuntimeException("Tag not found")));
     }
 
     @Override
-    public List<Tag> getAllTags() {
-        return tagRepository.findAll();
-    }
-
-    @Override
-    public TagPageDto getTags(String userId, Integer limit, String cursor) {
+    public TagPage getTags(String userId, Integer limit, String cursor) {
         log.info("Fetching tags for user: {}, limit: {}, cursor: {}", userId, limit, cursor);
         int fetchLimit = limit + 1; // Fetch one extra to check if there's a next page
 
-        List<Tag> tags;
+        List<TagEntity> tags;
         if (cursor != null && !cursor.isEmpty()) {
             tags = tagRepository.findByNameGreaterThanAndUserIdOrderByNameAsc(cursor, userId,
                     org.springframework.data.domain.PageRequest.of(0, fetchLimit));
@@ -115,11 +115,11 @@ public class TagService implements ITagService {
             nextCursor = tags.get(tags.size() - 1).getName();
         }
 
-        return new TagPageDto(tags, nextCursor);
+        return new TagPage(tags.stream().map(tagMapper::tagEntityToTag).collect(Collectors.toList()), nextCursor);
     }
 
     @Override
-    public java.util.Optional<Tag> getTagByName(String name, String userId) {
-        return tagRepository.findByNameAndUserId(name, userId);
+    public Optional<Tag> getTagByName(String name, String userId) {
+        return tagRepository.findByNameAndUserId(name, userId).map(tagMapper::tagEntityToTag);
     }
 }

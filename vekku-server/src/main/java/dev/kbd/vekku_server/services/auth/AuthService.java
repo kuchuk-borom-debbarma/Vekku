@@ -1,14 +1,14 @@
 package dev.kbd.vekku_server.services.auth;
 
-import dev.kbd.vekku_server.dto.auth.LoginRequest;
-import dev.kbd.vekku_server.dto.auth.LoginResponse;
-import dev.kbd.vekku_server.dto.auth.SignupRequest;
-import dev.kbd.vekku_server.dto.auth.VerifyOtpRequest;
+import dev.kbd.vekku_server.services.auth.dto.LoginData;
+import dev.kbd.vekku_server.services.auth.dto.LoginParam;
+import dev.kbd.vekku_server.services.auth.dto.SignupParam;
+import dev.kbd.vekku_server.services.auth.dto.VerifyOtpParam;
 
 public interface AuthService {
-    void signup(SignupRequest request);
+    void signup(SignupParam param);
 
-    void verifyOtp(VerifyOtpRequest request);
+    void verifyOtp(VerifyOtpParam param);
 
-    LoginResponse login(LoginRequest request);
+    LoginData login(LoginParam param);
 }

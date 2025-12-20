@@ -1,9 +1,9 @@
 package dev.kbd.vekku_server.services.brain.impl;
 
+import dev.kbd.vekku_server.services.brain.IBrainService;
 import dev.kbd.vekku_server.services.brain.dto.*;
-import dev.kbd.vekku_server.services.brain.model.ContentRegionTags;
-import dev.kbd.vekku_server.services.brain.model.TagScore;
-import dev.kbd.vekku_server.services.brain.interfaces.IBrainService;
+import dev.kbd.vekku_server.services.common.dtos.TagScore;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -37,7 +37,7 @@ public class BrainServiceImpl implements IBrainService {
         restClient.post()
                 .uri("/learn")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new LearnTagRequest(id.toString(), alias, synonyms))
+                .body(new LearnTagParam(id.toString(), alias, synonyms))
                 .retrieve()
                 .toBodilessEntity();
     }
@@ -52,12 +52,12 @@ public class BrainServiceImpl implements IBrainService {
 
     @Override
     public List<TagScore> getRawTagsByEmbedding(String content, Double threshold, Integer topK) {
-        RawTagsResponse response = restClient.post()
+        RawTagsResult response = restClient.post()
                 .uri("/raw-tags")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new RawTagsRequest(content, threshold, topK))
+                .body(new RawTagsParam(content, threshold, topK))
                 .retrieve()
-                .body(RawTagsResponse.class);
+                .body(RawTagsResult.class);
 
         return response != null ? response.tags() : List.of();
     }
@@ -101,12 +101,12 @@ public class BrainServiceImpl implements IBrainService {
 
     @Override
     public List<TagScore> extractKeywords(String content, Integer topK, Double diversity) {
-        ExtractKeywordsResponse response = restClient.post()
+        ExtractKeywordsResult response = restClient.post()
                 .uri("/keywords")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new ExtractKeywordsRequest(content, topK, diversity))
+                .body(new ExtractKeywordsParam(content, topK, diversity))
                 .retrieve()
-                .body(ExtractKeywordsResponse.class);
+                .body(ExtractKeywordsResult.class);
 
         return response != null ? response.keywords() : List.of();
     }
