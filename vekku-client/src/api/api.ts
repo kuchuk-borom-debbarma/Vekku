@@ -69,5 +69,55 @@ export const api = {
             throw new Error('Failed to fetch content keywords');
         }
         return response.json();
+    },
+
+    fetchContent: async (id: string) => {
+        const token = localStorage.getItem('accessToken');
+        const res = await fetch(`${API_BASE_URL}/content/${id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch content');
+        return res.json();
+    },
+
+    fetchTags: async (limit: number = 100) => {
+        const token = localStorage.getItem('accessToken');
+        const res = await fetch(`${API_BASE_URL}/tags?limit=${limit}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch tags');
+        return res.json();
+    },
+
+    refreshTagSuggestions: async (contentId: string) => {
+        const token = localStorage.getItem('accessToken');
+        await fetch(`${API_BASE_URL}/content/${contentId}/suggestions/tags/refresh`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    },
+
+    refreshKeywordSuggestions: async (contentId: string) => {
+        const token = localStorage.getItem('accessToken');
+        await fetch(`${API_BASE_URL}/content/${contentId}/suggestions/keywords/refresh`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+    },
+
+    updateContentTags: async (contentId: string, toAdd: string[], toRemove: string[]) => {
+        const token = localStorage.getItem('accessToken');
+        await fetch(`${API_BASE_URL}/content/tags`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                contentId,
+                toAddTags: toAdd,
+                toRemoveTags: toRemove
+            })
+        });
     }
 };

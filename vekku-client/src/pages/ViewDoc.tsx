@@ -4,12 +4,14 @@ import ReactMarkdown from 'react-markdown';
 import { Layout } from '../components/ui/Layout';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Select, Loader, Badge, ActionIcon, Tooltip } from '@mantine/core';
+import { Select, Loader, Badge, ActionIcon } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconRefresh, IconPlus, IconX, IconSparkles } from '@tabler/icons-react';
+import { IconPlus, IconX, IconSparkles } from '@tabler/icons-react';
 import { api } from '../api/api';
 import { useDisclosure } from '@mantine/hooks';
 import { TeachTagModal } from '../components/TeachTagModal';
+import { SuggestedTagsCard } from '../components/SuggestedTagsCard';
+import { SuggestedKeywordsCard } from '../components/SuggestedKeywordsCard';
 
 interface Tag {
     id: string;
@@ -58,12 +60,7 @@ export default function ViewDoc() {
         if (!id) return;
         setLoading(true);
         try {
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch(`http://localhost:8080/api/content/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!res.ok) throw new Error('Failed to fetch content');
-            const json = await res.json();
+            const json = await api.fetchContent(id);
             setData(json);
         } catch (err) {
             console.error(err);
@@ -74,11 +71,7 @@ export default function ViewDoc() {
 
     const fetchTags = useCallback(async () => {
         try {
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch(`http://localhost:8080/api/tags?limit=100`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const json = await res.json();
+            const json = await api.fetchTags();
             setAvailableTags(json.tags || []);
         } catch (err) {
             console.error(err);
@@ -90,7 +83,6 @@ export default function ViewDoc() {
         setKeywordsLoading(true);
         try {
             const results = await api.getContentKeywords(id);
-            // Transform to simple structure for display
             setKeywords(results.map(k => ({ keyword: k.keyword, score: k.score })));
         } catch (err) {
             console.error(err);
@@ -109,15 +101,14 @@ export default function ViewDoc() {
         if (!id) return;
         setRefreshing(true);
         try {
-            const token = localStorage.getItem('accessToken');
-            await fetch(`http://localhost:8080/api/content/${id}/suggestions/tags/refresh`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            await api.refreshTagSuggestions(id);
 
-            // Show notification/feedback
-            // Using a simple alert for now, effectively "Toasting"
-            // Ideally use Mantine notifications system
+            notifications.show({
+                title: 'Tags Refresh Queued',
+                message: 'The brain is looking for new tags...',
+                color: 'violet',
+                icon: <IconSparkles size={16} />
+            });
 
             setTimeout(() => {
                 fetchContent();
@@ -125,6 +116,11 @@ export default function ViewDoc() {
             }, 2000);
         } catch (err) {
             console.error(err);
+            notifications.show({
+                title: 'Error',
+                message: 'Failed to refresh tags',
+                color: 'red'
+            });
             setRefreshing(false);
         }
     };
@@ -133,17 +129,26 @@ export default function ViewDoc() {
         if (!id) return;
         setRefreshing(true);
         try {
-            const token = localStorage.getItem('accessToken');
-            await fetch(`http://localhost:8080/api/content/${id}/suggestions/keywords/refresh`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+            await api.refreshKeywordSuggestions(id);
+
+            notifications.show({
+                title: 'Keywords Refresh Queued',
+                message: 'Extracting keywords with KeyBERT...',
+                color: 'grape',
+                icon: <IconSparkles size={16} />
             });
+
             setTimeout(() => {
                 fetchKeywords();
                 setRefreshing(false);
             }, 2000);
         } catch (err) {
             console.error(err);
+            notifications.show({
+                title: 'Error',
+                message: 'Failed to refresh keywords',
+                color: 'red'
+            });
             setRefreshing(false);
         }
     };
@@ -151,20 +156,7 @@ export default function ViewDoc() {
     const handleAddTag = async () => {
         if (!id || !selectedTagToAdd) return;
         try {
-            const token = localStorage.getItem('accessToken');
-            // Using the batch endpoint for single add
-            await fetch(`http://localhost:8080/api/content/tags`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    contentId: id,
-                    toAddTags: [selectedTagToAdd],
-                    toRemoveTags: []
-                })
-            });
+            await api.updateContentTags(id, [selectedTagToAdd], []);
             setSelectedTagToAdd(null);
             fetchContent();
         } catch (err) {
@@ -175,19 +167,7 @@ export default function ViewDoc() {
     const handleRemoveTag = async (tagId: string) => {
         if (!id) return;
         try {
-            const token = localStorage.getItem('accessToken');
-            await fetch(`http://localhost:8080/api/content/tags`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    contentId: id,
-                    toAddTags: [],
-                    toRemoveTags: [tagId] // Note: Backend expects Tag IDs here, not ContentTag IDs
-                })
-            });
+            await api.updateContentTags(id, [], [tagId]);
             fetchContent();
         } catch (err) {
             console.error(err);
@@ -279,97 +259,29 @@ export default function ViewDoc() {
                     </Card>
 
                     {/* Suggested Tags */}
-                    <Card>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Suggested Tags</h3>
-                            <Tooltip label="Refresh Suggestions">
-                                <ActionIcon onClick={handleRefreshSuggestions} loading={refreshing} variant="subtle" color="gray">
-                                    <IconRefresh size={18} />
-                                </ActionIcon>
-                            </Tooltip>
-                        </div>
-
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                            {data.suggestedTags.map(st => (
-                                <Badge
-                                    key={st.id}
-                                    variant="outline"
-                                    color="gray"
-                                    style={{ cursor: 'pointer', paddingRight: 0 }}
-                                    rightSection={
-                                        <span style={{
-                                            fontSize: '0.7em',
-                                            opacity: 0.7,
-                                            padding: '0 6px',
-                                            borderLeft: '1px solid var(--color-border)'
-                                        }}>
-                                            {(st.score * 100).toFixed(0)}%
-                                        </span>
-                                    }
-                                    onClick={() => {
-                                        // Quick add from suggestion
-                                        setSelectedTagToAdd(st.tag.id);
-                                        // Maybe auto-add? Or set select value?
-                                        // Using state to trigger add effectively would be better UX
-                                        // For now, let's just populate the selector
-                                    }}
-                                >
-                                    {st.tag.name}
-                                </Badge>
-                            ))}
-                            {data.suggestedTags.length === 0 && <div style={{ color: 'var(--color-text-tertiary)', fontSize: '0.9rem' }}>No suggestions available</div>}
-                        </div>
-                    </Card>
+                    <SuggestedTagsCard
+                        suggestedTags={data.suggestedTags}
+                        loading={refreshing}
+                        onRefresh={handleRefreshSuggestions}
+                        onAddTag={(tagId) => setSelectedTagToAdd(tagId)}
+                    />
 
                     {/* Suggested Keywords (KeyBERT) */}
-                    <Card>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <IconSparkles size={16} color="var(--mantine-primary-color-filled)" />
-                                <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Suggested Keywords</h3>
-                            </div>
-                            <Tooltip label="Refresh Keywords">
-                                <ActionIcon onClick={handleRefreshKeywords} loading={refreshing || keywordsLoading} variant="subtle" color="gray">
-                                    <IconRefresh size={18} />
-                                </ActionIcon>
-                            </Tooltip>
-                        </div>
-
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                            {keywords.map(k => (
-                                <Badge
-                                    key={k.keyword}
-                                    variant="outline"
-                                    color="grape"
-                                    style={{ cursor: 'pointer', paddingRight: 0 }}
-                                    rightSection={
-                                        <span style={{
-                                            fontSize: '0.7em',
-                                            opacity: 0.7,
-                                            padding: '0 6px',
-                                            borderLeft: '1px solid var(--color-border)'
-                                        }}>
-                                            {(k.score * 100).toFixed(0)}%
-                                        </span>
-                                    }
-                                    onClick={() => {
-                                        setKeywordToTeach(k.keyword);
-                                        openModal();
-                                    }}
-                                >
-                                    {k.keyword}
-                                </Badge>
-                            ))}
-                            {keywords.length === 0 && <div style={{ color: 'var(--color-text-tertiary)', fontSize: '0.9rem' }}>No keywords extracted</div>}
-                        </div>
-                    </Card>
+                    <SuggestedKeywordsCard
+                        keywords={keywords}
+                        loading={refreshing || keywordsLoading}
+                        onRefresh={handleRefreshKeywords}
+                        onTeach={(keyword) => {
+                            setKeywordToTeach(keyword);
+                            openModal();
+                        }}
+                    />
                 </div>
 
                 <TeachTagModal
                     opened={modalOpened}
                     onClose={() => {
                         closeModal();
-                        // Refresh tags list after teaching new tag
                         fetchTags();
                     }}
                     initialData={{ id: '', name: keywordToTeach, synonyms: [] }}
