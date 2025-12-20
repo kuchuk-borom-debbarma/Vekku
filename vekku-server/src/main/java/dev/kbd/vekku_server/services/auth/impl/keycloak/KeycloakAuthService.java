@@ -1,12 +1,12 @@
 package dev.kbd.vekku_server.services.auth.impl.keycloak;
 
-import dev.kbd.vekku_server.controllers.auth.models.LoginResponse;
 import dev.kbd.vekku_server.services.auth.AuthService;
+import dev.kbd.vekku_server.services.auth.dto.LoginData;
+import dev.kbd.vekku_server.services.auth.dto.LoginParam;
+import dev.kbd.vekku_server.services.auth.dto.SignupParam;
+import dev.kbd.vekku_server.services.auth.dto.VerifyOtpParam;
 import dev.kbd.vekku_server.services.auth.impl.keycloak.pending.PendingRegistrationHandler;
 import dev.kbd.vekku_server.services.auth.impl.keycloak.pending.model.PendingRegistration;
-import dev.kbd.vekku_server.services.auth.model.LoginParam;
-import dev.kbd.vekku_server.services.auth.model.SignupParam;
-import dev.kbd.vekku_server.services.auth.model.VerifyOtpParam;
 import dev.kbd.vekku_server.services.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,7 +93,7 @@ public class KeycloakAuthService implements AuthService {
     }
 
     @Override
-    public LoginResponse login(LoginParam param) {
+    public LoginData login(LoginParam param) {
         log.info("Attempting login for user: {}", param.email());
 
         // Use KeycloakBuilder to act as the user and get a token
@@ -109,7 +109,7 @@ public class KeycloakAuthService implements AuthService {
 
             AccessTokenResponse tokenResponse = userKeycloak.tokenManager().getAccessToken();
 
-            return new LoginResponse(
+            return new LoginData(
                     tokenResponse.getToken(),
                     tokenResponse.getRefreshToken(),
                     tokenResponse.getExpiresIn());
