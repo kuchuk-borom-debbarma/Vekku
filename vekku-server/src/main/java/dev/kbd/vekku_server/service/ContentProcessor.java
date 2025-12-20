@@ -2,7 +2,7 @@ package dev.kbd.vekku_server.service;
 
 import dev.kbd.vekku_server.model.Tag;
 import dev.kbd.vekku_server.model.content.Content;
-import dev.kbd.vekku_server.model.content.ContentTag;
+import dev.kbd.vekku_server.model.content.ContentTagSuggestion;
 import dev.kbd.vekku_server.repository.ContentTagRepository;
 import dev.kbd.vekku_server.repository.TagRepository;
 import dev.kbd.vekku_server.services.brain.model.TagScore;
@@ -42,8 +42,8 @@ public class ContentProcessor {
                 Tag tag = tagRepository.findByNameAndUserId(tagName, userId)
                         .orElseThrow(() -> new RuntimeException("Tag not found for name: " + tagName));
 
-                // 3. Save ContentTag
-                ContentTag contentTag = ContentTag.builder()
+                // 3. Save ContentTagSuggestion
+                ContentTagSuggestion contentTag = ContentTagSuggestion.builder()
                         .content(content)
                         .tag(tag)
                         .score(score)

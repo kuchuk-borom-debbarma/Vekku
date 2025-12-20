@@ -30,10 +30,6 @@ public class Content {
     @Column(nullable = false)
     private String userId;
 
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private ContentStatus status = ContentStatus.PENDING;
-
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime created;
 
@@ -44,9 +40,6 @@ public class Content {
     public void onCreate() {
         this.created = java.time.LocalDateTime.now();
         this.updated = java.time.LocalDateTime.now();
-        if (this.status == null) {
-            this.status = ContentStatus.PENDING;
-        }
     }
 
     @PreUpdate

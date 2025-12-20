@@ -10,12 +10,12 @@ import lombok.NoArgsConstructor;
 import java.util.UUID;
 
 @Entity
-@Table(name = "content_tags")
+@Table(name = "content_tag_suggestions")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ContentTag {
+public class ContentTagSuggestion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

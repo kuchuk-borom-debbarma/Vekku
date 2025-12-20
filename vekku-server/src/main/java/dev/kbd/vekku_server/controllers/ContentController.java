@@ -2,6 +2,7 @@ package dev.kbd.vekku_server.controllers;
 
 import dev.kbd.vekku_server.dto.content.ContentPageDto;
 import dev.kbd.vekku_server.dto.content.CreateContentRequest;
+import dev.kbd.vekku_server.dto.content.SaveTagsForContentRequest;
 import dev.kbd.vekku_server.model.content.Content;
 import dev.kbd.vekku_server.service.ContentService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/api/content")
@@ -24,6 +27,15 @@ public class ContentController {
         Content content = contentService.createContent(request, userId);
         return ResponseEntity.ok(content);
     }
+
+    @PostMapping("/tags")
+    public void saveTagsForContent(@RequestBody SaveTagsForContentRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+        // TODO create function to update tags of content, create entity for it
+    }
+
+    // TODO endpoint to update suggestions of content
 
     @GetMapping
     public ResponseEntity<ContentPageDto> getAllContent(

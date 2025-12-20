@@ -26,6 +26,7 @@ public class ContentService {
     public Content createContent(CreateContentRequest request, String userId) {
         log.info("Creating content for user: {}", userId);
 
+        // Save the content in database
         Content content = Content.builder()
                 .text(request.getText())
                 .type(request.getType())
