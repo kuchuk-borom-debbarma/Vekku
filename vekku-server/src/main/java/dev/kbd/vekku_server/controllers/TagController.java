@@ -5,7 +5,7 @@ import dev.kbd.vekku_server.services.tags.model.Tag;
 import dev.kbd.vekku_server.services.tags.dto.TagPageDto;
 import dev.kbd.vekku_server.services.tags.interfaces.ITagService;
 import dev.kbd.vekku_server.infra.ratelimit.RateLimit;
-import dev.kbd.vekku_server.services.orchestration.TagOrchestrator;
+import dev.kbd.vekku_server.orchestrators.tag_orchestration.TagOrchestrator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.services.orchestration;
+package dev.kbd.vekku_server.orchestrators.tag_orchestration;
 
 import dev.kbd.vekku_server.services.tags.model.Tag;
 import dev.kbd.vekku_server.services.brain.interfaces.IBrainService;

@@ -43,7 +43,7 @@ public class ContentController {
         String userId = jwt.getSubject();
         // Refresh everything by default
         contentService.refreshSuggestions(id, userId,
-                java.util.EnumSet.allOf(dev.kbd.vekku_server.event.ContentProcessingAction.class));
+                java.util.EnumSet.allOf(dev.kbd.vekku_server.shared.events.ContentProcessingAction.class));
     }
 
     @PostMapping("/{id}/suggestions/tags/refresh")
@@ -51,7 +51,7 @@ public class ContentController {
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         contentService.refreshSuggestions(id, userId,
-                java.util.EnumSet.of(dev.kbd.vekku_server.event.ContentProcessingAction.SUGGEST_TAGS));
+                java.util.EnumSet.of(dev.kbd.vekku_server.shared.events.ContentProcessingAction.SUGGEST_TAGS));
     }
 
     @PostMapping("/{id}/suggestions/keywords/refresh")
@@ -59,7 +59,7 @@ public class ContentController {
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         contentService.refreshSuggestions(id, userId,
-                java.util.EnumSet.of(dev.kbd.vekku_server.event.ContentProcessingAction.SUGGEST_KEYWORDS));
+                java.util.EnumSet.of(dev.kbd.vekku_server.shared.events.ContentProcessingAction.SUGGEST_KEYWORDS));
     }
 
     @GetMapping("/{id}")

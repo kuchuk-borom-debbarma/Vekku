@@ -63,10 +63,10 @@ public class ContentService implements IContentService {
 
         // Publish to RabbitMQ
         log.info("Publishing content creation event for contentId: {}", savedContent.getId());
-        dev.kbd.vekku_server.event.ContentProcessingEvent event = dev.kbd.vekku_server.event.ContentProcessingEvent
+        dev.kbd.vekku_server.shared.events.ContentProcessingEvent event = dev.kbd.vekku_server.shared.events.ContentProcessingEvent
                 .builder()
                 .contentId(savedContent.getId())
-                .actions(java.util.EnumSet.allOf(dev.kbd.vekku_server.event.ContentProcessingAction.class))
+                .actions(java.util.EnumSet.allOf(dev.kbd.vekku_server.shared.events.ContentProcessingAction.class))
                 .build();
         rabbitTemplate.convertAndSend(exchange, routingKey, event);
 
@@ -188,7 +188,7 @@ public class ContentService implements IContentService {
 
     @Override
     public void refreshSuggestions(java.util.UUID contentId, String userId,
-            java.util.Set<dev.kbd.vekku_server.event.ContentProcessingAction> actions) {
+            java.util.Set<dev.kbd.vekku_server.shared.events.ContentProcessingAction> actions) {
         Content content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Content not found"));
 
@@ -197,7 +197,7 @@ public class ContentService implements IContentService {
         }
 
         log.info("Refreshing suggestions for content: {} with actions: {}", contentId, actions);
-        dev.kbd.vekku_server.event.ContentProcessingEvent event = dev.kbd.vekku_server.event.ContentProcessingEvent
+        dev.kbd.vekku_server.shared.events.ContentProcessingEvent event = dev.kbd.vekku_server.shared.events.ContentProcessingEvent
                 .builder()
                 .contentId(content.getId())
                 .actions(actions)

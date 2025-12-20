@@ -6,7 +6,7 @@ import dev.kbd.vekku_server.services.content.dto.CreateContentRequest;
 import dev.kbd.vekku_server.services.content.dto.SaveTagsForContentRequest;
 import dev.kbd.vekku_server.services.content.model.Content;
 import dev.kbd.vekku_server.services.content.model.ContentKeywordSuggestion;
-import dev.kbd.vekku_server.event.ContentProcessingAction; // Assuming this exists or needs moving?
+import dev.kbd.vekku_server.shared.events.ContentProcessingAction;
 import java.util.List;
 import java.util.UUID;
 import java.util.Set;

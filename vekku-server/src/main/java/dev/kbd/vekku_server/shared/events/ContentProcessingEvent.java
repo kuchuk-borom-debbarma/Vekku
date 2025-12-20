@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.event;
+package dev.kbd.vekku_server.shared.events;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.services.orchestration;
+package dev.kbd.vekku_server.orchestrators.content_processing;
 
 import dev.kbd.vekku_server.services.brain.model.TagScore;
 import dev.kbd.vekku_server.services.brain.interfaces.IBrainService;
@@ -19,7 +19,7 @@ public class ContentProcessingOrchestrator {
     private final IContentService contentService;
 
     @RabbitListener(queues = "${vekku.rabbitmq.queue}")
-    public void processContent(dev.kbd.vekku_server.event.ContentProcessingEvent event) {
+    public void processContent(dev.kbd.vekku_server.shared.events.ContentProcessingEvent event) {
         log.info("Processing event for content: {} with actions: {}", event.getContentId(), event.getActions());
 
         // We need content text for Brain processing.
@@ -80,12 +80,13 @@ public class ContentProcessingOrchestrator {
             // I'll implement this method in Service.
 
             // Action: SUGGEST_TAGS
-            if (event.getActions().contains(dev.kbd.vekku_server.event.ContentProcessingAction.SUGGEST_TAGS)) {
+            if (event.getActions().contains(dev.kbd.vekku_server.shared.events.ContentProcessingAction.SUGGEST_TAGS)) {
                 processTags(event.getContentId());
             }
 
             // Action: SUGGEST_KEYWORDS
-            if (event.getActions().contains(dev.kbd.vekku_server.event.ContentProcessingAction.SUGGEST_KEYWORDS)) {
+            if (event.getActions()
+                    .contains(dev.kbd.vekku_server.shared.events.ContentProcessingAction.SUGGEST_KEYWORDS)) {
                 processKeywords(event.getContentId());
             }
 
