@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -109,11 +110,12 @@ public class ContentService implements IContentService {
             nextCursor = contents.get(contents.size() - 1).getCreatedAt().toString();
         }
 
-        return new ContentPage(contents, nextCursor);
+        return new ContentPage(contents.stream().map(contentMapper::toContent).collect(Collectors.toList()),
+                nextCursor);
     }
 
     @Override
-    public void saveTagsForContent(SaveTagsForContentParam request, String userId) {
+    public void updateTagsOfContent(SaveTagsForContentParam request, String userId) {
         ContentEntity content = contentRepository.findById(java.util.UUID.fromString(request.contentId()))
                 .orElseThrow(() -> new RuntimeException("Content not found"));
 
@@ -155,45 +157,6 @@ public class ContentService implements IContentService {
     }
 
     @Override
-    public void addTagToContent(UUID contentId, UUID tagId, String userId) {
-        ContentEntity content = contentRepository.findById(contentId)
-                .orElseThrow(() -> new RuntimeException("Content not found"));
-
-        if (!content.getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized");
-        }
-
-        Tag tag = tagService.getTag(tagId);
-
-        boolean exists = contentTagRepository.findByContentId(content.getId()).stream()
-                .anyMatch(ct -> ct.getTag().getId().equals(tagId));
-
-        if (!exists) {
-            ContentTagEntity contentTag = ContentTagEntity.builder()
-                    .content(content)
-                    .tag(tag)
-                    .userId(userId)
-                    .build();
-            contentTagRepository.save(contentTag);
-        }
-    }
-
-    @Override
-    public void removeTagFromContent(java.util.UUID contentId, java.util.UUID tagId, String userId) {
-        ContentEntity content = contentRepository.findById(contentId)
-                .orElseThrow(() -> new RuntimeException("Content not found"));
-
-        if (!content.getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized");
-        }
-
-        contentTagRepository.findByContentId(content.getId()).stream()
-                .filter(ct -> ct.getTag().getId().equals(tagId))
-                .findFirst()
-                .ifPresent(contentTagRepository::delete);
-    }
-
-    @Override
     public void refreshSuggestions(UUID contentId, String userId,
             Set<ContentProcessingAction> actions) {
         ContentEntity content = contentRepository.findById(contentId)
@@ -228,7 +191,7 @@ public class ContentService implements IContentService {
                 .findByContentId(contentId);
 
         return ContentDetail.builder()
-                .content(content)
+                .content(contentMapper.toContent(content))
                 .manualTags(manualTags)
                 .suggestedTags(suggestedTags)
                 .build();
@@ -303,7 +266,7 @@ public class ContentService implements IContentService {
     }
 
     @Override
-    public Content getContentInternal(java.util.UUID id) {
+    public Content getContent(java.util.UUID id) {
         return contentMapper
                 .toContent(contentRepository.findById(id).orElseThrow(() -> new RuntimeException("Content not found")));
     }

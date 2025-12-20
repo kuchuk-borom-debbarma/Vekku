@@ -19,21 +19,20 @@ public interface IContentService {
 
         ContentDetail getContent(UUID contentId, String userId);
 
-        void saveTagsForContent(SaveTagsForContentParam request, String userId);
-
-        void addTagToContent(UUID contentId, UUID tagId, String userId);
-
-        void removeTagFromContent(UUID contentId, UUID tagId, String userId);
+        void updateTagsOfContent(SaveTagsForContentParam request, String userId);
 
         void refreshSuggestions(UUID contentId, String userId, Set<ContentProcessingAction> actions);
 
+        // TODO move to tags
         List<ContentKeywordSuggestion> getContentKeywords(UUID contentId, String userId);
 
+        // TODO move to tags
         void saveTagSuggestions(UUID contentId, List<TagScore> scores,
                         String userId);
 
+        // TODO move to tags
         void saveKeywordSuggestions(UUID contentId, List<TagScore> keywords,
                         String userId);
 
-        Content getContentInternal(UUID id);
+        Content getContent(UUID id);
 }

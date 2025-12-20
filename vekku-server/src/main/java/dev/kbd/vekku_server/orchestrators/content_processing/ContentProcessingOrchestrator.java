@@ -42,7 +42,7 @@ public class ContentProcessingOrchestrator {
     private void processTags(java.util.UUID contentId) {
         log.info("Generating tag suggestions for content: {}", contentId);
 
-        var content = contentService.getContentInternal(contentId); // Implementing this.
+        var content = contentService.getContent(contentId); // Implementing this.
 
         List<TagScore> tagScores = brainService.getRawTagsByEmbedding(content.content(), 0.45, 10);
 
@@ -54,7 +54,7 @@ public class ContentProcessingOrchestrator {
     private void processKeywords(java.util.UUID contentId) {
         log.info("Extracting keywords for content: {}", contentId);
 
-        var content = contentService.getContentInternal(contentId);
+        var content = contentService.getContent(contentId);
 
         List<TagScore> keywords = brainService.extractKeywords(content.content(), 5, 0.5);
 

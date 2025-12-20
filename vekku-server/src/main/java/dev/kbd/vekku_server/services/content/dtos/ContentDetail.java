@@ -1,6 +1,5 @@
 package dev.kbd.vekku_server.services.content.dtos;
 
-import dev.kbd.vekku_server.services.content.impl.entities.ContentEntity;
 import dev.kbd.vekku_server.services.content.impl.entities.ContentTagEntity;
 import dev.kbd.vekku_server.services.content.impl.entities.ContentTagSuggestionEntity;
 import lombok.Builder;
@@ -11,7 +10,7 @@ import java.util.List;
 @Data
 @Builder
 public class ContentDetail {
-    private ContentEntity content;
+    private Content content;
     private List<ContentTagEntity> manualTags;
     private List<ContentTagSuggestionEntity> suggestedTags;
 }

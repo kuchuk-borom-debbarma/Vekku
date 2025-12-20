@@ -44,7 +44,7 @@ public class ContentController {
     public void saveTagsForContent(@RequestBody SaveTagsForContentParam request,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
-        contentService.saveTagsForContent(request, userId);
+        contentService.updateTagsOfContent(request, userId);
     }
 
     @PostMapping("/{id}/suggestions/refresh")
