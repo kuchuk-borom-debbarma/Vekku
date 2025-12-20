@@ -1,8 +1,8 @@
 package dev.kbd.vekku_server.orchestrators.content_processing;
 
 import dev.kbd.vekku_server.services.brain.IBrainService;
-import dev.kbd.vekku_server.services.brain.dto.TagScore;
-import dev.kbd.vekku_server.services.content.interfaces.IContentService;
+import dev.kbd.vekku_server.services.common.dtos.TagScore;
+import dev.kbd.vekku_server.services.content.IContentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -44,9 +44,9 @@ public class ContentProcessingOrchestrator {
 
         var content = contentService.getContentInternal(contentId); // Implementing this.
 
-        List<TagScore> tagScores = brainService.getRawTagsByEmbedding(content.getText(), 0.45, 10);
+        List<TagScore> tagScores = brainService.getRawTagsByEmbedding(content.content(), 0.45, 10);
 
-        contentService.saveTagSuggestions(contentId, tagScores, content.getUserId());
+        contentService.saveTagSuggestions(contentId, tagScores, content.userId());
 
         log.info("Successfully generated {} tag suggestions for content: {}", tagScores.size(), contentId);
     }
@@ -56,9 +56,9 @@ public class ContentProcessingOrchestrator {
 
         var content = contentService.getContentInternal(contentId);
 
-        List<TagScore> keywords = brainService.extractKeywords(content.getText(), 5, 0.5);
+        List<TagScore> keywords = brainService.extractKeywords(content.content(), 5, 0.5);
 
-        contentService.saveKeywordSuggestions(contentId, keywords, content.getUserId());
+        contentService.saveKeywordSuggestions(contentId, keywords, content.userId());
 
         log.info("Successfully extracted {} keywords for content: {}", keywords.size(), contentId);
     }

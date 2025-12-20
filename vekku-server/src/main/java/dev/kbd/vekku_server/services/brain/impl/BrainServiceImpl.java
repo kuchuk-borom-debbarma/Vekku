@@ -2,6 +2,7 @@ package dev.kbd.vekku_server.services.brain.impl;
 
 import dev.kbd.vekku_server.services.brain.IBrainService;
 import dev.kbd.vekku_server.services.brain.dto.*;
+import dev.kbd.vekku_server.services.common.dtos.TagScore;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

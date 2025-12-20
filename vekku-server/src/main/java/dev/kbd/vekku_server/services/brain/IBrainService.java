@@ -2,7 +2,7 @@ package dev.kbd.vekku_server.services.brain;
 
 import dev.kbd.vekku_server.services.brain.dto.ContentRegionTags;
 import dev.kbd.vekku_server.services.brain.dto.TagListDto;
-import dev.kbd.vekku_server.services.brain.dto.TagScore;
+import dev.kbd.vekku_server.services.common.dtos.TagScore;
 
 import java.util.List;
 import java.util.UUID;

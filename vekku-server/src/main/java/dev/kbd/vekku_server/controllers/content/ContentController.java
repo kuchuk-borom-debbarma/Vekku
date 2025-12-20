@@ -1,17 +1,17 @@
 package dev.kbd.vekku_server.controllers.content;
 
-import dev.kbd.vekku_server.services.content.model.Content;
-import dev.kbd.vekku_server.services.content.model.ContentKeywordSuggestion;
+import dev.kbd.vekku_server.services.content.IContentService;
+import dev.kbd.vekku_server.services.content.dtos.Content;
+import dev.kbd.vekku_server.services.content.dtos.ContentDetail;
+import dev.kbd.vekku_server.services.content.dtos.ContentKeywordSuggestion;
+import dev.kbd.vekku_server.services.content.dtos.ContentPage;
+import dev.kbd.vekku_server.services.content.dtos.CreateContentParam;
+import dev.kbd.vekku_server.services.content.dtos.SaveTagsForContentParam;
 import dev.kbd.vekku_server.shared.events.ContentProcessingAction;
-import dev.kbd.vekku_server.services.content.interfaces.IContentService;
-import dev.kbd.vekku_server.controllers.content.models.ContentDetailDto;
-import dev.kbd.vekku_server.controllers.content.models.ContentPageDto;
-import dev.kbd.vekku_server.controllers.content.models.CreateContentRequest;
-import dev.kbd.vekku_server.controllers.content.models.SaveTagsForContentRequest;
 import dev.kbd.vekku_server.infrastructure.ratelimiter.RateLimit;
 import dev.kbd.vekku_server.services.brain.IBrainService;
 import dev.kbd.vekku_server.services.brain.dto.ExtractKeywordsParam;
-import dev.kbd.vekku_server.services.brain.dto.TagScore;
+import dev.kbd.vekku_server.services.common.dtos.TagScore;
 import lombok.RequiredArgsConstructor;
 
 import java.util.EnumSet;
@@ -33,7 +33,7 @@ public class ContentController {
     private final IBrainService brainService;
 
     @PostMapping
-    public ResponseEntity<Content> createContent(@RequestBody CreateContentRequest request,
+    public ResponseEntity<Content> createContent(@RequestBody CreateContentParam request,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         Content content = contentService.createContent(request, userId);
@@ -41,7 +41,7 @@ public class ContentController {
     }
 
     @PostMapping("/tags")
-    public void saveTagsForContent(@RequestBody SaveTagsForContentRequest request,
+    public void saveTagsForContent(@RequestBody SaveTagsForContentParam request,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         contentService.saveTagsForContent(request, userId);
@@ -73,7 +73,7 @@ public class ContentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ContentDetailDto> getContent(
+    public ResponseEntity<ContentDetail> getContent(
             @PathVariable UUID id,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
@@ -81,7 +81,7 @@ public class ContentController {
     }
 
     @GetMapping
-    public ResponseEntity<ContentPageDto> getAllContent(
+    public ResponseEntity<ContentPage> getAllContent(
             @RequestParam(required = false, defaultValue = "20") Integer limit,
             @RequestParam(required = false) String cursor,
             @AuthenticationPrincipal Jwt jwt) {

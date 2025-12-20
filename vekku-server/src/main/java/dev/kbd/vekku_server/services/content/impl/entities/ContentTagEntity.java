@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.services.content.model;
+package dev.kbd.vekku_server.services.content.impl.entities;
 
 import dev.kbd.vekku_server.services.tags.model.Tag;
 import jakarta.persistence.*;
@@ -15,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ContentTag {
+public class ContentTagEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -23,7 +23,7 @@ public class ContentTag {
 
     @ManyToOne
     @JoinColumn(name = "content_id", nullable = false)
-    private Content content;
+    private ContentEntity content;
 
     @ManyToOne
     @JoinColumn(name = "tag_id", nullable = false)

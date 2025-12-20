@@ -1,23 +1,32 @@
 package dev.kbd.vekku_server.services.content.impl;
 
-import dev.kbd.vekku_server.services.content.model.Content;
-import dev.kbd.vekku_server.services.content.model.ContentTag;
-import dev.kbd.vekku_server.services.content.model.ContentTagSuggestion;
-import dev.kbd.vekku_server.services.content.model.ContentKeywordSuggestion;
-import dev.kbd.vekku_server.services.content.repo.ContentRepository;
-import dev.kbd.vekku_server.services.content.repo.ContentTagRepository;
-import dev.kbd.vekku_server.services.content.repo.ContentTagSuggestionRepository;
-import dev.kbd.vekku_server.services.content.repo.ContentKeywordSuggestionRepository;
-import dev.kbd.vekku_server.controllers.content.models.ContentDetailDto;
-import dev.kbd.vekku_server.controllers.content.models.ContentPageDto;
-import dev.kbd.vekku_server.controllers.content.models.CreateContentRequest;
-import dev.kbd.vekku_server.controllers.content.models.SaveTagsForContentRequest;
-import dev.kbd.vekku_server.services.content.interfaces.IContentService;
+import dev.kbd.vekku_server.services.common.dtos.TagScore;
+import dev.kbd.vekku_server.services.content.IContentService;
+import dev.kbd.vekku_server.services.content.dtos.Content;
+import dev.kbd.vekku_server.services.content.dtos.ContentDetail;
+import dev.kbd.vekku_server.services.content.dtos.ContentKeywordSuggestion;
+import dev.kbd.vekku_server.services.content.dtos.ContentPage;
+import dev.kbd.vekku_server.services.content.dtos.CreateContentParam;
+import dev.kbd.vekku_server.services.content.dtos.SaveTagsForContentParam;
+import dev.kbd.vekku_server.services.content.impl.entities.ContentEntity;
+import dev.kbd.vekku_server.services.content.impl.entities.ContentKeywordSuggestionEntity;
+import dev.kbd.vekku_server.services.content.impl.entities.ContentTagEntity;
+import dev.kbd.vekku_server.services.content.impl.entities.ContentTagSuggestionEntity;
+import dev.kbd.vekku_server.services.content.impl.mappers.ContentMapper;
+import dev.kbd.vekku_server.services.content.impl.repo.ContentKeywordSuggestionRepository;
+import dev.kbd.vekku_server.services.content.impl.repo.ContentRepository;
+import dev.kbd.vekku_server.services.content.impl.repo.ContentTagRepository;
+import dev.kbd.vekku_server.services.content.impl.repo.ContentTagSuggestionRepository;
 import dev.kbd.vekku_server.services.tags.interfaces.ITagService;
 import dev.kbd.vekku_server.services.tags.model.Tag;
-
+import dev.kbd.vekku_server.shared.events.ContentProcessingAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,12 +36,12 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ContentService implements IContentService {
 
+    // TODO remove ITagService dependency. It should be done using orchestrators
+
     private final ContentRepository contentRepository;
     private final RabbitTemplate rabbitTemplate;
-    // Replace TagRepository with ITagService for independence
     private final ITagService tagService;
-    // Remove EmbeddingService dependency
-    // private final EmbeddingService embeddingService;
+    private final ContentMapper contentMapper;
 
     private final ContentTagRepository contentTagRepository;
     private final ContentTagSuggestionRepository contentTagSuggestionRepository;
@@ -45,13 +54,13 @@ public class ContentService implements IContentService {
     private String routingKey;
 
     @Override
-    public Content createContent(CreateContentRequest request, String userId) {
+    public Content createContent(CreateContentParam request, String userId) {
         log.info("Creating content for user: {}", userId);
 
         // Save the content in database
-        Content content = Content.builder()
-                .text(request.getText())
-                .type(request.getType())
+        ContentEntity content = ContentEntity.builder()
+                .content(request.getText())
+                .contentType(request.getType())
                 .userId(userId)
                 .build();
 
@@ -59,7 +68,7 @@ public class ContentService implements IContentService {
             throw new RuntimeException("Content cannot be null");
         }
 
-        Content savedContent = contentRepository.save(content);
+        ContentEntity savedContent = contentRepository.save(content);
 
         // Publish to RabbitMQ
         log.info("Publishing content creation event for contentId: {}", savedContent.getId());
@@ -70,17 +79,17 @@ public class ContentService implements IContentService {
                 .build();
         rabbitTemplate.convertAndSend(exchange, routingKey, event);
 
-        return savedContent;
+        return contentMapper.toContent(content);
     }
 
     @Override
-    public ContentPageDto getAllContent(String userId, Integer limit, String cursor) {
+    public ContentPage getAllContent(String userId, Integer limit, String cursor) {
         log.info("Fetching content for user: {}, limit: {}, cursor: {}", userId, limit, cursor);
         int fetchLimit = limit + 1;
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0,
                 fetchLimit);
 
-        java.util.List<Content> contents;
+        java.util.List<ContentEntity> contents;
         if (cursor != null && !cursor.isEmpty()) {
             try {
                 java.time.LocalDateTime createdCursor = java.time.LocalDateTime.parse(cursor);
@@ -97,15 +106,15 @@ public class ContentService implements IContentService {
         String nextCursor = null;
         if (contents.size() > limit) {
             contents = contents.subList(0, limit);
-            nextCursor = contents.get(contents.size() - 1).getCreated().toString();
+            nextCursor = contents.get(contents.size() - 1).getCreatedAt().toString();
         }
 
-        return new ContentPageDto(contents, nextCursor);
+        return new ContentPage(contents, nextCursor);
     }
 
     @Override
-    public void saveTagsForContent(SaveTagsForContentRequest request, String userId) {
-        Content content = contentRepository.findById(java.util.UUID.fromString(request.contentId()))
+    public void saveTagsForContent(SaveTagsForContentParam request, String userId) {
+        ContentEntity content = contentRepository.findById(java.util.UUID.fromString(request.contentId()))
                 .orElseThrow(() -> new RuntimeException("Content not found"));
 
         if (!content.getUserId().equals(userId)) {
@@ -123,7 +132,7 @@ public class ContentService implements IContentService {
                         .anyMatch(ct -> ct.getTag().getId().equals(tagId));
 
                 if (!exists) {
-                    ContentTag contentTag = ContentTag.builder()
+                    ContentTagEntity contentTag = ContentTagEntity.builder()
                             .content(content)
                             .tag(tag)
                             .userId(userId)
@@ -145,11 +154,9 @@ public class ContentService implements IContentService {
         }
     }
 
-    // New method required by interface, redirect to saveTags logic or keep as is?
-    // Interface defines addTag and removeTag. I should implement them.
     @Override
-    public void addTagToContent(java.util.UUID contentId, java.util.UUID tagId, String userId) {
-        Content content = contentRepository.findById(contentId)
+    public void addTagToContent(UUID contentId, UUID tagId, String userId) {
+        ContentEntity content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Content not found"));
 
         if (!content.getUserId().equals(userId)) {
@@ -162,7 +169,7 @@ public class ContentService implements IContentService {
                 .anyMatch(ct -> ct.getTag().getId().equals(tagId));
 
         if (!exists) {
-            ContentTag contentTag = ContentTag.builder()
+            ContentTagEntity contentTag = ContentTagEntity.builder()
                     .content(content)
                     .tag(tag)
                     .userId(userId)
@@ -173,7 +180,7 @@ public class ContentService implements IContentService {
 
     @Override
     public void removeTagFromContent(java.util.UUID contentId, java.util.UUID tagId, String userId) {
-        Content content = contentRepository.findById(contentId)
+        ContentEntity content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Content not found"));
 
         if (!content.getUserId().equals(userId)) {
@@ -187,9 +194,9 @@ public class ContentService implements IContentService {
     }
 
     @Override
-    public void refreshSuggestions(java.util.UUID contentId, String userId,
-            java.util.Set<dev.kbd.vekku_server.shared.events.ContentProcessingAction> actions) {
-        Content content = contentRepository.findById(contentId)
+    public void refreshSuggestions(UUID contentId, String userId,
+            Set<ContentProcessingAction> actions) {
+        ContentEntity content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Content not found"));
 
         if (!content.getUserId().equals(userId)) {
@@ -207,20 +214,20 @@ public class ContentService implements IContentService {
     }
 
     @Override
-    public ContentDetailDto getContent(java.util.UUID contentId, String userId) {
-        Content content = contentRepository.findById(contentId)
+    public ContentDetail getContent(UUID contentId, String userId) {
+        ContentEntity content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Content not found"));
 
         if (!content.getUserId().equals(userId)) {
             throw new RuntimeException("Unauthorized");
         }
 
-        java.util.List<ContentTag> manualTags = contentTagRepository
+        List<ContentTagEntity> manualTags = contentTagRepository
                 .findByContentId(contentId);
-        java.util.List<ContentTagSuggestion> suggestedTags = contentTagSuggestionRepository
+        List<ContentTagSuggestionEntity> suggestedTags = contentTagSuggestionRepository
                 .findByContentId(contentId);
 
-        return ContentDetailDto.builder()
+        return ContentDetail.builder()
                 .content(content)
                 .manualTags(manualTags)
                 .suggestedTags(suggestedTags)
@@ -228,36 +235,32 @@ public class ContentService implements IContentService {
     }
 
     @Override
-    public java.util.List<ContentKeywordSuggestion> getContentKeywords(
-            java.util.UUID contentId, String userId) {
-        Content content = contentRepository.findById(contentId)
+    public List<ContentKeywordSuggestion> getContentKeywords(
+            UUID contentId, String userId) {
+        ContentEntity content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Content not found"));
 
         if (!content.getUserId().equals(userId)) {
             throw new RuntimeException("Unauthorized");
         }
 
-        return contentKeywordSuggestionRepository.findByContentId(contentId);
+        var entities = contentKeywordSuggestionRepository.findByContentId(contentId);
+        return entities.stream().map(contentMapper::toContentKeywordSuggestion).toList();
     }
 
     @Override
-    public void saveTagSuggestions(java.util.UUID contentId,
-            java.util.List<dev.kbd.vekku_server.services.brain.dto.TagScore> scores, String userId) {
+    public void saveTagSuggestions(UUID contentId,
+            List<TagScore> scores, String userId) {
         // Find content to ensure ownership and existence
-        Content content = contentRepository.findById(contentId)
+        ContentEntity content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Content not found"));
         if (!content.getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized"); // Or log warning if system process? Usually system process has
-                                                        // userId context or bypass.
-            // Orchestrator calls this. Orchestrator gets content from repo.
-            // If Orchestrator runs async (RabbitMQ), userId verification might be implicit
-            // by content ownership.
-            // We'll enforce ownership check against passed userId.
+            throw new RuntimeException("Unauthorized");
         }
 
         contentTagSuggestionRepository.deleteByContentId(contentId);
 
-        for (dev.kbd.vekku_server.services.brain.dto.TagScore tagScore : scores) {
+        for (dev.kbd.vekku_server.services.common.dtos.TagScore tagScore : scores) {
             String tagName = tagScore.name();
             Double score = tagScore.score();
 
@@ -266,7 +269,7 @@ public class ContentService implements IContentService {
                     .orElseThrow(() -> new RuntimeException("Tag not found for name: " + tagName));
 
             // Save ContentTagSuggestion
-            ContentTagSuggestion contentTag = ContentTagSuggestion.builder()
+            ContentTagSuggestionEntity contentTag = ContentTagSuggestionEntity.builder()
                     .content(content)
                     .tag(tag)
                     .score(score)
@@ -279,8 +282,8 @@ public class ContentService implements IContentService {
 
     @Override
     public void saveKeywordSuggestions(java.util.UUID contentId,
-            java.util.List<dev.kbd.vekku_server.services.brain.dto.TagScore> keywords, String userId) {
-        Content content = contentRepository.findById(contentId)
+            java.util.List<dev.kbd.vekku_server.services.common.dtos.TagScore> keywords, String userId) {
+        ContentEntity content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new RuntimeException("Content not found"));
         if (!content.getUserId().equals(userId)) {
             throw new RuntimeException("Unauthorized");
@@ -288,8 +291,8 @@ public class ContentService implements IContentService {
 
         contentKeywordSuggestionRepository.deleteByContentId(contentId);
 
-        for (dev.kbd.vekku_server.services.brain.dto.TagScore keyword : keywords) {
-            ContentKeywordSuggestion suggestion = ContentKeywordSuggestion.builder()
+        for (dev.kbd.vekku_server.services.common.dtos.TagScore keyword : keywords) {
+            ContentKeywordSuggestionEntity suggestion = ContentKeywordSuggestionEntity.builder()
                     .content(content)
                     .keyword(keyword.name())
                     .score(keyword.score())
@@ -301,6 +304,7 @@ public class ContentService implements IContentService {
 
     @Override
     public Content getContentInternal(java.util.UUID id) {
-        return contentRepository.findById(id).orElseThrow(() -> new RuntimeException("Content not found"));
+        return contentMapper
+                .toContent(contentRepository.findById(id).orElseThrow(() -> new RuntimeException("Content not found")));
     }
 }

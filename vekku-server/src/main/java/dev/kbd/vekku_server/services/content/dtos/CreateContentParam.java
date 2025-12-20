@@ -1,6 +1,5 @@
-package dev.kbd.vekku_server.controllers.content.models;
+package dev.kbd.vekku_server.services.content.dtos;
 
-import dev.kbd.vekku_server.services.content.model.ContentType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateContentRequest {
+public class CreateContentParam {
     private String text;
     private ContentType type;
 }
