@@ -1,9 +1,5 @@
 package dev.kbd.vekku_server.services.content.impl;
 
-import dev.kbd.vekku_server.services.content.dto.CreateContentRequest;
-import dev.kbd.vekku_server.services.content.dto.ContentPageDto;
-import dev.kbd.vekku_server.services.content.dto.ContentDetailDto;
-import dev.kbd.vekku_server.services.content.dto.SaveTagsForContentRequest;
 import dev.kbd.vekku_server.services.content.model.Content;
 import dev.kbd.vekku_server.services.content.model.ContentTag;
 import dev.kbd.vekku_server.services.content.model.ContentTagSuggestion;
@@ -12,6 +8,10 @@ import dev.kbd.vekku_server.services.content.repo.ContentRepository;
 import dev.kbd.vekku_server.services.content.repo.ContentTagRepository;
 import dev.kbd.vekku_server.services.content.repo.ContentTagSuggestionRepository;
 import dev.kbd.vekku_server.services.content.repo.ContentKeywordSuggestionRepository;
+import dev.kbd.vekku_server.controllers.content.models.ContentDetailDto;
+import dev.kbd.vekku_server.controllers.content.models.ContentPageDto;
+import dev.kbd.vekku_server.controllers.content.models.CreateContentRequest;
+import dev.kbd.vekku_server.controllers.content.models.SaveTagsForContentRequest;
 import dev.kbd.vekku_server.services.content.interfaces.IContentService;
 import dev.kbd.vekku_server.services.tags.interfaces.ITagService;
 import dev.kbd.vekku_server.services.tags.model.Tag;

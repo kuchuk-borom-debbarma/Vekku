@@ -1,10 +1,10 @@
-package dev.kbd.vekku_server.controllers;
+package dev.kbd.vekku_server.controllers.content;
 
-import dev.kbd.vekku_server.services.content.dto.ContentPageDto;
-import dev.kbd.vekku_server.services.content.dto.CreateContentRequest;
-import dev.kbd.vekku_server.services.content.dto.SaveTagsForContentRequest;
 import dev.kbd.vekku_server.services.content.model.Content;
 import dev.kbd.vekku_server.services.content.interfaces.IContentService;
+import dev.kbd.vekku_server.controllers.content.models.ContentPageDto;
+import dev.kbd.vekku_server.controllers.content.models.CreateContentRequest;
+import dev.kbd.vekku_server.controllers.content.models.SaveTagsForContentRequest;
 import dev.kbd.vekku_server.infra.ratelimit.RateLimit;
 import dev.kbd.vekku_server.services.brain.interfaces.IBrainService;
 import lombok.RequiredArgsConstructor;
@@ -63,7 +63,7 @@ public class ContentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<dev.kbd.vekku_server.services.content.dto.ContentDetailDto> getContent(
+    public ResponseEntity<dev.kbd.vekku_server.controllers.content.models.ContentDetailDto> getContent(
             @PathVariable java.util.UUID id,
             @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();

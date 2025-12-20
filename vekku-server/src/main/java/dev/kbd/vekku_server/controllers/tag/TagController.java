@@ -1,9 +1,9 @@
-package dev.kbd.vekku_server.controllers;
+package dev.kbd.vekku_server.controllers.tag;
 
-import dev.kbd.vekku_server.services.tags.dto.CreateTagRequest;
 import dev.kbd.vekku_server.services.tags.model.Tag;
-import dev.kbd.vekku_server.services.tags.dto.TagPageDto;
 import dev.kbd.vekku_server.services.tags.interfaces.ITagService;
+import dev.kbd.vekku_server.controllers.tag.models.CreateTagRequest;
+import dev.kbd.vekku_server.controllers.tag.models.TagPageDto;
 import dev.kbd.vekku_server.infra.ratelimit.RateLimit;
 import dev.kbd.vekku_server.orchestrators.tag_orchestration.TagOrchestrator;
 import lombok.RequiredArgsConstructor;

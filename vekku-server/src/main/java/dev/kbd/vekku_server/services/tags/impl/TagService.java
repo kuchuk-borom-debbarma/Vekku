@@ -1,6 +1,6 @@
 package dev.kbd.vekku_server.services.tags.impl;
 
-import dev.kbd.vekku_server.services.tags.dto.TagPageDto;
+import dev.kbd.vekku_server.controllers.tag.models.TagPageDto;
 import dev.kbd.vekku_server.services.tags.interfaces.ITagService;
 import dev.kbd.vekku_server.services.tags.model.Tag;
 import dev.kbd.vekku_server.services.tags.repo.TagRepository;

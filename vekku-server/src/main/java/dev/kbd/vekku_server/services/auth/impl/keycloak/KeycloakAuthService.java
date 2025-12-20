@@ -1,9 +1,12 @@
-package dev.kbd.vekku_server.services.auth;
+package dev.kbd.vekku_server.services.auth.impl.keycloak;
 
-import dev.kbd.vekku_server.dto.auth.LoginRequest;
-import dev.kbd.vekku_server.dto.auth.LoginResponse;
-import dev.kbd.vekku_server.dto.auth.SignupRequest;
-import dev.kbd.vekku_server.dto.auth.VerifyOtpRequest;
+import dev.kbd.vekku_server.controllers.auth.models.LoginResponse;
+import dev.kbd.vekku_server.services.auth.AuthService;
+import dev.kbd.vekku_server.services.auth.impl.keycloak.pending.PendingRegistrationHandler;
+import dev.kbd.vekku_server.services.auth.impl.keycloak.pending.model.PendingRegistration;
+import dev.kbd.vekku_server.services.auth.model.LoginParam;
+import dev.kbd.vekku_server.services.auth.model.SignupParam;
+import dev.kbd.vekku_server.services.auth.model.VerifyOtpParam;
 import dev.kbd.vekku_server.services.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.core.Response;
 
@@ -29,15 +30,7 @@ import jakarta.ws.rs.core.Response;
 public class KeycloakAuthService implements AuthService {
 
     private final NotificationService notificationService;
-
-    // Store Pending Signup Request (Email -> Request)
-    // We also store the generated OTP within a wrapper or side-by-side.
-    // For simplicity, let's use a wrapper class or just a map of Email ->
-    // PendingRegistration
-    private final Map<String, PendingRegistration> pendingRegistrations = new ConcurrentHashMap<>();
-
-    private record PendingRegistration(String otp, SignupRequest request) {
-    }
+    private final PendingRegistrationHandler pendingRegistrationHandler;
 
     @Value("${keycloak.auth-server-url:http://localhost:8180}")
     private String serverUrl;
@@ -51,12 +44,9 @@ public class KeycloakAuthService implements AuthService {
     @Value("${keycloak.admin-password:admin}")
     private String adminPassword;
 
-    // We are using 'admin-cli' client which is available by default in 'master'
-    // realm
-    // to manage other realms. Alternatively, we can use a service account in
-    // 'vekku' realm.
     private Keycloak keycloak;
 
+    // Build admin client
     @PostConstruct
     public void init() {
         keycloak = KeycloakBuilder.builder()
@@ -69,56 +59,51 @@ public class KeycloakAuthService implements AuthService {
     }
 
     @Override
-    public void signup(SignupRequest request) {
-        log.info("Processing signup for email: {}", request.email());
+    public void signup(SignupParam param) {
+        log.info("Processing signup for email: {}", param.email());
 
-        // Check if user already exists in Keycloak?
-        // For simplicity/performance we might skip this or do a quick search.
-        // Doing a search to be safe.
-        List<UserRepresentation> existing = keycloak.realm(realm).users().searchByEmail(request.email(), true);
+        // Check if user exists
+        List<UserRepresentation> existing = keycloak.realm(realm).users().searchByEmail(param.email(), true);
         if (!existing.isEmpty()) {
             throw new RuntimeException("User already exists");
         }
 
         // Generate OTP
         String otp = generateOtp();
-        pendingRegistrations.put(request.email(), new PendingRegistration(otp, request));
+        pendingRegistrationHandler.addPendingRegistration(new PendingRegistration(otp, param));
 
         // Send OTP
-        notificationService.sendOtp(request.email(), otp);
+        notificationService.sendOtp(param.email(), otp);
     }
 
     @Override
-    public void verifyOtp(VerifyOtpRequest request) {
-        log.info("Verifying OTP for email: {}", request.email());
-        PendingRegistration pending = pendingRegistrations.get(request.email());
+    public void verifyOtp(VerifyOtpParam param) {
+        log.info("Verifying OTP for email: {}", param.email());
+        PendingRegistration pending = pendingRegistrationHandler.getPendingRegistration(param.email());
 
-        if (pending == null || !pending.otp().equals(request.otp())) {
+        if (pending == null || !pending.otp().equals(param.otp())) {
             throw new RuntimeException("Invalid or expired OTP");
         }
 
         // OTP Valid. Create User in Keycloak.
-        createUserInKeycloak(pending.request());
+        createUserInKeycloak(pending.param());
 
         // Cleanup
-        pendingRegistrations.remove(request.email());
+        pendingRegistrationHandler.removePendingRegistration(param.email());
     }
 
     @Override
-    public LoginResponse login(LoginRequest request) {
-        log.info("Attempting login for user: {}", request.email());
+    public LoginResponse login(LoginParam param) {
+        log.info("Attempting login for user: {}", param.email());
 
         // Use KeycloakBuilder to act as the user and get a token
-        // usage of KeycloakBuilder.builder()...grantType(PASSWORD) acts as a client to
-        // get user tokens
-        // logic:
         try (Keycloak userKeycloak = KeycloakBuilder.builder()
                 .serverUrl(serverUrl)
                 .realm(realm)
                 .clientId("vekku-client")
                 // .clientSecret("") // Public client
-                .username(request.email())
-                .password(request.password())
+                .username(param.email())
+                .password(param.password())
                 .scope("openid profile email") // REQUIRED for UserInfo endpoint
                 .build()) {
 
@@ -129,12 +114,12 @@ public class KeycloakAuthService implements AuthService {
                     tokenResponse.getRefreshToken(),
                     tokenResponse.getExpiresIn());
         } catch (Exception e) {
-            log.error("Login failed for user {}", request.email(), e);
+            log.error("Login failed for user {}", param.email(), e);
             throw new RuntimeException("Invalid credentials");
         }
     }
 
-    private void createUserInKeycloak(SignupRequest request) {
+    private void createUserInKeycloak(SignupParam request) {
         UserRepresentation user = new UserRepresentation();
         user.setUsername(request.email());
         user.setEmail(request.email());
@@ -142,12 +127,6 @@ public class KeycloakAuthService implements AuthService {
         user.setLastName(request.lastName());
         user.setEnabled(true);
         user.setEmailVerified(true);
-        // Note: setting realmRoles in UserRepresentation during create often doesn't
-        // work
-        // with some Keycloak versions/admin clients. Safer to add role mappings after
-        // creation.
-        // But let's try direct setting if the DTO supports it, otherwise explicit
-        // mapping.
 
         CredentialRepresentation credential = new CredentialRepresentation();
         credential.setType(CredentialRepresentation.PASSWORD);
@@ -173,18 +152,11 @@ public class KeycloakAuthService implements AuthService {
 
     private void assignUserRole(String userId) {
         try {
-            // Get role representation
-            // logic: realm().roles().get("USER").toRepresentation()
-            // then realm().users().get(userId).roles().realmLevel().add(list)
-
             var roleRep = keycloak.realm(realm).roles().get("USER").toRepresentation();
             keycloak.realm(realm).users().get(userId).roles().realmLevel().add(List.of(roleRep));
 
         } catch (Exception e) {
             log.error("Failed to assign USER role to user {}", userId, e);
-            // Non-blocking failure? OR blocking?
-            // In a real app we might want to retry or transactionalize this.
-            // For now, log error.
         }
     }
 

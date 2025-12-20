@@ -1,6 +1,6 @@
 package dev.kbd.vekku_server.services.tags.interfaces;
 
-import dev.kbd.vekku_server.services.tags.dto.TagPageDto;
+import dev.kbd.vekku_server.controllers.tag.models.TagPageDto;
 import dev.kbd.vekku_server.services.tags.model.Tag;
 import java.util.List;
 import java.util.UUID;

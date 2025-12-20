@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.services.content.dto;
+package dev.kbd.vekku_server.controllers.content.models;
 
 import java.util.Set;
 

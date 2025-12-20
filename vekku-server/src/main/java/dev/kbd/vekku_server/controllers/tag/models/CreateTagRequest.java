@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.services.tags.dto;
+package dev.kbd.vekku_server.controllers.tag.models;
 
 import java.util.List;
 
