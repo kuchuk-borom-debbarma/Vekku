@@ -94,7 +94,7 @@ export default function DocsList() {
         <Layout>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h1 style={{ fontSize: '2rem' }}>My Documents</h1>
-                <Button onClick={() => navigate('/create-content')}>New Document</Button>
+                <Button onClick={() => navigate('/create')}>New Document</Button>
             </div>
 
             {loading && docs.length === 0 ? (
@@ -110,7 +110,7 @@ export default function DocsList() {
                     color: 'var(--color-text-secondary)'
                 }}>
                     <p style={{ marginBottom: '1rem' }}>No documents found yet.</p>
-                    <Button onClick={() => navigate('/create-content')}>Create your first doc</Button>
+                    <Button onClick={() => navigate('/create')}>Create your first doc</Button>
                 </div>
             ) : (
                 <>

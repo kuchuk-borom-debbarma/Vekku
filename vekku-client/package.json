@@ -12,6 +12,12 @@
   "dependencies": {
     "@mantine/core": "^8.3.10",
     "@mantine/hooks": "^8.3.10",
+    "@mantine/tiptap": "^8.3.10",
+    "@tabler/icons-react": "^3.36.0",
+    "@tiptap/extension-link": "^3.14.0",
+    "@tiptap/extension-placeholder": "^3.14.0",
+    "@tiptap/react": "^3.14.0",
+    "@tiptap/starter-kit": "^3.14.0",
     "postcss": "^8.5.6",
     "postcss-preset-mantine": "^1.18.0",
     "react": "^19.2.0",

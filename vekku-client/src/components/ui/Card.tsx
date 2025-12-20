@@ -1,10 +1,10 @@
 import { Paper } from '@mantine/core';
 import type { PaperProps } from '@mantine/core';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
-import { ComponentPropsWithoutRef } from 'react';
+import type { ComponentPropsWithoutRef } from 'react';
 
-interface CardProps extends PaperProps, ComponentPropsWithoutRef<'div'> {
+interface CardProps extends PaperProps, Omit<ComponentPropsWithoutRef<'div'>, 'style' | 'children'> {
     children: ReactNode;
 }
 

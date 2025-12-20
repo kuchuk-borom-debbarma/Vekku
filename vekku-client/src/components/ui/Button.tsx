@@ -1,11 +1,12 @@
 import { Button as MantineButton } from '@mantine/core';
 import type { ButtonProps as MantineButtonProps } from '@mantine/core';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 interface ButtonProps extends MantineButtonProps {
     variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
     children: ReactNode;
     onClick?: (e: any) => void;
+    type?: "submit" | "reset" | "button";
 }
 
 export function Button({ variant = 'primary', children, ...props }: ButtonProps) {
