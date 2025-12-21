@@ -1,5 +1,6 @@
 package dev.kbd.vekku_server.auth;
 
+import dev.kbd.vekku_server.auth.AuthDTOs.UserInfoDTO;
 import dev.kbd.vekku_server.auth.IAuthService.LoginData;
 import dev.kbd.vekku_server.infrastructure.ratelimiter.RateLimit;
 import lombok.RequiredArgsConstructor;
@@ -105,13 +106,6 @@ record SignInRequest(String email, String password) {}
 record SignUpRequest(
     String email,
     String password,
-    String firstName,
-    String lastName
-) {}
-
-record UserInfoDTO(
-    String id,
-    String email,
     String firstName,
     String lastName
 ) {}

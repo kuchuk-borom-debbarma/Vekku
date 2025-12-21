@@ -1,12 +1,11 @@
 package dev.kbd.vekku_server.tag;
 
-import java.time.LocalDateTime;
+import dev.kbd.vekku_server.tag.TagDTOs.TagDTO;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -110,13 +109,4 @@ record UpdateTagRequest(
     String tagName,
     Set<String> synsToRemove,
     Set<String> synsToAdd
-) {}
-
-record TagDTO(
-    String id,
-    String name,
-    String userId,
-    Set<String> synonyms,
-    LocalDateTime createdAt,
-    LocalDateTime updatedAt
 ) {}
