@@ -5,5 +5,5 @@ import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
 interface ContentMapper {
-    ContentDTO toDto(Content content);
+    ContentDTO toDto(ContentEntity content);
 }

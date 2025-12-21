@@ -1,6 +1,8 @@
-package dev.kbd.vekku_server.content;
+package dev.kbd.vekku_server.content.api;
 
 import dev.kbd.vekku_server.content.api.ContentDTOs.ContentDTO;
+import dev.kbd.vekku_server.content.api.ContentDTOs.CreateContentRequest;
+import dev.kbd.vekku_server.content.api.ContentDTOs.UpdateContentRequest;
 import java.util.List;
 
 public interface IContentService {

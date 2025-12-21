@@ -1,6 +1,9 @@
 package dev.kbd.vekku_server.content;
 
 import dev.kbd.vekku_server.content.api.ContentDTOs.ContentDTO;
+import dev.kbd.vekku_server.content.api.ContentDTOs.CreateContentRequest;
+import dev.kbd.vekku_server.content.api.ContentDTOs.UpdateContentRequest;
+import dev.kbd.vekku_server.content.api.IContentService;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +30,7 @@ class ContentServiceImpl implements IContentService {
         String userId,
         CreateContentRequest request
     ) {
-        Content toSaveContent = Content.builder()
+        ContentEntity toSaveContent = ContentEntity.builder()
             .userId(userId)
             .content(request.content())
             .title(request.title())
@@ -82,7 +85,7 @@ class ContentServiceImpl implements IContentService {
     @Override
     public void deleteContent(String id, String userId) {
         //validate userId
-        Content existing = contentRepo
+        ContentEntity existing = contentRepo
             .findById(UUID.fromString(id))
             .orElse(null);
         if (existing == null || !existing.getUserId().equals(userId)) {
@@ -101,7 +104,7 @@ class ContentServiceImpl implements IContentService {
 
     @Override
     public ContentDTO getContentOfUser(String id, String userId) {
-        Content content = contentRepo
+        ContentEntity content = contentRepo
             .findById(UUID.fromString(id))
             .filter(c -> c.getUserId().equals(userId))
             .orElseThrow(() ->
@@ -131,8 +134,8 @@ class ContentServiceImpl implements IContentService {
         );
         PageRequest pageable = PageRequest.of(0, limit, sort);
 
-        Specification<Content> spec = Specification.where((root, query, cb) ->
-            cb.equal(root.get("userId"), userId)
+        Specification<ContentEntity> spec = Specification.where(
+            (root, query, cb) -> cb.equal(root.get("userId"), userId)
         );
 
         if (StringUtils.hasText(cursor)) {
@@ -154,7 +157,7 @@ class ContentServiceImpl implements IContentService {
         }
 
         // This assumes ContentRepo extends JpaSpecificationExecutor<Content>
-        List<Content> contentList = contentRepo
+        List<ContentEntity> contentList = contentRepo
             .findAll(spec, pageable)
             .getContent();
 

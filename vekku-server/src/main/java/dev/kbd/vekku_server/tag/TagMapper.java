@@ -1,10 +1,11 @@
 package dev.kbd.vekku_server.tag;
 
-import org.mapstruct.Mapper;
-
+import dev.kbd.vekku_server.tag.api.TagDTOs.TagContentDTO;
 import dev.kbd.vekku_server.tag.api.TagDTOs.TagDTO;
+import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
 interface TagMapper {
-    TagDTO toTagDTO(Tag tagEntity);
+    TagDTO toTagDTO(TagEntity tagEntity);
+    TagContentDTO toTagContentDTO(TagContentEntity tagContentEntity);
 }

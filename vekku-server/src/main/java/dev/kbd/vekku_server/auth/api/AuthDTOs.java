@@ -10,4 +10,13 @@ public class AuthDTOs {
         String firstName,
         String lastName
     ) {}
+
+    public record SignInRequest(String email, String password) {}
+
+    public record SignUpRequest(
+        String email,
+        String password,
+        String firstName,
+        String lastName
+    ) {}
 }

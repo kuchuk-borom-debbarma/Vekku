@@ -1,6 +1,6 @@
 package dev.kbd.vekku_server.content;
 
-import dev.kbd.vekku_server.content.Models.ContentType;
+import dev.kbd.vekku_server.content.api.ContentDTOs.ContentType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -31,7 +31,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Setter
 @ToString
 @Builder
-class Content {
+class ContentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

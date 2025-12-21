@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 interface ContentRepo
-    extends JpaRepository<Content, UUID>, JpaSpecificationExecutor<Content> {}
+    extends
+        JpaRepository<ContentEntity, UUID>,
+        JpaSpecificationExecutor<ContentEntity> {}

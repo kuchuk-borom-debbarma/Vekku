@@ -1,9 +1,10 @@
 package dev.kbd.vekku_server.content;
 
-import dev.kbd.vekku_server.content.Models.ContentType;
 import dev.kbd.vekku_server.content.api.ContentDTOs.ContentDTO;
+import dev.kbd.vekku_server.content.api.ContentDTOs.CreateContentRequest;
+import dev.kbd.vekku_server.content.api.ContentDTOs.UpdateContentRequest;
+import dev.kbd.vekku_server.content.api.IContentService;
 import java.util.List;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -21,7 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("api/v1/content")
 @RequiredArgsConstructor
 @Slf4j
-class Controller {
+class ContentController {
 
     final IContentService contentService;
 
@@ -102,19 +103,3 @@ class Controller {
         );
     }
 }
-
-record CreateContentRequest(
-    String title,
-    String content,
-    ContentType contentType,
-    Set<String> tags
-) {}
-
-record UpdateContentRequest(
-    String id,
-    String updatedTitle,
-    String updatedContent,
-    ContentType updatedContentType,
-    Set<String> toRemoveTags,
-    Set<String> toAddTags
-) {}

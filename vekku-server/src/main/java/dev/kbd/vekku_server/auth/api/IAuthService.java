@@ -1,6 +1,6 @@
-package dev.kbd.vekku_server.auth;
+package dev.kbd.vekku_server.auth.api;
 
-interface IAuthService {
+public interface IAuthService {
     /**
      * Start sign up process. This should send OTP to the email
      * @param email email of the user to login with

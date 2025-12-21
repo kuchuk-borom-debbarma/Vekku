@@ -27,7 +27,7 @@ import org.hibernate.type.SqlTypes;
 @Getter
 @Setter
 @Builder
-class Tag {
+class TagEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

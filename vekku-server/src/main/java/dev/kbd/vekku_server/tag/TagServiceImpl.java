@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import dev.kbd.vekku_server.tag.api.ITagService;
 import dev.kbd.vekku_server.tag.api.TagDTOs.TagDTO;
 
 @Service
@@ -19,7 +20,7 @@ import dev.kbd.vekku_server.tag.api.TagDTOs.TagDTO;
 @Slf4j
 class TagServiceImpl implements ITagService {
 
-    final TagRepository tagRepository;
+    final TagRepo tagRepository;
     final TagMapper mapper;
 
     @Override
@@ -50,7 +51,7 @@ class TagServiceImpl implements ITagService {
         boolean isNext = !"prev".equalsIgnoreCase(dir);
         PageRequest pageable = PageRequest.of(0, limit);
 
-        List<Tag> tags;
+        List<TagEntity> tags;
 
         if (!StringUtils.hasText(fromCursor)) {
             tags = isNext
@@ -63,7 +64,7 @@ class TagServiceImpl implements ITagService {
                       pageable
                   );
         } else {
-            Tag cursorEntity = tagRepository
+            TagEntity cursorEntity = tagRepository
                 .findById(UUID.fromString(fromCursor))
                 .orElse(null);
             if (cursorEntity == null) {
@@ -108,12 +109,12 @@ class TagServiceImpl implements ITagService {
             tagName,
             synonyms.size()
         );
-        Tag toSave = Tag.builder()
+        TagEntity toSave = TagEntity.builder()
             .name(tagName)
             .userId(userId)
             .synonyms(new ArrayList<>(synonyms))
             .build();
-        Tag saved = tagRepository.save(toSave);
+        TagEntity saved = tagRepository.save(toSave);
         log.info("Tag created with id {}", saved.getId());
 
         return mapper.toTagDTO(saved);
@@ -128,7 +129,7 @@ class TagServiceImpl implements ITagService {
         Set<String> synsToRemove
     ) {
         log.info("Update tag for user {} with id {}", userId, tagId);
-        Tag tagEntity = tagRepository
+        TagEntity tagEntity = tagRepository
             .findByUserIdAndId(userId, UUID.fromString(tagId))
             .orElseThrow(() -> new IllegalArgumentException("Tag not found"));
 
@@ -145,14 +146,14 @@ class TagServiceImpl implements ITagService {
         }
         tagEntity.setSynonyms(new ArrayList<>(currentSynonyms));
 
-        Tag updatedTag = tagRepository.save(tagEntity);
+        TagEntity updatedTag = tagRepository.save(tagEntity);
         return mapper.toTagDTO(updatedTag);
     }
 
     @Override
     public void deleteTag(String subject, String tagId) {
         log.info("Delete tag for user {} with id {}", subject, tagId);
-        Tag tagEntity = tagRepository
+        TagEntity tagEntity = tagRepository
             .findByUserIdAndId(subject, UUID.fromString(tagId))
             .orElseThrow(() ->
                 new IllegalArgumentException(

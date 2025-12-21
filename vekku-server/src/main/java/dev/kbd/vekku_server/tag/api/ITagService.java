@@ -1,11 +1,10 @@
-package dev.kbd.vekku_server.tag;
+package dev.kbd.vekku_server.tag.api;
 
+import dev.kbd.vekku_server.tag.api.TagDTOs.TagDTO;
 import java.util.List;
 import java.util.Set;
 
-import dev.kbd.vekku_server.tag.api.TagDTOs.TagDTO;
-
-interface ITagService {
+public interface ITagService {
     TagDTO getTag(String userId, String id);
 
     List<TagDTO> getTags(

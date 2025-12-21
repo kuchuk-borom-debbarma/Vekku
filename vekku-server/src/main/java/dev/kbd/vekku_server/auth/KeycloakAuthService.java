@@ -19,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import dev.kbd.vekku_server.auth.api.IAuthService;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor

@@ -1,8 +1,11 @@
 package dev.kbd.vekku_server.tag;
 
+import dev.kbd.vekku_server.tag.api.ITagContentService;
+import dev.kbd.vekku_server.tag.api.ITagService;
+import dev.kbd.vekku_server.tag.api.TagDTOs.CreateTagRequest;
 import dev.kbd.vekku_server.tag.api.TagDTOs.TagDTO;
+import dev.kbd.vekku_server.tag.api.TagDTOs.UpdateTagRequest;
 import java.util.List;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -14,9 +17,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("api/v1/tag")
 @RequiredArgsConstructor
 @Slf4j
-class Controller {
+class TagController {
 
     final ITagService tagService;
+    final ITagContentService tagContentService;
 
     @GetMapping("/{id}")
     public TagDTO getTag(
@@ -100,13 +104,3 @@ class Controller {
         log.info("Tag deleted");
     }
 }
-
-// DTOs
-record CreateTagRequest(String tagName, Set<String> synonyms) {}
-
-record UpdateTagRequest(
-    String tagId,
-    String tagName,
-    Set<String> synsToRemove,
-    Set<String> synsToAdd
-) {}

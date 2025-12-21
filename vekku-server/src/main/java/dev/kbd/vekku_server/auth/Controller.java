@@ -1,7 +1,10 @@
 package dev.kbd.vekku_server.auth;
 
-import dev.kbd.vekku_server.auth.IAuthService.LoginData;
+import dev.kbd.vekku_server.auth.api.AuthDTOs.SignInRequest;
+import dev.kbd.vekku_server.auth.api.AuthDTOs.SignUpRequest;
 import dev.kbd.vekku_server.auth.api.AuthDTOs.UserInfoDTO;
+import dev.kbd.vekku_server.auth.api.IAuthService;
+import dev.kbd.vekku_server.auth.api.IAuthService.LoginData;
 import dev.kbd.vekku_server.infrastructure.ratelimiter.RateLimit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -99,13 +102,3 @@ class Controller {
         );
     }
 }
-
-// DTOs
-record SignInRequest(String email, String password) {}
-
-record SignUpRequest(
-    String email,
-    String password,
-    String firstName,
-    String lastName
-) {}

@@ -9,24 +9,24 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-interface TagRepository extends JpaRepository<Tag, UUID> {
-    Optional<Tag> findByUserIdAndId(String userId, UUID id);
+interface TagRepo extends JpaRepository<TagEntity, UUID> {
+    Optional<TagEntity> findByUserIdAndId(String userId, UUID id);
 
-    List<Tag> findByUserIdAndCreatedAtAfterOrderByCreatedAtAsc(
+    List<TagEntity> findByUserIdAndCreatedAtAfterOrderByCreatedAtAsc(
         String userId,
         LocalDateTime createdAt,
         Pageable pageable
     );
 
-    List<Tag> findByUserIdAndCreatedAtBeforeOrderByCreatedAtDesc(
+    List<TagEntity> findByUserIdAndCreatedAtBeforeOrderByCreatedAtDesc(
         String userId,
         LocalDateTime createdAt,
         Pageable pageable
     );
 
-    List<Tag> findByUserIdOrderByCreatedAtAsc(String userId, Pageable pageable);
+    List<TagEntity> findByUserIdOrderByCreatedAtAsc(String userId, Pageable pageable);
 
-    List<Tag> findByUserIdOrderByCreatedAtDesc(
+    List<TagEntity> findByUserIdOrderByCreatedAtDesc(
         String userId,
         Pageable pageable
     );
