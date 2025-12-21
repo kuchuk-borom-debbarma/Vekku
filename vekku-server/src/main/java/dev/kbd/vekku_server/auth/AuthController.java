@@ -1,16 +1,17 @@
 package dev.kbd.vekku_server.auth;
 
-import dev.kbd.vekku_server.auth.AuthService.LoginData;
+import dev.kbd.vekku_server.auth.IAuthService.LoginData;
 import dev.kbd.vekku_server.infrastructure.ratelimiter.RateLimit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,46 +21,58 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 class AuthController {
 
-    final AuthService authService;
-    final AuthOrchestrator authOrchestrator;
+    final IAuthService authService;
 
     @PostMapping("/signup")
     public ResponseEntity<String> signUp(@RequestBody SignUpRequest request) {
-        log.info("Signing up user with email: {}", request.email());
-        String token = authOrchestrator.startSignUp(
+        log.info("Received signup request for email: {}", request.email());
+
+        String token = authService.startSignUp(
             request.email(),
             request.password(),
             request.firstName(),
             request.lastName()
         );
-        log.debug(
-            "User signed up successfully. Token: ...{}...",
-            token.substring(5, 10)
+
+        log.info(
+            "Signup initiated successfully for email: {}. Verification token generated.",
+            request.email()
         );
         return ResponseEntity.ok(token);
     }
 
     @PostMapping("/verify")
     public void verify(
-        @Header("otp") String otp,
-        @Header("token") String token
+        @RequestHeader("otp") String otp,
+        @RequestHeader("token") String token
     ) {
-        log.info("Verifying user with token: {}", token);
-        authOrchestrator.verifyOtp(token, otp);
+        log.info("Received verification request for token: {}", token);
+
+        authService.verifySignUp(otp, token);
+
+        log.info("Verification successful for token: {}. User created.", token);
     }
 
     @RateLimit
     @PostMapping("/signin")
     public LoginData signIn(@RequestBody SignInRequest request) {
-        log.info("Signing in user with email: {}", request.email());
-        LoginData loginData = authService.login(
-            request.email(),
-            request.password()
-        );
-        if (loginData == null) {
-            log.warn("Failed to sign in user with email: {}", request.email());
+        log.info("Received signin request for email: {}", request.email());
+
+        try {
+            LoginData loginData = authService.login(
+                request.email(),
+                request.password()
+            );
+            log.info("User {} signed in successfully.", request.email());
+            return loginData;
+        } catch (Exception e) {
+            log.warn(
+                "Sign in failed for user: {}. Reason: {}",
+                request.email(),
+                e.getMessage()
+            );
+            throw e; // Re-throw to let the global exception handler or framework handle the 401/403
         }
-        return loginData;
     }
 
     @RateLimit
@@ -68,12 +81,17 @@ class AuthController {
         @AuthenticationPrincipal Jwt jwt
     ) {
         if (jwt == null) {
-            return ResponseEntity.status(401).build();
+            log.warn("UserInfo request rejected: No JWT principal found.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
+        String email = jwt.getClaimAsString("email");
+        log.debug("Fetching user info for authenticated user: {}", email);
+
         return ResponseEntity.ok(
             new UserInfoDTO(
                 jwt.getSubject(),
-                jwt.getClaimAsString("email"),
+                email,
                 jwt.getClaimAsString("given_name"),
                 jwt.getClaimAsString("family_name")
             )
@@ -81,11 +99,19 @@ class AuthController {
     }
 }
 
+// DTOs
 record SignInRequest(String email, String password) {}
 
 record SignUpRequest(
     String email,
     String password,
+    String firstName,
+    String lastName
+) {}
+
+record UserInfoDTO(
+    String id,
+    String email,
     String firstName,
     String lastName
 ) {}

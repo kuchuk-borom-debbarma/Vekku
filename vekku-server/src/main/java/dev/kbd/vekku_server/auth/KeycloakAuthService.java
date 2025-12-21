@@ -3,6 +3,9 @@ package dev.kbd.vekku_server.auth;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.CreatedResponseUtil;
@@ -12,12 +15,14 @@ import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-class KeycloakAuthService implements AuthService {
+class KeycloakAuthService implements IAuthService {
 
     @Value("${keycloak.auth-server-url:http://localhost:8180}")
     private String serverUrl;
@@ -33,12 +38,14 @@ class KeycloakAuthService implements AuthService {
 
     private Keycloak keycloak;
 
-    // Build admin client
+    private final Map<String, PendingUser> tempUsers =
+        new ConcurrentHashMap<>();
+
     @PostConstruct
     public void init() {
         keycloak = KeycloakBuilder.builder()
             .serverUrl(serverUrl)
-            .realm("master") // Admin operations usually done via master realm
+            .realm("master")
             .clientId("admin-cli")
             .username(adminUsername)
             .password(adminPassword)
@@ -46,25 +53,97 @@ class KeycloakAuthService implements AuthService {
     }
 
     @Override
+    public String startSignUp(
+        String email,
+        String password,
+        String firstName,
+        String lastName
+    ) {
+        log.info("Starting sign up process for user with email: {}", email);
+
+        log.debug("Generating OTP");
+        String otp = generateOTP();
+
+        log.debug("Generating Token..");
+        String token = UUID.randomUUID().toString();
+
+        // Store the pending user data mapped by Token
+        tempUsers.put(
+            token,
+            new PendingUser(email, password, firstName, lastName, otp)
+        );
+
+        tempUsers.put(
+            token,
+            new PendingUser(email, password, firstName, lastName, otp)
+        );
+
+        log.debug(
+            "Mapped token {} to email {}, OTP : {}",
+            token.substring(0, 5),
+            email,
+            otp
+        );
+
+        return token;
+    }
+
+    @Override
+    public void verifySignUp(String otp, String token) {
+        log.info("Verifying OTP for token: {}", token);
+
+        PendingUser pendingUser = tempUsers.get(token);
+
+        if (pendingUser == null) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Token not found"
+            );
+        }
+
+        if (!pendingUser.otp().equals(otp)) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Invalid OTP"
+            );
+        }
+
+        log.debug("Valid OTP for token. Creating user...");
+
+        // Call internal create method
+        createUserInKeycloak(
+            pendingUser.email(),
+            pendingUser.password(),
+            pendingUser.firstName(),
+            pendingUser.lastName()
+        );
+
+        // Cleanup
+        tempUsers.remove(token);
+
+        log.debug("User created and temporary data cleaned up.");
+    }
+
+    private String generateOTP() {
+        return String.valueOf((int) (Math.random() * 1000000));
+    }
+
+    @Override
     public LoginData login(String email, String password) {
         log.info("Attempting login for user: {}", email);
-
-        // Use KeycloakBuilder to act as the user and get a token
         try (
             Keycloak userKeycloak = KeycloakBuilder.builder()
                 .serverUrl(serverUrl)
                 .realm(realm)
                 .clientId("vekku-client")
-                // .clientSecret("") // Public client
                 .username(email)
                 .password(password)
-                .scope("openid profile email") // REQUIRED for UserInfo endpoint
+                .scope("openid profile email")
                 .build()
         ) {
             AccessTokenResponse tokenResponse = userKeycloak
                 .tokenManager()
                 .getAccessToken();
-
             return new LoginData(
                 tokenResponse.getToken(),
                 tokenResponse.getRefreshToken(),
@@ -83,7 +162,7 @@ class KeycloakAuthService implements AuthService {
         String firstName,
         String lastName
     ) {
-        log.info("Creating user with email: {} in keyclock", email);
+        // Direct creation (bypassing OTP)
         createUserInKeycloak(email, password, firstName, lastName);
     }
 
@@ -93,6 +172,8 @@ class KeycloakAuthService implements AuthService {
         String firstName,
         String lastName
     ) {
+        log.info("Creating user in Keycloak: {}", email);
+
         UserRepresentation user = new UserRepresentation();
         user.setUsername(email);
         user.setEmail(email);
@@ -117,12 +198,8 @@ class KeycloakAuthService implements AuthService {
             throw new RuntimeException("Failed to register user");
         }
 
-        // Fetch created user to get ID
         String userId = CreatedResponseUtil.getCreatedId(response);
-
-        // Assign USER role
         assignUserRole(userId);
-
         log.info("User created successfully in Keycloak with ID: {}", userId);
     }
 
@@ -145,3 +222,12 @@ class KeycloakAuthService implements AuthService {
         }
     }
 }
+
+// You can keep this in the same file or move to its own file
+record PendingUser(
+    String email,
+    String password,
+    String firstName,
+    String lastName,
+    String otp
+) {}
