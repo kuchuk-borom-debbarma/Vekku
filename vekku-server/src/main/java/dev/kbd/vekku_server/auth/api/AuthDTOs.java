@@ -1,6 +1,6 @@
-package dev.kbd.vekku_server.auth;
+package dev.kbd.vekku_server.auth.api;
 
-class AuthDTOs {
+public class AuthDTOs {
 
     private AuthDTOs() {}
 

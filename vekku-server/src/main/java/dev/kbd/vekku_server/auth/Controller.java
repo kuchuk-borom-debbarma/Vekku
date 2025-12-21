@@ -1,7 +1,7 @@
 package dev.kbd.vekku_server.auth;
 
-import dev.kbd.vekku_server.auth.AuthDTOs.UserInfoDTO;
 import dev.kbd.vekku_server.auth.IAuthService.LoginData;
+import dev.kbd.vekku_server.auth.api.AuthDTOs.UserInfoDTO;
 import dev.kbd.vekku_server.infrastructure.ratelimiter.RateLimit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/auth")
 @Slf4j
 @RequiredArgsConstructor
-class AuthController {
+class Controller {
 
     final IAuthService authService;
 

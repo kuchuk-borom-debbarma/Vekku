@@ -1,9 +1,9 @@
-package dev.kbd.vekku_server.tag;
+package dev.kbd.vekku_server.tag.api;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 
-class TagDTOs {
+public class TagDTOs {
 
     private TagDTOs() {}
 

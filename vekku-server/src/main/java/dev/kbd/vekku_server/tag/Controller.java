@@ -1,6 +1,6 @@
 package dev.kbd.vekku_server.tag;
 
-import dev.kbd.vekku_server.tag.TagDTOs.TagDTO;
+import dev.kbd.vekku_server.tag.api.TagDTOs.TagDTO;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("api/v1/tag")
 @RequiredArgsConstructor
 @Slf4j
-class TagController {
+class Controller {
 
     final ITagService tagService;
 

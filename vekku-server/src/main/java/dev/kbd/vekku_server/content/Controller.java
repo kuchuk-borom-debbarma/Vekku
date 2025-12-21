@@ -5,4 +5,4 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("api/v1/content")
-class ContentController {}
+class Controller {}
