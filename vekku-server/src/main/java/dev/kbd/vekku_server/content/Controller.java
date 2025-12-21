@@ -2,6 +2,7 @@ package dev.kbd.vekku_server.content;
 
 import dev.kbd.vekku_server.content.Models.ContentType;
 import dev.kbd.vekku_server.content.api.ContentDTOs.ContentDTO;
+import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,8 +12,10 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("api/v1/content")
@@ -70,6 +73,33 @@ class Controller {
 
         //TODO publish event
         contentService.deleteContent(id, jwt.getSubject());
+    }
+
+    public ContentDTO getContent(String id, @AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+        ContentDTO content = contentService.getContentOfUser(id, userId);
+        if (content == null) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Content for user not found"
+            );
+        }
+        return content;
+    }
+
+    public List<ContentDTO> getContents(
+        @RequestParam(required = false) String cursor,
+        @RequestParam(required = false, defaultValue = "10") int limit,
+        @RequestParam(required = false, defaultValue = "next") String direction,
+        @AuthenticationPrincipal Jwt jwt
+    ) {
+        String userId = jwt.getSubject();
+        return contentService.getContentsOfUser(
+            userId,
+            cursor,
+            limit,
+            direction
+        );
     }
 }
 
