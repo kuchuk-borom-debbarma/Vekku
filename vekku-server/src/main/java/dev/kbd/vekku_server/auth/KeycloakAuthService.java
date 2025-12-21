@@ -1,5 +1,6 @@
 package dev.kbd.vekku_server.auth;
 
+import dev.kbd.vekku_server.auth.api.IAuthService;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
@@ -18,8 +19,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import dev.kbd.vekku_server.auth.api.IAuthService;
 
 @Slf4j
 @Service
@@ -225,7 +224,6 @@ class KeycloakAuthService implements IAuthService {
     }
 }
 
-// You can keep this in the same file or move to its own file
 record PendingUser(
     String email,
     String password,

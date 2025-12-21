@@ -10,4 +10,6 @@ public interface ITagContentService {
         UnlinkTagsFromContentRequest request,
         String userId
     );
+
+    //TODO function to get tags linekd to content paginated
 }

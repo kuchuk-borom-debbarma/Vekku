@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +21,7 @@ class TagContentController {
 
     final ITagContentService tagContentService;
 
+    @PostMapping
     public void linkTagsToContent(
         @RequestBody LinkTagsToContentRequest request,
         @AuthenticationPrincipal Jwt jwt
@@ -26,10 +29,13 @@ class TagContentController {
         tagContentService.linkTagsToContent(request, jwt.getSubject());
     }
 
+    @PutMapping
     public void unlinkTagsFromContent(
         @RequestBody UnlinkTagsFromContentRequest request,
         @AuthenticationPrincipal Jwt jwt
     ) {
         tagContentService.unlinkTagsFromContent(request, jwt.getSubject());
     }
+
+    //todo get link and get links pagination pending
 }
