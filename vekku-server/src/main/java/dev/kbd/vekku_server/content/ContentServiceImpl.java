@@ -25,6 +25,7 @@ class ContentServiceImpl implements IContentService {
             .content(request.content())
             .title(request.title())
             .contentType(request.contentType())
+            .tags(request.tags())
             .build();
         contentRepo.save(toSaveContent);
         return contentMapper.toDto(toSaveContent);
@@ -56,6 +57,14 @@ class ContentServiceImpl implements IContentService {
         }
         if (request.updatedContentType() != null) {
             existing.setContentType(request.updatedContentType());
+        }
+
+        //tags updates
+        if (!request.toRemoveTags().isEmpty()) {
+            existing.getTags().removeAll(request.toRemoveTags());
+        }
+        if (!request.toAddTags().isEmpty() == false) {
+            existing.getTags().addAll(request.toAddTags());
         }
 
         contentRepo.save(existing);
