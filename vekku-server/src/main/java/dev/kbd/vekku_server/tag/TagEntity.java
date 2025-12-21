@@ -50,8 +50,4 @@ class TagEntity {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
-    public static TagEntityBuilder builder(String name, String userId) {
-        return new TagEntityBuilder().name(name).userId(userId);
-    }
 }
