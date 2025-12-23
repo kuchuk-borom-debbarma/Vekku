@@ -1,5 +1,7 @@
 package dev.kbd.vekku_server.tag;
 
+import dev.kbd.vekku_server.tag.api.ITagService;
+import dev.kbd.vekku_server.tag.api.TagDTOs.TagDTO;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -12,9 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import dev.kbd.vekku_server.tag.api.ITagService;
-import dev.kbd.vekku_server.tag.api.TagDTOs.TagDTO;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -26,7 +25,7 @@ class TagServiceImpl implements ITagService {
     @Override
     public TagDTO getTag(String userId, String id) {
         log.info("GetTag of user {} with id {}", userId, id);
-        return mapper.toTagDTO(
+        return mapper.toDTO(
             tagRepository
                 .findByUserIdAndId(userId, UUID.fromString(id))
                 .orElse(null)
@@ -88,7 +87,7 @@ class TagServiceImpl implements ITagService {
             }
         }
 
-        List<TagDTO> tagDTOs = tags.stream().map(mapper::toTagDTO).toList();
+        List<TagDTO> tagDTOs = tags.stream().map(mapper::toDTO).toList();
 
         if (!isNext) {
             Collections.reverse(tagDTOs);
@@ -117,7 +116,7 @@ class TagServiceImpl implements ITagService {
         TagEntity saved = tagRepository.save(toSave);
         log.info("Tag created with id {}", saved.getId());
 
-        return mapper.toTagDTO(saved);
+        return mapper.toDTO(saved);
     }
 
     @Override
@@ -147,7 +146,7 @@ class TagServiceImpl implements ITagService {
         tagEntity.setSynonyms(new ArrayList<>(currentSynonyms));
 
         TagEntity updatedTag = tagRepository.save(tagEntity);
-        return mapper.toTagDTO(updatedTag);
+        return mapper.toDTO(updatedTag);
     }
 
     @Override
