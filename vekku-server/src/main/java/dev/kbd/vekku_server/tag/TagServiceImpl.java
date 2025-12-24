@@ -1,6 +1,6 @@
 package dev.kbd.vekku_server.tag;
 
-import dev.kbd.vekku_server.infrastructure.config.RabbitMQConfig;
+import dev.kbd.vekku_server.tag.api.ITagEventPublisher;
 import dev.kbd.vekku_server.tag.api.ITagService;
 import dev.kbd.vekku_server.tag.api.TagDTOs.TagDTO;
 import dev.kbd.vekku_server.tag.api.TagEvents.TagCreatedEvent;
@@ -12,8 +12,6 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -25,10 +23,7 @@ class TagServiceImpl implements ITagService {
 
     final TagRepo tagRepository;
     final TagMapper mapper;
-    final RabbitTemplate rabbitTemplate;
-
-    @Value("${vekku.rabbitmq.exchange}")
-    private String exchange;
+    final ITagEventPublisher eventPublisher;
 
     @Override
     public TagDTO getTag(String userId, String id) {
@@ -124,9 +119,7 @@ class TagServiceImpl implements ITagService {
         TagEntity saved = tagRepository.save(toSave);
         log.info("Tag created with id {}", saved.getId());
 
-        rabbitTemplate.convertAndSend(
-            exchange,
-            RabbitMQConfig.TAG_ROUTING_KEY,
+        eventPublisher.publishTagCreated(
             new TagCreatedEvent(saved.getId().toString(), saved.getName(), saved.getUserId())
         );
 

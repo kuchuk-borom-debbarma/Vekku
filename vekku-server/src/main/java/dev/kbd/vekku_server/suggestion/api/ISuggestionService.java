@@ -1,12 +1,10 @@
 package dev.kbd.vekku_server.suggestion.api;
 
+import dev.kbd.vekku_server.tag.api.TagEvents.TagCreatedEvent;
 import java.util.Map;
 import java.util.Set;
 
 public interface ISuggestionService {
-    /**
-     * Create the suggestion score of a content.
-     */
     Map<String, Double> createSuggestionsForContent(
         String contentId,
         String content,
@@ -14,12 +12,6 @@ public interface ISuggestionService {
         int count
     );
 
-    /**
-     * Get the keywords of a content
-     * @param content the content to be analyzed
-     * @param count the maximum number of keywords to return
-     * @return a set of keywords
-     */
     Set<String> getKeywords(String content, int count);
 
     void deleteSuggestionsOfContent(String id);
@@ -31,4 +23,6 @@ public interface ISuggestionService {
         String direction,
         String userId
     );
+
+    void handleTagCreatedEvent(TagCreatedEvent event);
 }

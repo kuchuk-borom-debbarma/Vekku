@@ -1,6 +1,5 @@
 package dev.kbd.vekku_server.suggestion;
 
-import dev.kbd.vekku_server.infrastructure.config.RabbitMQConfig;
 import dev.kbd.vekku_server.suggestion.api.ISuggestionService;
 import dev.kbd.vekku_server.tag.api.TagEvents.TagCreatedEvent;
 import java.util.Collections;
@@ -13,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -69,7 +67,7 @@ public class SuggestionServiceImpl implements ISuggestionService {
         }
     }
 
-    @RabbitListener(queues = RabbitMQConfig.TAG_QUEUE)
+    @Override
     public void handleTagCreatedEvent(TagCreatedEvent event) {
         log.info("Received TagCreatedEvent for tag ID: {}, name: {}, userId: {}", event.tagId(), event.tagName(), event.userId());
         // TODO: Implement logic to generate embeddings for the new tag
