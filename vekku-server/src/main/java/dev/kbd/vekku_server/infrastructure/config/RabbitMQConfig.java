@@ -21,9 +21,17 @@ public class RabbitMQConfig {
     @Value("${vekku.rabbitmq.routingkey}")
     private String routingKey;
 
+    public static final String TAG_QUEUE = "tag.creation.queue";
+    public static final String TAG_ROUTING_KEY = "tag.created";
+
     @Bean
     public Queue queue() {
         return new Queue(queueName);
+    }
+
+    @Bean
+    public Queue tagQueue() {
+        return new Queue(TAG_QUEUE);
     }
 
     @Bean
@@ -34,6 +42,11 @@ public class RabbitMQConfig {
     @Bean
     public Binding binding(Queue queue, TopicExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange).with(routingKey);
+    }
+
+    @Bean
+    public Binding tagBinding(Queue tagQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(tagQueue).to(exchange).with(TAG_ROUTING_KEY);
     }
 
     @Bean

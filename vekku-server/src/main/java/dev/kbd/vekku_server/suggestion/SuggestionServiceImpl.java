@@ -1,18 +1,20 @@
 package dev.kbd.vekku_server.suggestion;
 
+import dev.kbd.vekku_server.infrastructure.config.RabbitMQConfig;
 import dev.kbd.vekku_server.suggestion.api.ISuggestionService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.stereotype.Service;
-
+import dev.kbd.vekku_server.tag.api.TagEvents.TagCreatedEvent;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +67,27 @@ public class SuggestionServiceImpl implements ISuggestionService {
         } catch (Exception e) {
             log.warn("Error deleting from VectorStore: {}", e.getMessage());
         }
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.TAG_QUEUE)
+    public void handleTagCreatedEvent(TagCreatedEvent event) {
+        log.info("Received TagCreatedEvent for tag ID: {}, name: {}, userId: {}", event.tagId(), event.tagName(), event.userId());
+        // TODO: Implement logic to generate embeddings for the new tag
+        generateEmbeddingsForTag(event.tagId(), event.tagName());
+    }
+
+    private void generateEmbeddingsForTag(String tagId, String tagName) {
+        log.info("Generating embeddings for tag ID: {}, name: {}", tagId, tagName);
+        // Create a Document from the tag name
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("tagId", tagId);
+        metadata.put("type", "tag"); // Distinguish from content suggestions
+
+        Document document = new Document(tagId, tagName, metadata);
+
+        // Add the document to the vector store
+        vectorStore.add(List.of(document));
+        log.info("Embeddings generated and stored for tag ID: {}", tagId);
     }
 
     @Override
