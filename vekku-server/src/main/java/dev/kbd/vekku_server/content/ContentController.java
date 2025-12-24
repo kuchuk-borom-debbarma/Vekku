@@ -4,7 +4,9 @@ import dev.kbd.vekku_server.content.api.ContentDTOs.ContentDTO;
 import dev.kbd.vekku_server.content.api.ContentDTOs.CreateContentRequest;
 import dev.kbd.vekku_server.content.api.ContentDTOs.UpdateContentRequest;
 import dev.kbd.vekku_server.content.api.IContentService;
+import dev.kbd.vekku_server.suggestion.api.ISuggestionService;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -25,6 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 class ContentController {
 
     final IContentService contentService;
+    final ISuggestionService suggestionService;
 
     /**
      * Create content and publishes event about it
@@ -48,7 +51,17 @@ class ContentController {
             content.id(),
             jwt.getSubject()
         );
-        //TODO publish event
+
+        //TODO message broker
+        CompletableFuture.runAsync(() -> {
+            suggestionService.createSuggestionsForContent(
+                content.id().toString(),
+                content.content(),
+                0.45,
+                10
+            ); //TODO dynamic number of tags based on count of content
+        });
+
         return content;
     }
 
@@ -61,8 +74,18 @@ class ContentController {
             jwt.getSubject(),
             request
         );
-        //TODO publish event
-        return contentService.updateContent(jwt.getSubject(), request);
+
+        var content = contentService.updateContent(jwt.getSubject(), request);
+
+        CompletableFuture.runAsync(() -> {
+            suggestionService.createSuggestionsForContent(
+                content.id().toString(),
+                content.content(),
+                0.45,
+                10
+            ); //TODO dynamic number of tags based on count of content
+        });
+        return content;
     }
 
     public void deleteContent(String id, @AuthenticationPrincipal Jwt jwt) {
@@ -73,6 +96,7 @@ class ContentController {
         );
 
         //TODO publish event
+        suggestionService.deleteSuggestionsOfContent(id);
         contentService.deleteContent(id, jwt.getSubject());
     }
 
