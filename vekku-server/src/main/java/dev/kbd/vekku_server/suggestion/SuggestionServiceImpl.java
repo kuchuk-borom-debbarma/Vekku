@@ -32,7 +32,9 @@ public class SuggestionServiceImpl implements ISuggestionService {
         
         // Store the new content
         // contentId is used as the document ID
-        Document document = new Document(contentId, content, Map.of("contentId", contentId));
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("contentId", contentId);
+        Document document = new Document(contentId, content, metadata);
         vectorStore.add(List.of(document));
         
         // Search for similar content
@@ -77,7 +79,7 @@ public class SuggestionServiceImpl implements ISuggestionService {
     private void generateEmbeddingsForTag(String tagId, String tagName) {
         log.info("Generating embeddings for tag ID: {}, name: {}", tagId, tagName);
         // Create a Document from the tag name
-        Map<String, String> metadata = new HashMap<>();
+        Map<String, Object> metadata = new HashMap<>();
         metadata.put("tagId", tagId);
         metadata.put("type", "tag"); // Distinguish from content suggestions
 

@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.infrastructure.messaging;
+package dev.kbd.vekku_server.suggestion.messaging;
 
 import dev.kbd.vekku_server.infrastructure.config.RabbitMQConfig;
 import dev.kbd.vekku_server.suggestion.api.ISuggestionService;
@@ -17,7 +17,10 @@ public class SuggestionRabbitListener {
 
     @RabbitListener(queues = RabbitMQConfig.TAG_QUEUE)
     public void handleTagCreatedEvent(TagCreatedEvent event) {
-        log.info("RabbitListener received TagCreatedEvent for tag ID: {}", event.tagId());
+        log.info(
+            "RabbitListener received TagCreatedEvent for tag ID: {}",
+            event.tagId()
+        );
         suggestionService.handleTagCreatedEvent(event);
     }
 }

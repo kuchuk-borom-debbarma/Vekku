@@ -1,7 +1,7 @@
-package dev.kbd.vekku_server.infrastructure.messaging;
+package dev.kbd.vekku_server.tag.messaging;
 
-import dev.kbd.vekku_server.infrastructure.config.RabbitMQConfig;
 import dev.kbd.vekku_server.tag.api.ITagEventPublisher;
+import dev.kbd.vekku_server.tag.api.TagEvents;
 import dev.kbd.vekku_server.tag.api.TagEvents.TagCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ public class RabbitTagEventPublisher implements ITagEventPublisher {
         log.info("Publishing TagCreatedEvent for tag ID: {}", event.tagId());
         rabbitTemplate.convertAndSend(
             exchange,
-            RabbitMQConfig.TAG_ROUTING_KEY,
+            TagEvents.TAG_CREATED,
             event
         );
     }
