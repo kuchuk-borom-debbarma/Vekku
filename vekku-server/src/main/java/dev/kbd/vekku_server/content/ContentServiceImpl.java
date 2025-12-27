@@ -3,6 +3,8 @@ package dev.kbd.vekku_server.content;
 import dev.kbd.vekku_server.content.api.ContentDTOs.ContentDTO;
 import dev.kbd.vekku_server.content.api.ContentDTOs.CreateContentRequest;
 import dev.kbd.vekku_server.content.api.ContentDTOs.UpdateContentRequest;
+import dev.kbd.vekku_server.content.api.ContentEvents.ContentCreatedEvent;
+import dev.kbd.vekku_server.content.api.IContentEventPublisher;
 import dev.kbd.vekku_server.content.api.IContentService;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -24,6 +26,7 @@ class ContentServiceImpl implements IContentService {
 
     final ContentRepo contentRepo;
     final ContentMapper contentMapper;
+    final IContentEventPublisher eventPublisher;
 
     @Override
     public ContentDTO createContent(
@@ -38,6 +41,16 @@ class ContentServiceImpl implements IContentService {
             .tags(request.tags())
             .build();
         contentRepo.save(toSaveContent);
+
+        eventPublisher.publishContentCreated(
+            new ContentCreatedEvent(
+                toSaveContent.getId().toString(),
+                toSaveContent.getUserId(),
+                toSaveContent.getContent(),
+                toSaveContent.getTags()
+            )
+        );
+
         return contentMapper.toDto(toSaveContent);
     }
 
