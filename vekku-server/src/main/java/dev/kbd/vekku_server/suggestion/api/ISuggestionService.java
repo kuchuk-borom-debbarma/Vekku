@@ -22,4 +22,6 @@ public interface ISuggestionService {
         String direction,
         String userId
     );
+
+    void saveTag(String tagId, String tagName);
 }

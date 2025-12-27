@@ -52,6 +52,7 @@ public class SuggestionServiceImpl implements ISuggestionService {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("contentId", contentId);
         metadata.put("suggestedTags", suggestions);
+        metadata.put("type", "SUGGESTION");
 
         Document suggestionDoc = new Document(contentId, "", metadata);
         vectorStore.add(List.of(suggestionDoc));
@@ -90,5 +91,17 @@ public class SuggestionServiceImpl implements ISuggestionService {
         String userId
     ) {
         return Collections.emptyMap();
+    }
+
+    @Override
+    public void saveTag(String tagId, String tagName) {
+        log.info("Saving tag with ID: {} and name: {}", tagId, tagName);
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("tagId", tagId);
+        metadata.put("type", "TAG");
+
+        Document document = new Document(tagId, tagName, metadata);
+        vectorStore.add(List.of(document));
+        log.info("Tag saved to VectorStore: {}", tagId);
     }
 }
