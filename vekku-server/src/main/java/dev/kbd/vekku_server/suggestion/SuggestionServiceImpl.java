@@ -9,6 +9,7 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.document.MetadataMode;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
@@ -39,11 +40,19 @@ public class SuggestionServiceImpl implements ISuggestionService {
         Map<String, Double> suggestions = new HashMap<>();
         // Assuming the ID of the similar document corresponds to the Tag ID
         for (Document doc : similarDocs) {
-            // Use a default score if not available, usually score is not directly in Document in Spring AI's similaritySearch result list directly without extra casting often
-            // But for now we just put 0.0 or we could try to extract it if we had the ScoredDocument
-            suggestions.put(doc.getId(), 0.0);
+            // Check metadata for score/distance if ScoredDocument is not available
+            if (doc.getMetadata().containsKey("distance")) {
+                 Object dist = doc.getMetadata().get("distance");
+                 if (dist instanceof Number) {
+                     suggestions.put(doc.getId(), ((Number) dist).doubleValue());
+                 } else {
+                     suggestions.put(doc.getId(), 0.0);
+                 }
+            } else {
+                 suggestions.put(doc.getId(), 0.0);
+            }
         }
-        
+
         // Store the suggestions with the contentId as part of the metadata
         // We do not store the content itself, just the suggestions.
         Map<String, Object> metadata = new HashMap<>();
