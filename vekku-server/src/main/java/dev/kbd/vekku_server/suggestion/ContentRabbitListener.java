@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.suggestion.messaging;
+package dev.kbd.vekku_server.suggestion;
 
 import dev.kbd.vekku_server.content.api.ContentEvents.ContentCreatedEvent;
 import dev.kbd.vekku_server.infrastructure.config.RabbitMQConfig;
