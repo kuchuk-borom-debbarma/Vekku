@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ContentRabbitListener {
+class ContentRabbitListener {
 
     private final ISuggestionService suggestionService;
 
@@ -27,11 +27,18 @@ public class ContentRabbitListener {
                 event.contentId(),
                 event.content(),
                 0.45, // Default threshold
-                10    // Default count
+                10 // Default count
             );
-            log.info("Suggestions created for content ID: {}", event.contentId());
+            log.info(
+                "Suggestions created for content ID: {}",
+                event.contentId()
+            );
         } catch (Exception e) {
-            log.error("Error creating suggestions for content ID: {}", event.contentId(), e);
+            log.error(
+                "Error creating suggestions for content ID: {}",
+                event.contentId(),
+                e
+            );
         }
     }
 }

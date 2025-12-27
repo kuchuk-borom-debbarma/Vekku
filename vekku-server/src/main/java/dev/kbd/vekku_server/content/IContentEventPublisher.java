@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.content.api;
+package dev.kbd.vekku_server.content;
 
 import dev.kbd.vekku_server.content.api.ContentEvents.ContentCreatedEvent;
 

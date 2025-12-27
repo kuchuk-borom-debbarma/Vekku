@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.tag.api;
+package dev.kbd.vekku_server.tag;
 
 import dev.kbd.vekku_server.tag.api.TagEvents.TagCreatedEvent;
 

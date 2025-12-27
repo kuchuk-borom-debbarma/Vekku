@@ -1,6 +1,5 @@
 package dev.kbd.vekku_server.tag;
 
-import dev.kbd.vekku_server.tag.api.ITagEventPublisher;
 import dev.kbd.vekku_server.tag.api.TagEvents;
 import dev.kbd.vekku_server.tag.api.TagEvents.TagCreatedEvent;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class RabbitTagEventPublisher implements ITagEventPublisher {
+class RabbitTagEventPublisher implements ITagEventPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
@@ -22,10 +21,6 @@ public class RabbitTagEventPublisher implements ITagEventPublisher {
     @Override
     public void publishTagCreated(TagCreatedEvent event) {
         log.info("Publishing TagCreatedEvent for tag ID: {}", event.tagId());
-        rabbitTemplate.convertAndSend(
-            exchange,
-            TagEvents.TAG_CREATED,
-            event
-        );
+        rabbitTemplate.convertAndSend(exchange, TagEvents.TAG_CREATED, event);
     }
 }

@@ -10,7 +10,7 @@ import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring")
-public interface TagMapper {
+interface TagMapper {
     TagMapper INSTANCE = Mappers.getMapper(TagMapper.class);
 
     @Mapping(source = "id", target = "id", qualifiedByName = "uuidToString")

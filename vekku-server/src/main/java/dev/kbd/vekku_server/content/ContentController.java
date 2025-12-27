@@ -6,7 +6,6 @@ import dev.kbd.vekku_server.content.api.ContentDTOs.UpdateContentRequest;
 import dev.kbd.vekku_server.content.api.IContentService;
 import dev.kbd.vekku_server.suggestion.api.ISuggestionService;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

@@ -1,6 +1,5 @@
 package dev.kbd.vekku_server.tag;
 
-import dev.kbd.vekku_server.tag.api.ITagEventPublisher;
 import dev.kbd.vekku_server.tag.api.ITagService;
 import dev.kbd.vekku_server.tag.api.TagDTOs.TagDTO;
 import dev.kbd.vekku_server.tag.api.TagEvents.TagCreatedEvent;
@@ -120,7 +119,11 @@ class TagServiceImpl implements ITagService {
         log.info("Tag created with id {}", saved.getId());
 
         eventPublisher.publishTagCreated(
-            new TagCreatedEvent(saved.getId().toString(), saved.getName(), saved.getUserId())
+            new TagCreatedEvent(
+                saved.getId().toString(),
+                saved.getName(),
+                saved.getUserId()
+            )
         );
 
         return mapper.toDTO(saved);

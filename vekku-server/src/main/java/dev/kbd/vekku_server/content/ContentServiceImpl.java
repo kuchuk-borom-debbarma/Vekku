@@ -4,7 +4,6 @@ import dev.kbd.vekku_server.content.api.ContentDTOs.ContentDTO;
 import dev.kbd.vekku_server.content.api.ContentDTOs.CreateContentRequest;
 import dev.kbd.vekku_server.content.api.ContentDTOs.UpdateContentRequest;
 import dev.kbd.vekku_server.content.api.ContentEvents.ContentCreatedEvent;
-import dev.kbd.vekku_server.content.api.IContentEventPublisher;
 import dev.kbd.vekku_server.content.api.IContentService;
 import java.time.LocalDateTime;
 import java.util.Collections;

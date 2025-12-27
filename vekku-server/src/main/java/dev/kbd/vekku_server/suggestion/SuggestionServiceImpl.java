@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class SuggestionServiceImpl implements ISuggestionService {
+class SuggestionServiceImpl implements ISuggestionService {
 
     private final VectorStore vectorStore;
 
