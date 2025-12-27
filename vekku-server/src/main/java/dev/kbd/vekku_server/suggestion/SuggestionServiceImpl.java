@@ -32,9 +32,11 @@ class SuggestionServiceImpl implements ISuggestionService {
 
         // Search for similar tags (assuming tags are stored in the vector store)
         List<Document> similarDocs = vectorStore.similaritySearch(
-            SearchRequest.query(content)
-                .withTopK(count)
-                .withSimilarityThreshold(threshold)
+            SearchRequest.builder()
+                .query(content)
+                .topK(count)
+                .similarityThreshold(threshold)
+                .build()
         );
 
         List<Map<String, Object>> suggestions = new ArrayList<>();
