@@ -29,14 +29,7 @@ public class SuggestionServiceImpl implements ISuggestionService {
     ) {
         log.info("Creating suggestions for content: {}", contentId);
 
-        // Store the new content
-        // contentId is used as the document ID
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("contentId", contentId);
-        Document document = new Document(contentId, content, metadata);
-        vectorStore.add(List.of(document));
-
-        // Search for similar content
+        // Search for similar tags (assuming tags are stored in the vector store)
         List<Document> similarDocs = vectorStore.similaritySearch(
             SearchRequest.query(content)
                 .withTopK(count)
@@ -44,14 +37,23 @@ public class SuggestionServiceImpl implements ISuggestionService {
         );
 
         Map<String, Double> suggestions = new HashMap<>();
+        // Assuming the ID of the similar document corresponds to the Tag ID
         for (Document doc : similarDocs) {
-            // Exclude the document itself from suggestions
-            if (!doc.getId().equals(contentId)) {
-                // In Spring AI, score is often not directly exposed in Document but filtered by threshold.
-                // We'll just mark it present.
-                suggestions.put(doc.getId(), 0.0);
-            }
+            // Use a default score if not available, usually score is not directly in Document in Spring AI's similaritySearch result list directly without extra casting often
+            // But for now we just put 0.0 or we could try to extract it if we had the ScoredDocument
+            suggestions.put(doc.getId(), 0.0);
         }
+        
+        // Store the suggestions with the contentId as part of the metadata
+        // We do not store the content itself, just the suggestions.
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("contentId", contentId);
+        metadata.put("suggestedTags", suggestions);
+
+        // Create a document with empty text (or minimal) as we only care about metadata storage for this ID
+        Document suggestionDoc = new Document(contentId, "", metadata);
+        vectorStore.add(List.of(suggestionDoc));
+
         return suggestions;
     }
 
