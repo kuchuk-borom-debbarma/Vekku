@@ -10,7 +10,6 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.document.MetadataMode;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
@@ -42,10 +41,10 @@ public class SuggestionServiceImpl implements ISuggestionService {
         for (Document doc : similarDocs) {
             Map<String, Object> suggestion = new HashMap<>();
             suggestion.put("tagId", doc.getId());
-            
+
             Object distance = doc.getMetadata().getOrDefault("distance", 0.0);
             suggestion.put("distance", distance);
-            
+
             suggestions.add(suggestion);
         }
 
@@ -57,11 +56,12 @@ public class SuggestionServiceImpl implements ISuggestionService {
         Document suggestionDoc = new Document(contentId, "", metadata);
         vectorStore.add(List.of(suggestionDoc));
 
-        // Return a simple map for the API response compatibility if needed, 
-        // or refactor the return type. For now, keeping return as ID -> distance
         Map<String, Double> result = new HashMap<>();
         for (Map<String, Object> s : suggestions) {
-            result.put((String) s.get("tagId"), ((Number) s.get("distance")).doubleValue());
+            result.put(
+                (String) s.get("tagId"),
+                ((Number) s.get("distance")).doubleValue()
+            );
         }
         return result;
     }
