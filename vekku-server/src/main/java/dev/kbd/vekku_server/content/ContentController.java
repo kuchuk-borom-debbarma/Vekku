@@ -61,20 +61,14 @@ class ContentController {
         );
 
         var content = contentService.updateContent(jwt.getSubject(), request);
-
-        CompletableFuture.runAsync(() -> {
-            suggestionService.createSuggestionsForContent(
-                content.id().toString(),
-                content.content(),
-                0.45,
-                10
-            ); //TODO dynamic number of tags based on count of content
-        });
         return content;
     }
 
     @DeleteMapping("/{id}")
-    public void deleteContent(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
+    public void deleteContent(
+        @PathVariable String id,
+        @AuthenticationPrincipal Jwt jwt
+    ) {
         log.info(
             "Attempting to delete content {} for user {}",
             id,
@@ -87,7 +81,10 @@ class ContentController {
     }
 
     @GetMapping("/{id}")
-    public ContentDTO getContent(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
+    public ContentDTO getContent(
+        @PathVariable String id,
+        @AuthenticationPrincipal Jwt jwt
+    ) {
         String userId = jwt.getSubject();
         ContentDTO content = contentService.getContentOfUser(id, userId);
         if (content == null) {

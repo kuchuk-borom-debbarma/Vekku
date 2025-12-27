@@ -1,4 +1,4 @@
-package dev.kbd.vekku_server.tag.messaging;
+package dev.kbd.vekku_server.tag;
 
 import dev.kbd.vekku_server.tag.api.ITagEventPublisher;
 import dev.kbd.vekku_server.tag.api.TagEvents;
