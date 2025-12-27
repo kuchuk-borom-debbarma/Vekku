@@ -40,17 +40,21 @@ public class SuggestionServiceImpl implements ISuggestionService {
         Map<String, Double> suggestions = new HashMap<>();
         // Assuming the ID of the similar document corresponds to the Tag ID
         for (Document doc : similarDocs) {
-            // Check metadata for score/distance if ScoredDocument is not available
+            // Spring AI 1.0.0-M1 uses metadata for scores, ScoredDocument is not available.
+            // Check for 'distance' (standard) or 'score' (implementation specific)
+            Double score = 0.0;
             if (doc.getMetadata().containsKey("distance")) {
                  Object dist = doc.getMetadata().get("distance");
                  if (dist instanceof Number) {
-                     suggestions.put(doc.getId(), ((Number) dist).doubleValue());
-                 } else {
-                     suggestions.put(doc.getId(), 0.0);
+                     score = 1.0 - ((Number) dist).doubleValue(); // Convert distance to similarity score if needed, or just usage raw
                  }
-            } else {
-                 suggestions.put(doc.getId(), 0.0);
+            } else if (doc.getMetadata().containsKey("score")) {
+                 Object s = doc.getMetadata().get("score");
+                 if (s instanceof Number) {
+                     score = ((Number) s).doubleValue();
+                 }
             }
+            suggestions.put(doc.getId(), score);
         }
 
         // Store the suggestions with the contentId as part of the metadata
