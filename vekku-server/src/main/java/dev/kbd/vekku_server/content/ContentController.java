@@ -12,12 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
@@ -54,6 +49,7 @@ class ContentController {
         return content;
     }
 
+    @PutMapping
     public ContentDTO updateContent(
         @RequestBody UpdateContentRequest request,
         @AuthenticationPrincipal Jwt jwt
@@ -77,7 +73,8 @@ class ContentController {
         return content;
     }
 
-    public void deleteContent(String id, @AuthenticationPrincipal Jwt jwt) {
+    @DeleteMapping("/{id}")
+    public void deleteContent(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
         log.info(
             "Attempting to delete content {} for user {}",
             id,
@@ -89,7 +86,8 @@ class ContentController {
         contentService.deleteContent(id, jwt.getSubject());
     }
 
-    public ContentDTO getContent(String id, @AuthenticationPrincipal Jwt jwt) {
+    @GetMapping("/{id}")
+    public ContentDTO getContent(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         ContentDTO content = contentService.getContentOfUser(id, userId);
         if (content == null) {
@@ -101,6 +99,7 @@ class ContentController {
         return content;
     }
 
+    @GetMapping
     public List<ContentDTO> getContents(
         @RequestParam(required = false) String cursor,
         @RequestParam(required = false, defaultValue = "10") int limit,

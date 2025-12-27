@@ -52,7 +52,7 @@ public class SuggestionServiceImpl implements ISuggestionService {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("contentId", contentId);
         metadata.put("suggestedTags", suggestions);
-        metadata.put("type", "SUGGESTION");
+        metadata.put("type", ISuggestionService.METADATA_TYPE_SUGGESTION);
 
         Document suggestionDoc = new Document(contentId, "", metadata);
         vectorStore.add(List.of(suggestionDoc));
@@ -98,7 +98,7 @@ public class SuggestionServiceImpl implements ISuggestionService {
         log.info("Saving tag with ID: {} and name: {}", tagId, tagName);
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("tagId", tagId);
-        metadata.put("type", "TAG");
+        metadata.put("type", ISuggestionService.METADATA_TYPE_TAG);
 
         Document document = new Document(tagId, tagName, metadata);
         vectorStore.add(List.of(document));

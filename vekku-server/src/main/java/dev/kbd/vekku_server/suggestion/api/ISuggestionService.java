@@ -4,6 +4,9 @@ import java.util.Map;
 import java.util.Set;
 
 public interface ISuggestionService {
+    String METADATA_TYPE_TAG = "TAG";
+    String METADATA_TYPE_SUGGESTION = "SUGGESTION";
+
     Map<String, Double> createSuggestionsForContent(
         String contentId,
         String content,
