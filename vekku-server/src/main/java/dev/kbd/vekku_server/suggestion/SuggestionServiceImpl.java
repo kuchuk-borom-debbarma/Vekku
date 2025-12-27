@@ -1,6 +1,7 @@
 package dev.kbd.vekku_server.suggestion;
 
 import dev.kbd.vekku_server.suggestion.api.ISuggestionService;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,37 +38,32 @@ public class SuggestionServiceImpl implements ISuggestionService {
                 .withSimilarityThreshold(threshold)
         );
 
-        Map<String, Double> suggestions = new HashMap<>();
-        // Assuming the ID of the similar document corresponds to the Tag ID
+        List<Map<String, Object>> suggestions = new ArrayList<>();
         for (Document doc : similarDocs) {
-            // Spring AI 1.0.0-M1 uses metadata for scores, ScoredDocument is not available.
-            // Check for 'distance' (standard) or 'score' (implementation specific)
-            Double score = 0.0;
-            if (doc.getMetadata().containsKey("distance")) {
-                 Object dist = doc.getMetadata().get("distance");
-                 if (dist instanceof Number) {
-                     score = 1.0 - ((Number) dist).doubleValue(); // Convert distance to similarity score if needed, or just usage raw
-                 }
-            } else if (doc.getMetadata().containsKey("score")) {
-                 Object s = doc.getMetadata().get("score");
-                 if (s instanceof Number) {
-                     score = ((Number) s).doubleValue();
-                 }
-            }
-            suggestions.put(doc.getId(), score);
+            Map<String, Object> suggestion = new HashMap<>();
+            suggestion.put("tagId", doc.getId());
+            
+            Object distance = doc.getMetadata().getOrDefault("distance", 0.0);
+            suggestion.put("distance", distance);
+            
+            suggestions.add(suggestion);
         }
 
         // Store the suggestions with the contentId as part of the metadata
-        // We do not store the content itself, just the suggestions.
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("contentId", contentId);
         metadata.put("suggestedTags", suggestions);
 
-        // Create a document with empty text (or minimal) as we only care about metadata storage for this ID
         Document suggestionDoc = new Document(contentId, "", metadata);
         vectorStore.add(List.of(suggestionDoc));
 
-        return suggestions;
+        // Return a simple map for the API response compatibility if needed, 
+        // or refactor the return type. For now, keeping return as ID -> distance
+        Map<String, Double> result = new HashMap<>();
+        for (Map<String, Object> s : suggestions) {
+            result.put((String) s.get("tagId"), ((Number) s.get("distance")).doubleValue());
+        }
+        return result;
     }
 
     @Override
