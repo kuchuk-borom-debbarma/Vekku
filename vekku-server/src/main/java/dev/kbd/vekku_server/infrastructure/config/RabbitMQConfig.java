@@ -1,5 +1,6 @@
 package dev.kbd.vekku_server.infrastructure.config;
 
+import dev.kbd.vekku_server.content.api.ContentEvents;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -21,9 +22,16 @@ public class RabbitMQConfig {
     @Value("${vekku.rabbitmq.routingkey}")
     private String routingKey;
 
+    public static final String CONTENT_CREATION_QUEUE = "content.creation.queue";
+
     @Bean
     public Queue queue() {
         return new Queue(queueName);
+    }
+
+    @Bean
+    public Queue contentCreationQueue() {
+        return new Queue(CONTENT_CREATION_QUEUE);
     }
 
     @Bean
@@ -34,6 +42,11 @@ public class RabbitMQConfig {
     @Bean
     public Binding binding(Queue queue, TopicExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange).with(routingKey);
+    }
+
+    @Bean
+    public Binding contentCreationBinding(Queue contentCreationQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(contentCreationQueue).to(exchange).with(ContentEvents.CONTENT_CREATED);
     }
 
     @Bean
