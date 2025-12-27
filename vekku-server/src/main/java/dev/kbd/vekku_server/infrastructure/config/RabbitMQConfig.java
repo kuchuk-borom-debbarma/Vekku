@@ -1,6 +1,5 @@
 package dev.kbd.vekku_server.infrastructure.config;
 
-import dev.kbd.vekku_server.tag.api.TagEvents;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -22,16 +21,9 @@ public class RabbitMQConfig {
     @Value("${vekku.rabbitmq.routingkey}")
     private String routingKey;
 
-    public static final String TAG_QUEUE = "tag.creation.queue";
-
     @Bean
     public Queue queue() {
         return new Queue(queueName);
-    }
-
-    @Bean
-    public Queue tagQueue() {
-        return new Queue(TAG_QUEUE);
     }
 
     @Bean
@@ -42,11 +34,6 @@ public class RabbitMQConfig {
     @Bean
     public Binding binding(Queue queue, TopicExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange).with(routingKey);
-    }
-
-    @Bean
-    public Binding tagBinding(Queue tagQueue, TopicExchange exchange) {
-        return BindingBuilder.bind(tagQueue).to(exchange).with(TagEvents.TAG_CREATED);
     }
 
     @Bean

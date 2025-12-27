@@ -51,17 +51,6 @@ class ContentController {
             content.id(),
             jwt.getSubject()
         );
-
-        //TODO message broker
-        CompletableFuture.runAsync(() -> {
-            suggestionService.createSuggestionsForContent(
-                content.id().toString(),
-                content.content(),
-                0.45,
-                10
-            ); //TODO dynamic number of tags based on count of content
-        });
-
         return content;
     }
 

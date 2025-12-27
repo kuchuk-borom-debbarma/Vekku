@@ -1,6 +1,5 @@
 package dev.kbd.vekku_server.suggestion.api;
 
-import dev.kbd.vekku_server.tag.api.TagEvents.TagCreatedEvent;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,6 +22,4 @@ public interface ISuggestionService {
         String direction,
         String userId
     );
-
-    void handleTagCreatedEvent(TagCreatedEvent event);
 }
