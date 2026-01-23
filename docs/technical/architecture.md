@@ -33,12 +33,12 @@ The backend rejects the traditional Class-based "Service/Controller" pattern in 
 
 The "Smart Suggestions" system is the core innovation of Vekku. It operates on two distinct levels:
 
-### 3.1 Existing Tag Matching (Semantic Similarity)
+### 3.1 Suggested Existing Tags (Semantic Similarity)
 1. **Embedding**: When content is created, the system generates a high-dimensional vector (384d via BGE-Small) representing the text.
 2. **Vector Search**: Using the `<=>` cosine distance operator in `pgvector`, the system performs a nearest-neighbor search against the user's existing tag library.
 3. **Scoring**: Results are returned with a distance-based accuracy score, where lower distance indicates higher semantic relevance.
 
-### 3.2 Potential Keyword Extraction (KeyBERT Strategy)
+### 3.2 New Tag Suggestions (KeyBERT Strategy)
 Vekku implements a local version of the KeyBERT algorithm:
 1. **Candidate Generation**: The system extracts 1-gram and 2-gram fragments (n-grams) from the text.
 2. **Cross-Reference**: These candidates are embedded and compared against the original document vector.
