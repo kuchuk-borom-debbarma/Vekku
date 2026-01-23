@@ -38,6 +38,7 @@ const CreateContentModal: React.FC<CreateContentModalProps> = ({ onContentCreate
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [suggestionError, setSuggestionError] = useState("");
 
   const resetState = () => {
     setTitle("");
@@ -50,6 +51,7 @@ const CreateContentModal: React.FC<CreateContentModalProps> = ({ onContentCreate
     setSuggestedTags([]);
     setExtractedKeywords([]);
     setError("");
+    setSuggestionError("");
   };
 
   const handleNextStep = (e: React.FormEvent) => {
@@ -68,30 +70,40 @@ const CreateContentModal: React.FC<CreateContentModalProps> = ({ onContentCreate
 
   const handleSuggestTags = async () => {
     setIsExtractingTags(true);
+    setSuggestionError("");
     try {
       const res = await api.post("/suggestions/generate", { text: content, mode: "tags" });
       setSuggestedTags(res.data.existing || []);
+      setExtractedKeywords(res.data.potential || []);
     } catch (err: any) {
       console.error("Failed to suggest tags:", err);
       if (err.response?.status === 429) {
-        alert("AI rate limit exceeded for tags. Please wait a minute.");
+        setSuggestionError("AI rate limit exceeded for tags. Please wait a minute.");
+      } else {
+        setSuggestionError("Failed to fetch tag suggestions.");
       }
-    } finally {
+    }
+    finally {
       setIsExtractingTags(false);
     }
   };
 
   const handleExtractKeywords = async () => {
     setIsExtractingKeywords(true);
+    setSuggestionError("");
     try {
       const res = await api.post("/suggestions/generate", { text: content, mode: "keywords" });
       setExtractedKeywords(res.data.potential || []);
+      setSuggestedTags(res.data.existing || []);
     } catch (err: any) {
       console.error("Failed to suggest keywords:", err);
       if (err.response?.status === 429) {
-        alert("AI rate limit exceeded for keywords. Please wait a minute.");
+        setSuggestionError("AI rate limit exceeded for keywords. Please wait a minute.");
+      } else {
+        setSuggestionError("Failed to discover new keywords.");
       }
-    } finally {
+    }
+    finally {
       setIsExtractingKeywords(false);
     }
   };
@@ -309,6 +321,11 @@ const CreateContentModal: React.FC<CreateContentModalProps> = ({ onContentCreate
 
              {/* Combined Suggestion Area */}
              <div className="bg-zinc-50/50 rounded-xl p-4 border border-zinc-100 space-y-4 min-h-[100px]">
+                {suggestionError && (
+                  <div className="mb-2 p-2 bg-red-50 text-red-600 text-xs rounded border border-red-100">
+                    {suggestionError}
+                  </div>
+                )}
                 {(suggestedTags.length > 0 || extractedKeywords.length > 0) && (
                   <p className="text-[10px] text-zinc-400 font-medium italic border-b border-zinc-100 pb-2 mb-2">
                     Note: A more filled bar indicates a higher semantic match accuracy.
@@ -351,7 +368,7 @@ const CreateContentModal: React.FC<CreateContentModalProps> = ({ onContentCreate
                 {extractedKeywords.length > 0 && (
                   <div>
                     <p className="text-[10px] uppercase font-bold text-purple-400 mb-3 tracking-wider">New Tag Suggestions:</p>
-                    <div className="flex flex-wrap gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {extractedKeywords
                         .filter(kw => {
                           if (!kw.keyword || kw.keyword.trim().length < 2) return false;
@@ -362,39 +379,46 @@ const CreateContentModal: React.FC<CreateContentModalProps> = ({ onContentCreate
                         .map((kw) => {
                           const isSelected = selectedKeywords.includes(kw.keyword);
                           return (
-                            <div key={kw.keyword} className="flex flex-col gap-1.5">
-                              <button
-                                onClick={() => handleKeywordClick(kw.keyword)}
-                                className={`px-3 py-1.5 rounded-full text-[11px] font-bold border shadow-sm transition-all flex items-center gap-1.5 ${
-                                  isSelected
-                                    ? "bg-purple-600 text-white border-purple-700"
-                                    : "bg-white text-purple-700 border-indigo-200 hover:border-indigo-300"
-                                }`}
-                              >
-                                {isSelected ? <Check size={12} /> : <Plus size={12} />}
-                                <span>{kw.keyword}</span>
-                                <div className="w-8 h-1 bg-black/10 rounded-full overflow-hidden ml-1.5 border border-black/5" title={`Match Accuracy Distance: ${kw.score}`}>
-                                  <div 
-                                    className={`h-full transition-all ${isSelected ? "bg-white" : "bg-purple-500"}`} 
-                                    style={{ width: `${Math.max(10, Math.min(100, (1 - parseFloat(kw.score)) * 100))}%` }} 
-                                  />
-                                </div>
-                              </button>
-
-                              {/* Render Variants List */}
-                              {kw.variants && kw.variants.length > 0 && (
-                                <div className="flex flex-wrap gap-1 px-1">
-                                  {kw.variants.map(v => (
-                                    <button 
-                                      key={v}
-                                      onClick={() => swapKeywordVariant(kw.keyword, v)}
-                                      className="text-[9px] text-zinc-400 hover:text-purple-600 hover:underline transition-colors px-1"
+                            <div key={kw.keyword} className={`relative flex flex-col bg-white border rounded-lg p-3 transition-all ${isSelected ? "border-purple-400 ring-1 ring-purple-400 shadow-sm" : "border-indigo-100 hover:border-purple-300 hover:shadow-sm"}`}>
+                                {/* Header */}
+                                <div className="flex justify-between items-start gap-2 mb-2">
+                                    <span className="text-xs font-bold text-purple-900 leading-tight break-words">{kw.keyword}</span>
+                                    <button
+                                        onClick={() => handleKeywordClick(kw.keyword)}
+                                        className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full border transition-colors ${isSelected ? "bg-purple-600 border-purple-600 text-white" : "bg-white border-zinc-200 text-zinc-400 hover:border-purple-400 hover:text-purple-600"}`}
                                     >
-                                      {v}
+                                        {isSelected ? <Check size={10} /> : <Plus size={12} />}
                                     </button>
-                                  ))}
                                 </div>
-                              )}
+
+                                {/* Score */}
+                                <div className="w-full h-1 bg-zinc-100 rounded-full overflow-hidden mb-3" title={`Match Accuracy Distance: ${kw.score}`}>
+                                    <div 
+                                        className={`h-full transition-all ${isSelected ? "bg-purple-500" : "bg-purple-300"}`} 
+                                        style={{ width: `${Math.max(10, Math.min(100, (1 - parseFloat(kw.score)) * 100))}%` }} 
+                                    />
+                                </div>
+
+                                {/* Variants */}
+                                {kw.variants && kw.variants.length > 0 ? (
+                                    <div className="mt-auto pt-2 border-t border-dashed border-zinc-100">
+                                        <p className="text-[9px] text-zinc-400 mb-1.5 font-medium">Alternatives:</p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                        {kw.variants.map(v => (
+                                            <button 
+                                            key={v}
+                                            onClick={() => swapKeywordVariant(kw.keyword, v)}
+                                            className="text-[10px] bg-zinc-50 border border-zinc-100 px-1.5 py-0.5 rounded text-zinc-600 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-colors"
+                                            title={`Use "${v}" instead`}
+                                            >
+                                            {v}
+                                            </button>
+                                        ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="mt-auto text-[9px] text-zinc-300 italic">No variants</div>
+                                )}
                             </div>
                           );
                         })}
