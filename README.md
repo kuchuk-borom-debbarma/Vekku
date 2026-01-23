@@ -4,9 +4,9 @@ Vekku is an intelligent digital knowledge base that uses AI to help you organize
 
 ## Project Structure
 
-- **[Client (Frontend)](./client)**: A modern React application built with TypeScript, Tailwind CSS, and Shadcn UI, featuring a glassmorphism design.
-- **[Server (Backend)](./server)**: A high-performance Bun runtime service utilizing Neon (PostgreSQL), Drizzle ORM, and Cloudflare AI for semantic analysis.
-- **[Docs](./docs)**: Comprehensive documentation including user guides and technical architecture details.
+- **[web (Frontend)](./web)**: A modern React application built with TypeScript, Tailwind CSS, and Shadcn UI, featuring a glassmorphism design.
+- **[backend (Backend)](./backend)**: A high-performance Bun runtime service utilizing Neon (PostgreSQL), Drizzle ORM, and Cloudflare AI for semantic analysis.
+- **[docs](./docs)**: Comprehensive documentation including user guides and technical architecture details.
 
 ## Core Features
 
