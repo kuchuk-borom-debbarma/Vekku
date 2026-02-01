@@ -40,23 +40,52 @@ Vekku-Meta/
 └── README.md   # This file
 ```
 
-## 🏁 Getting Started
+## 📚 Documentation
+
+For deeper dives into specific parts of the system:
+-   **[Backend Guide](./backend/GEMINI.md)**: Detailed API flows, auth strategy, and pagination logic.
+-   **[Frontend Guide](./web/GEMINI.md)**: UI architecture, component structure, and state management.
+-   **[Docs Folder](./docs)**: Architectural decisions and future roadmap.
+
+---
+
+## 💻 Local Development Setup
+
+*Vekku is already deployed and ready to use. However, if you wish to run a local instance or contribute to development, follow the steps below.*
 
 ### Prerequisites
 -   **Node.js** & **npm** (for Frontend)
 -   **Bun** (for Backend)
 -   **PostgreSQL** Database (e.g., Neon)
+-   **Cloudflare Workers AI** (for Embeddings)
+-   **Upstash Redis** (for Caching/Rate Limiting)
 
 ### 1. Backend Setup
 
-Navigate to the backend directory and install dependencies:
+Navigate to the backend directory:
 
 ```bash
 cd backend
 bun install
 ```
 
-Configure your environment variables (copy `.env.example` to `.env`) and set up your database URL.
+**Environment Variables:**
+Copy `.env.example` to `.env` and populate the following secrets:
+
+| Variable | Description |
+| :--- | :--- |
+| `DATABASE_URL` | PostgreSQL connection string (Neon Tech). |
+| `JWT_SECRET` | Secret key for signing authentication tokens. |
+| `CLOUDFLARE_WORKER_AI_API_KEY` | API Key for Cloudflare Workers AI. |
+| `CLOUDFLARE_WORKER_ACCOUNT_ID` | Cloudflare Account ID. |
+| `CLOUDFLARE_AI_MODEL` | Embedding model (e.g., `@cf/baai/bge-small-en-v1.5`). |
+| `EMBEDDING_THRESHOLD` | Similarity threshold for suggestions (e.g., `0.4`). |
+| `EMBEDDING_MATCH_COUNT` | Number of suggestions to return (e.g., `10`). |
+| `NOTIFICATION_API_CLIENT_ID` | Client ID for notification service (optional). |
+| `NOTIFICATION_API_CLIENT_SECRET` | Secret for notification service (optional). |
+| `UPSTASH_REDIS_REST_URL` | URL for Upstash Redis instance. |
+| `UPSTASH_REDIS_REST_TOKEN` | Auth token for Upstash Redis. |
+| `FRONTEND_URL` | URL of the frontend (e.g., `http://localhost:5173`). |
 
 Run the development server:
 
@@ -66,12 +95,19 @@ bun run dev
 
 ### 2. Frontend Setup
 
-Navigate to the web directory and install dependencies:
+Navigate to the web directory:
 
 ```bash
 cd web
 npm install
 ```
+
+**Environment Variables:**
+Create a `.env` file with the following configurations:
+
+| Variable | Description |
+| :--- | :--- |
+| `VITE_API_URL` | Full URL to the backend API (e.g., `http://localhost:3000/api`). |
 
 Start the frontend development server:
 
@@ -79,14 +115,7 @@ Start the frontend development server:
 npm run dev
 ```
 
-The application should now be running at `http://localhost:5173` (by default).
-
-## 📚 Documentation
-
-For deeper dives into specific parts of the system:
--   **[Backend Guide](./backend/GEMINI.md)**: Detailed API flows, auth strategy, and pagination logic.
--   **[Frontend Guide](./web/GEMINI.md)**: UI architecture, component structure, and state management.
--   **[Docs Folder](./docs)**: Architectural decisions and future roadmap.
+The application should now be running at `http://localhost:5173`.
 
 ---
 
